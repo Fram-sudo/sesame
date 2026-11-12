@@ -1,8 +1,7 @@
-# Publie le site (site/) et la démo interactive (site/demo, données fictives) sur GitHub Pages
+# Publie le site (site/), la démo interactive (site/demo, données fictives) et l'historique des versions
+# (latest.json de la dernière version) sur GitHub Pages. Lancé par « Version » après chaque publication.
 name: Site
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
@@ -26,6 +25,9 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build:demo
+      - run: gh release download --repo "$GITHUB_REPOSITORY" --pattern latest.json --dir site || true
+        env:
+          GH_TOKEN: ${{ github.token }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

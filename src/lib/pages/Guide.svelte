@@ -1,7 +1,8 @@
 <script lang="ts">
   // Aide : les questions pratiques, une réponse courte et un bouton qui mène au bon endroit.
   import { app, type Page } from "../etat.svelte";
-  import { t } from "../i18n.svelte";
+  import { locale, t } from "../i18n.svelte";
+  import { HISTORIQUE, notesDansLaLangue } from "../maj.svelte";
   import Icone from "../Icone.svelte";
   import { normaliser } from "../import/analyse";
 
@@ -116,9 +117,42 @@
       <p class="sous vide">{t("Aucune réponse ne correspond. Essayez un autre mot.")}</p>
     {/each}
   </div>
+
+  {#if !recherche}
+    <section class="nouveautes">
+      <h2>{t("Nouveautés")}</h2>
+      {#each HISTORIQUE as v (v.version)}
+        <div class="version">
+          <p><strong>{t("Version {0}", v.version)}</strong> <span class="sous">· {new Date(v.date + "T12:00:00").toLocaleDateString(locale(), { day: "numeric", month: "long", year: "numeric" })}</span></p>
+          <ul>{#each notesDansLaLangue(v.notes) as n}<li>{n}</li>{/each}</ul>
+        </div>
+      {/each}
+    </section>
+  {/if}
 </div>
 
 <style>
+  .nouveautes {
+    margin-top: 12px;
+  }
+  .nouveautes h2 {
+    font-size: 1.1rem;
+    margin: 0 0 8px;
+  }
+  .version {
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+  }
+  .version p {
+    margin: 0;
+  }
+  .version ul {
+    margin: 6px 0 0;
+    padding-left: 18px;
+    color: var(--doux);
+  }
   /* Largeur de lecture confortable sur grand écran */
   .pile {
     max-width: 820px;

@@ -5,6 +5,7 @@
   import ChampMotDePasse from "../ChampMotDePasse.svelte";
   import CleRecuperation from "../CleRecuperation.svelte";
   import { annoncer, app, mettreAJourTaux, sauverParametres } from "../etat.svelte";
+  import { maj, verifierMaj } from "../maj.svelte";
   import { aDesDonneesDemo, chargerDemo, retirerDemo } from "../demo";
   import { charger, vider } from "../donnees.svelte";
   import GestionCategories from "../GestionCategories.svelte";
@@ -215,6 +216,17 @@
       </p>
       {#if app.params.tauxActifs}<button onclick={() => agir(async () => annoncer((await mettreAJourTaux(true)) ? t("Taux mis à jour.") : t("Pas de connexion : les derniers taux sont gardés.")))} disabled={enCours}>{t("Mettre à jour maintenant")}</button>{/if}
     {/if}
+  </section>
+
+  <section class="carte pile">
+    <h2>{t("Mises à jour")}</h2>
+    <p class="sous">{t("Version installée : {0}", maj.actuelle || "…")}</p>
+    <label class="interrupteur">
+      <input type="checkbox" checked={app.params.majAuto !== false} onchange={async (e) => ((app.params.majAuto = e.currentTarget.checked), await sauverParametres())} />
+      <span>{t("Me prévenir quand une nouvelle version est disponible")}</span>
+    </label>
+    <p class="sous">{t("Au démarrage, l'appli lit seulement la fiche publique de la dernière version sur github.com : rien de vos données n'est envoyé.")}</p>
+    <button onclick={() => agir(async () => { const f = await verifierMaj(true); annoncer(f ? t("Nouvelle version {0} disponible.", f.version) : f === null ? t("Vous avez la dernière version.") : t("Pas de connexion : réessayez plus tard.")); })} disabled={enCours}>{t("Vérifier maintenant")}</button>
   </section>
 
   <section class="carte pile">

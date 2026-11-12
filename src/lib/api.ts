@@ -23,6 +23,10 @@ export interface Parametres {
   dernierRecu?: string;
   /** Guide du premier lancement déjà vu */
   guideVu?: boolean;
+  /** Chercher les nouvelles versions au démarrage (absent = oui) */
+  majAuto?: boolean;
+  /** Version dont la carte « Nouvelle version » a été fermée (« Plus tard ») */
+  majIgnoree?: string;
 }
 
 export interface Recus {
@@ -63,6 +67,8 @@ export const api = {
   envoyerChangements: (appareil: string) => invoke<boolean>("envoyer_changements", { appareil }),
   recevoirChangements: () => invoke<number | null>("recevoir_changements"),
   chercherChangements: (appareil: string) => invoke<Recus>("chercher_changements", { appareil }),
+  derniereVersion: () => invoke<string>("derniere_version"),
+  ouvrirLien: (url: string) => invoke<void>("ouvrir_lien", { url }),
 };
 
 /** Fichier de relevé lu par le moteur : tableur en lignes, PDF en base64, sinon texte. */

@@ -77,6 +77,36 @@ async fn taux_bce() -> Res<String> {
     .map_err(txt)?
 }
 
+/// Fiche de la dernière version publiée (numéro, nouveautés, liens) : seule adresse consultée
+#[tauri::command]
+async fn derniere_version() -> Res<String> {
+    tauri::async_runtime::spawn_blocking(|| {
+        let r = ureq::get("https://github.com/Fram-sudo/sesame/releases/latest/download/latest.json")
+            .timeout(std::time::Duration::from_secs(15))
+            .call()
+            .map_err(txt)?;
+        let mut json = String::new();
+        r.into_reader().take(500_000).read_to_string(&mut json).map_err(txt)?;
+        Ok(json)
+    })
+    .await
+    .map_err(txt)?
+}
+
+/// Ouvre le téléchargement d'une nouvelle version dans le navigateur : uniquement les pages de Sésame sur GitHub
+#[tauri::command]
+fn ouvrir_lien(app: tauri::AppHandle, url: String) -> Res<()> {
+    if !lien_autorise(&url) {
+        return Err("Lien refusé".into());
+    }
+    use tauri_plugin_opener::OpenerExt;
+    app.opener().open_url(url, None::<&str>).map_err(txt)
+}
+
+fn lien_autorise(url: &str) -> bool {
+    url.starts_with("https://github.com/Fram-sudo/sesame/") && !url.contains("..") && !url.contains('@')
+}
+
 #[derive(Serialize)]
 struct EtatCoffre {
     existe: bool,
@@ -650,6 +680,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_opener::init())
         .plugin(
             tauri::plugin::Builder::<tauri::Wry>::new("partage")
                 .setup(|_app, _api| {
@@ -695,6 +726,8 @@ pub fn run() {
             lire_releves,
             lire_releves_chemins,
             taux_bce,
+            derniere_version,
+            ouvrir_lien,
             envoyer_changements,
             empreinte_disponible,
             activer_empreinte,
@@ -710,6 +743,14 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn seuls_les_liens_de_sesame_s_ouvrent() {
+        assert!(lien_autorise("https://github.com/Fram-sudo/sesame/releases/download/v0.1.2/Sesame-Android.apk"));
+        assert!(!lien_autorise("https://github.com/autre/depot/x.exe"));
+        assert!(!lien_autorise("https://github.com/Fram-sudo/sesame/../../autre"));
+        assert!(!lien_autorise("file:///C:/Windows/system32/calc.exe"));
+    }
 
     #[test]
     fn texte_windows_1252_et_utf8() {

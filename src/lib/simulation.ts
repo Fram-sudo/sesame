@@ -68,6 +68,18 @@ mockIPC(async (cmd, a) => {
       const latin = nom.includes("societe");
       return [{ nom, lignes: null, texte: new TextDecoder(latin ? "windows-1252" : "utf-8").decode(octets), pdf: null, erreur: null }];
     }
+    case "plugin:app|version":
+      return "0.1.0";
+    case "derniere_version": {
+      // ?maj : fait apparaître la carte « Nouvelle version »
+      if (!new URLSearchParams(location.search).has("maj")) throw "Pas de connexion";
+      const f = (n: string) => `https://github.com/Fram-sudo/sesame/releases/download/v0.1.9/${n}`;
+      return JSON.stringify({ version: "0.1.9", date: "2026-11-20", page: "https://github.com/Fram-sudo/sesame/releases/tag/v0.1.9",
+        fichiers: { windows: f("Sesame-Windows-Setup.exe"), android: f("Sesame-Android.apk"), deb: f("sesame-linux.deb"), appimage: f("Sesame-Linux.AppImage") },
+        notes: { fr: ["Mises à jour automatiques.", "Historique des versions dans l'Aide."], en: ["Automatic updates.", "Version history in Help."] } });
+    }
+    case "ouvrir_lien":
+      return;
     default:
       throw `Simulation : commande ${cmd} non simulÃ©e.`;
   }

@@ -1,0 +1,14 @@
+[
+  {
+    "version": "0.1.0",
+    "date": "2026-11-12",
+    "notes": {
+      "fr": [
+        "Première version publique : import des relevés de n'importe quelle banque, budgets, épargne et poches, prêts, prévision sur 3 mois, synchronisation PC ↔ téléphone sans cloud, français et anglais, empreinte sur Android."
+      ],
+      "en": [
+        "First public release: statement import from any bank, budgets, savings and pockets, loans, 3-month forecast, PC ↔ phone sync without cloud, French and English, fingerprint on Android."
+      ]
+    }
+  }
+]

@@ -24,6 +24,7 @@ zeroize = "1"
 data-encoding = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
+tauri-plugin-opener = "2"
 calamine = { version = "0.38.0", features = ["dates"] }
 encoding_rs = "0.8.44"
 ureq = "2"

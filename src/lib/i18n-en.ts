@@ -834,6 +834,20 @@ export const EN: Record<string, string> = {
   "échéance": "payment",
   "✓ Les soldes correspondent.": "✓ The balances match.",
   "✓ Prêt entièrement remboursé.": "✓ Loan fully repaid.",
+  "Nouvelle version {0}": "New version {0}",
+  "Mettre à jour": "Update",
+  "Téléchargement ouvert dans le navigateur. Installez le fichier : vos données sont gardées.": "Download opened in your browser. Install the file: your data is kept.",
+  "Mises à jour": "Updates",
+  "Version installée : {0}": "Installed version: {0}",
+  "Me prévenir quand une nouvelle version est disponible": "Tell me when a new version is available",
+  "Au démarrage, l'appli lit seulement la fiche publique de la dernière version sur github.com : rien de vos données n'est envoyé.": "At startup, the app only reads the public page of the latest version on github.com: none of your data is sent.",
+  "Nouvelle version {0} disponible.": "New version {0} available.",
+  "Vous avez la dernière version.": "You have the latest version.",
+  "Pas de connexion : réessayez plus tard.": "No connection: try again later.",
+  "Vérifier maintenant": "Check now",
+  "Nouveautés": "What's new",
+  "Version {0}": "Version {0}",
+  "Lien refusé": "Link refused",
 };
 
 /** Textes volontairement identiques en anglais (codes, données de démonstration) */

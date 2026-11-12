@@ -53,6 +53,7 @@ export async function apresOuverture() {
   await charger();
   appliquerTheme();
   void mettreAJourTaux();
+  void import("./maj.svelte").then((m) => m.verifierMaj());
   app.page = "accueil";
   app.ecran = "app";
   relancerMinuteur();

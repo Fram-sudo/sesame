@@ -17,6 +17,8 @@
   import Plus from "./pages/Plus.svelte";
   import Guide from "./pages/Guide.svelte";
   import Bienvenue from "./Bienvenue.svelte";
+  import CarteMaj from "./CarteMaj.svelte";
+  import { maj } from "./maj.svelte";
   import Saisie from "./Saisie.svelte";
   import Synchro from "./Synchro.svelte";
   import { donnees, premiereDate, soldes } from "./donnees.svelte";
@@ -139,6 +141,7 @@
     </header>
 
     <main>
+      {#if maj.dispo && maj.dispo.version !== app.params.majIgnoree}<CarteMaj fiche={maj.dispo} />{/if}
       {#if app.page === "accueil"}
         <Accueil />
       {:else if app.page === "parametres"}

@@ -52,6 +52,13 @@ h1 em { font-style: normal; color: var(--accent); }
 .telephone .note { position: absolute; left: 50%; bottom: -34px; transform: translateX(-50%); font-size: 13px; color: var(--doux); white-space: nowrap; font-weight: 600; }
 .demo-mobile { display: none; }
 
+/* Historique des versions */
+.versions { list-style: none; margin-top: 32px; display: grid; gap: 12px; max-width: 760px; }
+.versions > li { background: var(--surface); border-radius: 18px; padding: 18px 22px; }
+.versions .titre { font-weight: 800; }
+.versions .titre span { color: var(--doux); font-weight: 600; }
+.versions ul { margin: 8px 0 0 20px; color: var(--doux); display: grid; gap: 4px; }
+
 /* Sections */
 section.bloc { padding: 80px 0; }
 section.bloc + section.bloc { border-top: 1px solid var(--bord); }
@@ -134,6 +141,7 @@ footer .cadre { display: flex; flex-wrap: wrap; justify-content: space-between; 
       <a href="#fonctions"><span lang="fr">Fonctionnalités</span><span lang="en">Features</span></a>
       <a href="#installer"><span lang="fr">Installer</span><span lang="en">Install</span></a>
       <a href="#securite"><span lang="fr">Sécurité</span><span lang="en">Security</span></a>
+      <a href="#versions"><span lang="fr">Nouveautés</span><span lang="en">What's new</span></a>
       <a href="https://github.com/Fram-sudo/sesame">GitHub</a>
     </nav>
     <div class="langues" role="group" aria-label="Langue / Language">
@@ -300,12 +308,19 @@ footer .cadre { display: flex; flex-wrap: wrap; justify-content: space-between; 
         <div><h3><svg class="i"><use href="#cadenas"/></svg><span lang="fr">Tout est chiffré</span><span lang="en">Everything is encrypted</span></h3>
           <p><span lang="fr">AES-256 et Argon2id, comme les gestionnaires de mots de passe. Chaque essai de mot de passe est volontairement lent.</span><span lang="en">AES-256 and Argon2id, like password managers. Every password attempt is deliberately slow.</span></p></div>
         <div><h3><svg class="i"><use href="#nuage"/></svg><span lang="fr">Rien en ligne</span><span lang="en">Nothing online</span></h3>
-          <p><span lang="fr">Pas de compte, pas de pistage, pas de sauvegarde cloud cachée. Seuls les taux de change publics peuvent être téléchargés, si vous le décidez.</span><span lang="en">No account, no tracking, no hidden cloud backup. Only public exchange rates can be downloaded, if you choose to.</span></p></div>
+          <p><span lang="fr">Pas de compte, pas de pistage, pas de sauvegarde cloud cachée. L'appli lit seulement des fichiers publics : la fiche de la dernière version et, si vous le décidez, les taux de change.</span><span lang="en">No account, no tracking, no hidden cloud backup. The app only reads public files: the latest-version page and, if you choose, exchange rates.</span></p></div>
         <div><h3><svg class="i"><use href="#cle"/></svg><span lang="fr">Une clé de récupération</span><span lang="en">A recovery key</span></h3>
           <p><span lang="fr">Si vous oubliez votre mot de passe, la clé remise à la création rouvre vos données. Personne d'autre ne peut le faire.</span><span lang="en">If you forget your password, the key you get at setup reopens your data. Nobody else can.</span></p></div>
         <div><h3><svg class="i"><use href="#empreinte"/></svg><span lang="fr">L'empreinte sur Android</span><span lang="en">Fingerprint on Android</span></h3>
           <p><span lang="fr">Posez le doigt au lieu de taper le mot de passe : la clé reste dans le coffre-fort matériel du téléphone.</span><span lang="en">Touch the sensor instead of typing your password: the key stays in the phone's hardware vault.</span></p></div>
       </div>
+    </div>
+  </section>
+  <section class="bloc" id="versions" hidden>
+    <div class="cadre">
+      <h2><span lang="fr">Historique des versions</span><span lang="en">Version history</span></h2>
+      <p class="intro"><span lang="fr">Sésame vous prévient quand une nouvelle version sort. Voici ce qui a changé à chaque fois.</span><span lang="en">Sesame tells you when a new version is out. Here is what changed each time.</span></p>
+      <ol class="versions"></ol>
     </div>
   </section>
 </main>
@@ -329,6 +344,37 @@ footer .cadre { display: flex; flex-wrap: wrap; justify-content: space-between; 
   try { depart = localStorage.getItem("sesame-site-langue") || (navigator.language.startsWith("fr") ? "fr" : "en"); } catch {}
   langue(depart);
   document.querySelectorAll("[data-langue]").forEach((b) => b.addEventListener("click", () => langue(b.dataset.langue)));
+
+  // Historique des versions : latest.json, déposé à côté du site à chaque publication
+  let versions = [];
+  function afficherVersions() {
+    const liste = document.querySelector(".versions");
+    const l = racine.lang;
+    liste.replaceChildren(...versions.map((v) => {
+      const li = document.createElement("li");
+      const titre = document.createElement("div");
+      titre.className = "titre";
+      titre.textContent = "Version " + v.version + " ";
+      const date = document.createElement("span");
+      date.textContent = "· " + new Date(v.date + "T12:00:00").toLocaleDateString(l === "en" ? "en-GB" : "fr-FR", { day: "numeric", month: "long", year: "numeric" });
+      titre.append(date);
+      const ul = document.createElement("ul");
+      for (const n of (l === "en" && v.notes.en.length ? v.notes.en : v.notes.fr)) {
+        const p = document.createElement("li");
+        p.textContent = n;
+        ul.append(p);
+      }
+      li.append(titre, ul);
+      return li;
+    }));
+  }
+  fetch("latest.json").then((r) => (r.ok ? r.json() : null)).then((d) => {
+    if (!d || !d.history) return;
+    versions = d.history;
+    afficherVersions();
+    document.getElementById("versions").hidden = false;
+  }).catch(() => {});
+  document.querySelectorAll("[data-langue]").forEach((b) => b.addEventListener("click", afficherVersions));
 
   // Onglets d'installation : celui de l'appareil du visiteur d'abord
   function plateforme(p) {

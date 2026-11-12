@@ -47,3 +47,4 @@ linux/
 
 # Démo web construite (npm run build:demo), publiée par le workflow du site
 site/demo/
+site/latest.json

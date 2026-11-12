@@ -9,7 +9,8 @@
     "noEmit": true,
     "skipLibCheck": true,
     "verbatimModuleSyntax": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "resolveJsonModule": true
   },
   "include": ["src/**/*.ts", "src/**/*.svelte"],
   "exclude": ["src/**/*.test.ts"]
