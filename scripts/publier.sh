@@ -9,8 +9,7 @@ COPIE=${COPIE:-/c/Projets/sesame-publication}
 MESSAGE=${1:-$(git -C "$SOURCE" log -1 --format=%s)}
 
 if [ -n "$(git -C "$SOURCE" status --porcelain -- . ':!.claude' ':!.impeccable')" ]; then
-  echo "Des changements ne sont pas encore enregistrés (commit) : rien n'est publié." >&2
-  exit 1
+  echo "Attention : les changements pas encore enregistrés (commit) ne sont pas publiés." >&2
 fi
 
 cd "$COPIE"
