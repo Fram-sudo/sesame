@@ -95,8 +95,8 @@ jobs:
         with: { name: publication, path: publication }
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: 17 }
-      - uses: android-actions/setup-android@v3
-      - run: sdkmanager "ndk;27.2.12479018" "build-tools;36.0.0"
+      # Le SDK Android est déjà installé sur la machine de GitHub : on ajoute seulement le NDK et les outils de signature
+      - run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;27.2.12479018" "build-tools;36.0.0" > /dev/null
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
       - uses: dtolnay/rust-toolchain@stable
