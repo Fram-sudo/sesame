@@ -11,6 +11,10 @@ export interface Profil {
   entete: string[];
   colonnes: Partial<Record<Role, string>>;
   formatDate: FormatDate;
+  /** Ce qui identifie ce format de relevé (titres des colonnes, et pour un PDF la banque et l'en-tête) */
+  cle?: string;
+  /** Montants à l'envers dans ce format (dépenses en positif) : on les retourne à la lecture */
+  inverser?: boolean;
 }
 
 export interface OpLue {
@@ -203,6 +207,7 @@ export function lire(lignes: string[][], idxEntete: number, profil: Profil, devi
     const dv = val(l, c.devise).toUpperCase();
     if (dv && (DEVISES[dv.toLowerCase()] ?? dv) !== devise) return void res.autreDevise++;
     const frais = lireMontant(val(l, c.frais));
+    if (profil.inverser) montant = -montant;
     if (frais) montant -= Math.abs(frais);
     const detail = val(l, c.detail);
     const solde = lireMontant(val(l, c.solde));
@@ -217,6 +222,112 @@ export function lire(lignes: string[][], idxEntete: number, profil: Profil, devi
     });
   });
   return res;
+}
+
+// ---------- Reconnaissance par le contenu (quelle que soit la langue des titres) ----------
+
+/**
+ * Part des lignes où le solde suit les montants (« solde précédent + opération = nouveau solde »),
+ * relevé du plus ancien au plus récent ou l'inverse. `n` = paires vérifiables.
+ * Une colonne de solde qui ne bouge pas (solde du jour répété sur chaque ligne) ne compte pas.
+ */
+export function coherenceSoldes(mouvements: (number | null)[], soldes: (number | null)[]): { n: number; ok: number } {
+  let n = 0, ok = 0;
+  for (let i = 1; i < soldes.length; i++) {
+    const a = soldes[i - 1], b = soldes[i];
+    if (a === null || b === null || a === b) continue;
+    n++;
+    if (b - a === mouvements[i] || a - b === mouvements[i - 1]) ok++;
+  }
+  return { n, ok: n ? ok / n : 0 };
+}
+
+/**
+ * Complète (et corrige) les colonnes devinées par les titres en regardant les valeurs :
+ * la colonne pleine de dates est la date, les colonnes de nombres sont montant, débit/crédit ou solde
+ * (le solde est celle qui suit les montants), le texte le plus varié est le libellé.
+ * Marche avec des titres inconnus, dans n'importe quelle langue, ou sans titres du tout.
+ */
+export function completerParContenu(lignes: string[][], idx: number, entete: string[], titres: Partial<Record<Role, string>>): Partial<Record<Role, string>> {
+  const corps = lignes.slice(idx + 1, idx + 401).filter((l) => l.filter((c) => c.trim()).length >= 2);
+  if (corps.length < 2) return titres;
+  const res = { ...titres };
+  const brut = (k: number) => corps.map((l) => (l[k] ?? "").trim());
+  const nombres = (k: number) => brut(k).map((x) => (x && !RE_DATE.test(x) && /\d/.test(x) ? lireMontant(x) : null));
+  const stats = entete.map((_, k) => {
+    const v = brut(k).filter(Boolean);
+    const part = (f: (x: string) => boolean) => (v.length ? v.filter(f).length / v.length : 0);
+    return {
+      k,
+      rempli: v.length / corps.length,
+      date: part((x) => RE_DATE.test(x) || !!dateEnLettres(x)),
+      nombre: part((x) => !RE_DATE.test(x) && /\d/.test(x) && lireMontant(x) !== null),
+      texte: new Set(v).size * (v.reduce((a, x) => a + x.length, 0) / (v.length || 1)),
+    };
+  });
+  const k = (nom?: string) => (nom === undefined ? -1 : entete.indexOf(nom));
+  // Titres trompeurs : une « date » sans dates, un « montant » sans nombres
+  if (res.date && stats[k(res.date)].date < 0.5) delete res.date;
+  for (const r of ["montant", "debit", "credit", "solde"] as Role[]) if (res[r] && stats[k(res[r])].nombre < 0.5) delete res[r];
+  const pris = () => new Set(Object.values(res).map(k));
+
+  if (!res.date) {
+    const d = stats.find((s) => !pris().has(s.k) && s.date >= 0.8 && s.rempli >= 0.8);
+    if (d) res.date = entete[d.k];
+  }
+
+  const libres = () => stats.filter((s) => !pris().has(s.k) && s.nombre >= 0.9 && s.date < 0.5 && s.rempli > 0);
+  if (!res.montant && !res.debit && !res.credit) {
+    const cands = libres();
+    const solde = (mouv: (number | null)[], exclus: number[]) =>
+      cands.filter((s) => !exclus.includes(s.k) && s.rempli >= 0.8).map((s) => ({ s, c: coherenceSoldes(mouv, nombres(s.k)) })).sort((a, b) => b.c.ok - a.c.ok)[0];
+    // Deux colonnes jamais remplies sur la même ligne : sorties et entrées
+    let choix: { debit?: number; credit?: number; montant?: number; solde?: number; score: number } = { score: -1 };
+    for (const a of cands)
+      for (const b of cands) {
+        if (a.k >= b.k) continue;
+        const na = nombres(a.k), nb = nombres(b.k);
+        const ensemble = na.filter((x, i) => x !== null && nb[i] !== null).length;
+        const union = na.filter((x, i) => x !== null || nb[i] !== null).length;
+        if (ensemble > corps.length * 0.02 || union < corps.length * 0.6 || a.rempli < 0.03 || b.rempli < 0.03) continue;
+        for (const [d, c] of [[a.k, b.k], [b.k, a.k]]) {
+          const nd = nombres(d), nc = nombres(c);
+          const mouv = nd.map((x, i) => (x === null && nc[i] === null ? null : Math.abs(nc[i] ?? 0) - Math.abs(x ?? 0)));
+          const s = solde(mouv, [d, c]);
+          // Sans solde pour trancher : des montants négatifs, sinon la colonne la plus remplie, sont les dépenses
+          const indice = s && s.c.n >= 3 ? s.c.ok : nd.some((x) => x !== null && x < 0) ? 0.5 : stats[d].rempli >= stats[c].rempli ? 0.4 : 0.3;
+          if (indice > choix.score) choix = { debit: d, credit: c, solde: s && s.c.n >= 3 && s.c.ok >= 0.6 ? s.s.k : undefined, score: indice };
+        }
+      }
+    // Sinon une seule colonne de montants signés (et peut-être un solde à côté)
+    if (choix.score < 0)
+      for (const m of cands.filter((s) => s.rempli >= 0.8)) {
+        const s = solde(nombres(m.k), [m.k]);
+        const indice = s && s.c.n >= 3 ? s.c.ok : 0.1;
+        if (indice > choix.score) choix = { montant: m.k, solde: s && s.c.n >= 3 && s.c.ok >= 0.6 ? s.s.k : undefined, score: indice };
+      }
+    if (choix.debit !== undefined) (res.debit = entete[choix.debit]), (res.credit = entete[choix.credit!]);
+    if (choix.montant !== undefined) res.montant = entete[choix.montant];
+    if (choix.solde !== undefined && !res.solde) res.solde = entete[choix.solde];
+  }
+
+  if (!res.libelle && !res.detail) {
+    const l = stats.filter((s) => !pris().has(s.k) && s.nombre < 0.5 && s.date < 0.5 && s.rempli >= 0.5).sort((a, b) => b.texte - a.texte)[0];
+    if (l) res.libelle = entete[l.k];
+  }
+  return res;
+}
+
+/**
+ * Montants à l'envers ? Si le relevé donne un solde qui suit les montants une fois retournés
+ * (et pas tels quels), le format écrit les dépenses en positif.
+ */
+export function sensInverse(ops: OpLue[]): boolean {
+  const avec = ops.filter((o) => o.solde !== undefined);
+  const soldes = avec.map((o) => o.solde!);
+  const droit = coherenceSoldes(avec.map((o) => o.montant), soldes);
+  const envers = coherenceSoldes(avec.map((o) => -o.montant), soldes);
+  return droit.n >= 3 && envers.ok >= 0.8 && droit.ok < 0.5;
 }
 
 /** Ce qu'il manque pour pouvoir importer (vide = c'est bon). */

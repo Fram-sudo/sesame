@@ -7,7 +7,7 @@
   import ControleSolde from "./ControleSolde.svelte";
   import { classerEtLier, DEVISES, donnees, ecrire, nouvelId, type Changement, type Compte, type Devise, type Import, type Operation } from "./donnees.svelte";
   import { argent, dateCourte } from "./format";
-  import { lire, manques, type FormatDate, type Role } from "./import/analyse";
+  import { coherenceSoldes, lire, manques, type FormatDate, type Role } from "./import/analyse";
   import { cleOp, separerDoublons } from "./import/doublons";
   import { choisirCompte, deviner, type Preparation } from "./import/fichier";
 
@@ -73,7 +73,26 @@
   });
   const nbPoches = $derived(poches ? [...poches.parPoche.values()].reduce((a, l) => a + l.length, 0) : 0);
   const suspects = $derived(tri ? tri.nouvelles.filter((o) => Math.abs(o.montant) >= (devise === "XOF" ? 1e8 : 1e7)) : []);
-  const pret = $derived(ok && !!tri && (tri.nouvelles.length > 0 || nbPoches > 0));
+  // Format jamais vu : l'utilisateur vérifie l'aperçu une fois, ensuite il est reconnu tout seul
+  /* svelte-ignore state_referenced_locally */
+  let valide = $state(!prep.profilNouveau);
+  const cleProfil = (p: { cle?: string; entete: string[] }) => p.cle ?? p.entete.join("|");
+  const aValider = $derived(!valide && !donnees.profils.some((p) => cleProfil(p) === cleProfil(profil)));
+  async function valider() {
+    await ecrire([{ collection: "profils", id: profil.id, valeur: $state.snapshot(profil) }]);
+    valide = true;
+    assistant = false;
+    profilModifie = false;
+  }
+  // Le solde donné par le relevé ne suit pas les montants lus : colonnes sans doute mal comprises
+  const soldesFaux = $derived.by(() => {
+    const a = lecture?.ops.filter((o) => o.solde !== undefined) ?? [];
+    const c = coherenceSoldes(a.map((o) => o.montant), a.map((o) => o.solde!));
+    return c.n >= 5 && c.ok < 0.8;
+  });
+  // Rien de lisible : l'assistant s'ouvre de lui-même
+  const assistantOuvert = $derived(assistant || (!!lecture && !lecture.ops.length && lecture.erreurs.length > 0));
+  const pret = $derived(ok && !aValider && !!tri && (tri.nouvelles.length > 0 || nbPoches > 0));
 
   export async function importer() {
     if (!pret || etat !== "pret" || !tri || !lecture) return;
@@ -114,7 +133,7 @@
       const dates = ops.map((o) => o.date).sort();
       const imp: Import = { id: importId, compteId: cid, quand: Date.now(), fichier: prep.nom, banque: prep.banque ?? profil.nom, nb: ops.length, doublons: tri.doublons.length + (poches?.doublons ?? 0), de: dates[0], a: dates[dates.length - 1] };
       ch.push(...ops.map((o) => ({ collection: "operations", id: o.id, valeur: o }) as Changement), { collection: "imports", id: importId, valeur: imp });
-      if (!prep.estPdf && (prep.profilNouveau || profilModifie)) ch.push({ collection: "profils", id: profil.id, valeur: $state.snapshot(profil) });
+      if (prep.profilNouveau || profilModifie) ch.push({ collection: "profils", id: profil.id, valeur: $state.snapshot(profil) });
       await ecrire(ch);
       await classerEtLier();
 
@@ -133,6 +152,7 @@
     }
   }
   export const estPret = () => pret && etat === "pret";
+  export const attendValidation = () => aValider && etat === "pret";
 
   // Assistant de colonnes
   const ROLES: [Role, string][] = [
@@ -202,7 +222,7 @@
       </details>
     {/if}
 
-    {#if assistant}
+    {#if assistantOuvert}
       <div class="assistant pile">
         <h3>{t("Quelle colonne contient quoi ?")}</h3>
         <p class="sous">{t("Une seule fois : l'appli s'en souviendra.")} {#if !ok}{t("Il manque")} {manques(profil).join(", ")}.{/if}</p>
@@ -231,13 +251,42 @@
           {@render choixColonne("montant", t("Montant * (négatif = dépense)"))}
         {/if}
         {@render choixColonne("solde", t("Solde après opération (facultatif)"))}
+        <label class="case">
+          <input type="checkbox" bind:checked={profil.inverser} onchange={() => (profilModifie = true)} />
+          <span>{t("Les dépenses sont écrites sans signe moins (inverser les montants)")}</span>
+        </label>
         <label>{t("Format des dates")}
           <Choix bind:valeur={profil.formatDate} titre={t("Format des dates")} change={() => (profilModifie = true)} options={FORMATS.map((f) => ({ v: f, l: f }))} />
         </label>
       </div>
     {/if}
 
+    {#if lecture && aValider}
+      <div class="verifier pile" data-visite="verifier">
+        <h3>{t("Vérifiez votre relevé")}</h3>
+        <p class="sous">{t("C'est la première fois que Sésame voit ce format. Voici les premières opérations telles qu'elles seront importées :")}</p>
+        {#if lecture.ops.length}
+          <ul class="apercu">
+            {#each lecture.ops.slice(0, 5) as o (o.ligne)}
+              <li><span class="texte"><span class="libelle">{o.libelle}</span><span class="sous">{dateCourte(o.date)}</span></span><span class="montant" class:plus={o.montant > 0}>{argent(o.montant, devise, true)}</span></li>
+            {/each}
+          </ul>
+        {:else}
+          <p class="erreur">{t("Aucune opération lue : indiquez ci-dessus quelle colonne contient quoi.")}</p>
+        {/if}
+        {#if profil.inverser}<p class="info">{t("Dans ce relevé, les dépenses sont écrites sans signe moins : Sésame les a remises dans le bon sens.")}</p>{/if}
+        {#if soldesFaux}<p class="erreur">{t("Les soldes du relevé ne suivent pas ces montants : vérifiez les colonnes.")}</p>{/if}
+        <p class="sous">{t("Dates, libellés et montants (dépenses en rouge, entrées en vert) sont-ils justes ?")}</p>
+        <div class="actions">
+          {#if !assistantOuvert}<button onclick={() => (assistant = true)}>{t("Corriger les colonnes")}</button>{/if}
+          <button class="principal" data-visite="valider" onclick={valider} disabled={!lecture.ops.length}>{t("C'est bon")}</button>
+        </div>
+        <p class="sous">{t("Une seule fois : les prochains relevés de ce format seront reconnus tout seuls.")}</p>
+      </div>
+    {/if}
+
     {#if lecture && tri}
+      {#if soldesFaux && !aValider}<p class="erreur">{t("Les soldes du relevé ne suivent pas les montants lus : vérifiez les colonnes avant d'importer.")}</p>{/if}
       <ul class="bilan">
         <li><strong>{tri.nouvelles.length}</strong> {t("nouvelle")}{tri.nouvelles.length > 1 ? "s" : ""} {t("opération")}{tri.nouvelles.length > 1 ? "s" : ""}{#if tri.nouvelles.length}<span class="sous"> {t("du")} {dateCourte(tri.nouvelles.map((o) => o.date).sort()[0])} {t("au")} {dateCourte(tri.nouvelles.map((o) => o.date).sort().at(-1)!)}</span>{/if}</li>
         {#if poches}
@@ -261,7 +310,7 @@
       {/if}
       {#if !tri.nouvelles.length && !nbPoches}<p class="sous">{t("Rien de nouveau dans ce relevé.")}</p>{/if}
     {/if}
-    {#if !assistant}<button class="lien gauche" onclick={() => (assistant = true)}>{t("Ajuster les colonnes")}</button>{/if}
+    {#if !assistantOuvert && !aValider}<button class="lien gauche" onclick={() => (assistant = true)}>{t("Ajuster les colonnes")}</button>{/if}
     {#if erreur}<p class="erreur">{erreur}</p>{/if}
   {/if}
 </section>
@@ -298,6 +347,54 @@
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 10px;
+  }
+  .verifier {
+    background: var(--accent-fond);
+    border-radius: 16px;
+    padding: 14px;
+  }
+  .verifier h3 {
+    margin: 0;
+  }
+  .apercu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 6px;
+  }
+  .apercu li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    background: var(--fond);
+    border-radius: 10px;
+    padding: 8px 10px;
+  }
+  .apercu .texte {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .apercu .libelle {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .apercu .montant {
+    font-weight: 700;
+    color: var(--danger);
+    font-variant-numeric: tabular-nums;
+  }
+  .apercu .montant.plus {
+    color: var(--ok);
+  }
+  .verifier .actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
   }
   .ok {
     background: var(--ok-fond);

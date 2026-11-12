@@ -874,6 +874,20 @@ export const EN: Record<string, string> = {
   "Quitter": "Exit",
   "Visite guidée": "Guided tour",
   "Au-dessus de la démo, les boutons « Téléphone » et « Ordinateur » vous montrent les deux versions.": "Above the demo, the “Phone” and “Computer” buttons show you both versions.",
+  "Les dépenses sont écrites sans signe moins (inverser les montants)": "Expenses are written without a minus sign (flip amounts)",
+  "Vérifiez votre relevé": "Check your statement",
+  "C'est la première fois que Sésame voit ce format. Voici les premières opérations telles qu'elles seront importées :": "This is the first time Sesame has seen this format. Here are the first transactions as they will be imported:",
+  "Aucune opération lue : indiquez ci-dessus quelle colonne contient quoi.": "No transactions read: show above which column holds what.",
+  "Dans ce relevé, les dépenses sont écrites sans signe moins : Sésame les a remises dans le bon sens.": "In this statement, expenses are written without a minus sign: Sesame has turned them the right way round.",
+  "Les soldes du relevé ne suivent pas ces montants : vérifiez les colonnes.": "The statement's balances don't match these amounts: check the columns.",
+  "Dates, libellés et montants (dépenses en rouge, entrées en vert) sont-ils justes ?": "Are the dates, descriptions and amounts (expenses in red, income in green) right?",
+  "Corriger les colonnes": "Fix the columns",
+  "C'est bon": "Looks good",
+  "Une seule fois : les prochains relevés de ce format seront reconnus tout seuls.": "Only once: future statements in this format will be recognised automatically.",
+  "Les soldes du relevé ne suivent pas les montants lus : vérifiez les colonnes avant d'importer.": "The statement's balances don't match the amounts read: check the columns before importing.",
+  "Vérifiez d'abord l'aperçu du relevé ci-dessus, puis touchez « C'est bon ».": "First check the statement preview above, then tap “Looks good”.",
+  "Une vérification, une seule fois": "One check, only once",
+  "Pour un format jamais vu, Sésame montre ce qu'il a compris : dates, libellés, montants. Touchez « C'est bon » : les relevés suivants seront reconnus tout seuls, quelle que soit la banque ou la langue.": "For a format it hasn't seen before, Sesame shows what it understood: dates, descriptions, amounts. Tap “Looks good”: later statements will be recognised automatically, whatever the bank or language.",
 };
 
 /** Textes volontairement identiques en anglais (codes, données de démonstration) */

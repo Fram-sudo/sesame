@@ -161,7 +161,70 @@ export function tableauDepuisPdf(morceaux: Morceau[]): string[][] {
     res.push(cases);
     precedente = { cases, ligne: l };
   });
-  return res.length > 1 ? res : lignes.map((l) => cellules(l).map((c) => c.s));
+  return res.length > 1 ? res : (tableauParContenu(lignes, annee) ?? lignes.map((l) => cellules(l).map((c) => c.s)));
+}
+
+/** Nombre de cellules en début de ligne qui forment une date (« 18 » « sept. » « 2024 » → 3), 0 sinon. */
+function debutDate(c: { s: string }[]): number {
+  let s = "";
+  for (let n = 1; n <= Math.min(3, c.length); n++) {
+    s = `${s} ${c[n - 1].s}`.trim();
+    if (/^\d{1,4}[/.-]\d{1,2}([/.-]\d{2,4})?$/.test(s) || (dateEnLettres(s) && /\d{4}$/.test(s))) return n;
+  }
+  return 0;
+}
+
+/**
+ * Titres de colonnes inconnus (autre langue, autre banque) : le tableau est reconstruit d'après le contenu.
+ * Une opération = une ligne qui commence par une date et se termine par des montants ; les montants sont
+ * rangés en colonnes selon leur bord droit. Le moteur devine ensuite quelle colonne est quoi (voir completerParContenu).
+ */
+function tableauParContenu(lignes: Ligne[], annee?: string): string[][] | null {
+  type Op = { date: string; texte: string[]; detail: string[]; montants: { s: string; x1: number }[]; ligne: Ligne };
+  const ops: Op[] = [];
+  let derniere: Op | null = null;
+  for (const l of lignes) {
+    const c = cellules(l);
+    const n = debutDate(c);
+    let fin = c.length;
+    while (fin > n && estMontant(c[fin - 1].s)) fin--;
+    if (n && fin < c.length) {
+      let date = c.slice(0, n).map((x) => x.s).join(" ");
+      if (annee && /^\d{1,2}[/.-]\d{1,2}$/.test(date)) date += `/${annee}`;
+      // Une 2e date juste après (date de valeur) n'est pas du libellé
+      const reste = c.slice(n, fin).map((x) => x.s);
+      if (reste.length && debutDate([{ s: reste[0] }])) reste.shift();
+      ops.push((derniere = { date, texte: reste, detail: [], montants: c.slice(fin).map((x) => ({ s: x.s, x1: x.x1 })), ligne: l }));
+    } else if (!n && fin === c.length && derniere && derniere.ligne.page === l.page && derniere.ligne.y - l.y < l.h * 2.2) {
+      // Suite du libellé sur la ligne du dessous
+      derniere.detail.push(c.map((x) => x.s).join(" "));
+      derniere.ligne = l;
+    } else derniere = null;
+  }
+  if (ops.length < 2) return null;
+  // Colonnes de montants : bords droits proches regroupés
+  const bords = ops.flatMap((o) => o.montants.map((m) => m.x1)).sort((a, b) => a - b);
+  const colonnes: number[][] = [];
+  for (const x of bords) {
+    const g = colonnes.at(-1);
+    if (g && x - g.at(-1)! <= 12) g.push(x);
+    else colonnes.push([x]);
+  }
+  const centres = colonnes.map((g) => g.reduce((a, x) => a + x, 0) / g.length);
+  const proche = (x: number) => centres.reduce((b, c, i) => (Math.abs(c - x) < Math.abs(centres[b] - x) ? i : b), 0);
+  // Titre de chaque colonne : le texte au-dessus de la première opération, aligné sur la colonne, s'il y en a un
+  const k0 = lignes.indexOf(ops[0].ligne) - 1;
+  const titres = centres.map((c, i) => {
+    const t = k0 >= 0 && lignes[k0].page === ops[0].ligne.page ? cellules(lignes[k0]).find((x) => Math.abs(x.x1 - c) <= 15 || (x.x0 <= c && c <= x.x1 + 15)) : undefined;
+    return t && !/\d/.test(t.s) ? t.s : `Colonne ${i + 1}`;
+  });
+  const res: string[][] = [["Date", "Libellé", "Détail", ...titres, "Section"]];
+  for (const o of ops) {
+    const nombres: string[] = Array(centres.length).fill("");
+    for (const m of o.montants) nombres[proche(m.x1)] = m.s;
+    res.push([o.date, o.texte.join(" "), o.detail.join(" "), ...nombres, "Relevé"]);
+  }
+  return res;
 }
 
 /** Tableau d'opérations pas encore définitives. */

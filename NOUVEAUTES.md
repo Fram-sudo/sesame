@@ -10,12 +10,12 @@ Si ce texte n'a pas changé depuis la version précédente, la version dit simpl
 
 ## FR
 
-- Relevés Revolut en français : les montants sont maintenant lus (avant, « Rien de nouveau dans ce relevé »).
-- Les poches et les dépôts d'épargne du relevé ne sont plus mélangés au compte principal.
-- Import en français et en anglais partout : titres de colonnes, dates, opérations en attente ou annulées, poches et catégories devinées.
+- Import de n'importe quelle banque, en français, en anglais ou dans une autre langue : Sésame reconnaît les colonnes d'après leur contenu (dates, montants, solde), même sans titres.
+- La première fois qu'il voit un format, Sésame montre un aperçu à valider d'un geste ; ensuite, ce format est reconnu tout seul (PDF compris).
+- Contrôle automatique avec le solde du relevé : dépenses et entrées inversées corrigées, colonnes douteuses signalées avant l'import.
 
 ## EN
 
-- Revolut statements in French: amounts are now read (before, “Nothing new in this statement”).
-- Pockets and savings deposits in the statement are no longer mixed into the main account.
-- Import works in French and English throughout: column titles, dates, pending or cancelled transactions, pockets and guessed categories.
+- Import from any bank, in French, English or another language: Sesame recognises columns from their content (dates, amounts, balance), even without titles.
+- The first time it sees a format, Sesame shows a preview you confirm in one tap; after that, the format is recognised automatically (PDFs included).
+- Automatic check against the statement balance: swapped expenses and income are fixed, doubtful columns are flagged before import.

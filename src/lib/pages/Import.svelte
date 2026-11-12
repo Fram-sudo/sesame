@@ -91,6 +91,8 @@
   });
 
   const nbPrets = $derived(fichiers.length);
+  // Un relevé d'un format jamais vu attend qu'on vérifie son aperçu
+  const aVerifier = $derived(cartes.some((c) => c?.attendValidation()));
 </script>
 
 <div class="pile">
@@ -108,9 +110,10 @@
   {/each}
 
   {#if nbPrets}
+    {#if aVerifier}<p class="sous">{t("Vérifiez d'abord l'aperçu du relevé ci-dessus, puis touchez « C'est bon ».")}</p>{/if}
     <div class="actions">
       <button onclick={() => (fichiers = [])}>{t("Tout effacer")}</button>
-      <button class="principal" data-visite="importer" onclick={toutImporter} disabled={enCours}>{enCours ? t("Import en cours…") : t("Tout importer")}</button>
+      <button class="principal" data-visite="importer" onclick={toutImporter} disabled={enCours || aVerifier}>{enCours ? t("Import en cours…") : t("Tout importer")}</button>
     </div>
   {/if}
 

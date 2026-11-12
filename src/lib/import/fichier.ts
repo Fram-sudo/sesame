@@ -2,7 +2,7 @@ import { t } from "../i18n.svelte";
 // Préparation d'un relevé avant import : lecture (PDF, tableur, CSV), colonnes devinées,
 // banque reconnue et compte de destination choisi automatiquement.
 import type { Releve } from "../api";
-import { detecterEntete, detecterFormatDate, devinerColonnes, enteteDe, formatNonGere, normaliser, reconnaitreBanque, type Profil } from "./analyse";
+import { completerParContenu, detecterEntete, detecterFormatDate, devinerColonnes, enteteDe, formatNonGere, lire, normaliser, reconnaitreBanque, sensInverse, type Profil } from "./analyse";
 import { lireCsv } from "./csv";
 
 export interface Preparation {
@@ -69,9 +69,14 @@ export function deviseDansTexte(texte: string): string | undefined {
 /** Colonnes et format de date devinés pour une ligne de titres donnée. */
 export function deviner(lignes: string[][], idx: number, base: Profil): Profil {
   const entete = enteteDe(lignes, idx);
-  const colonnes = devinerColonnes(entete);
+  // Les titres donnent un premier avis ; le contenu des colonnes complète et corrige (toutes langues)
+  const colonnes = completerParContenu(lignes, idx, entete, devinerColonnes(entete));
   const k = entete.indexOf(colonnes.date ?? "");
-  return { ...base, entete, colonnes, formatDate: detecterFormatDate(lignes.slice(idx + 1, idx + 200).map((l) => l[k] ?? "")) };
+  const p: Profil = { ...base, entete, colonnes, formatDate: detecterFormatDate(lignes.slice(idx + 1, idx + 200).map((l) => l[k] ?? "")) };
+  delete p.inverser;
+  // Dépenses écrites en positif dans ce format ? Le solde du relevé le révèle
+  if (sensInverse(lire(lignes.slice(0, idx + 401), idx, { ...p, colonnes: { ...colonnes, devise: undefined } }, "").ops)) p.inverser = true;
+  return p;
 }
 
 export async function preparer(r: Releve, profils: Profil[]): Promise<Preparation> {
@@ -113,11 +118,13 @@ export async function preparer(r: Releve, profils: Profil[]): Promise<Preparatio
   const entete = enteteDe(lignes, idx);
   // CSV et tableurs : seules les lignes avant les titres décrivent le relevé (le reste, ce sont des libellés)
   if (!estPdf) texte = lignes.slice(0, Math.max(idx, 0)).map((l) => l.join(" ")).join("\n");
-  // Les PDF sont tous ramenés aux mêmes colonnes : pas de profil mémorisé, tout est deviné à chaque fois
-  const connu = estPdf ? undefined : profils.find((p) => p.entete.join("|") === entete.join("|"));
-  const banque = (estPdf ? banqueDansTexte(texte) : (reconnaitreBanque(entete) ?? banqueDansTexte(texte))) ?? connu?.nom;
-  const profil = connu ? structuredClone(connu) : deviner(lignes, idx, { id: crypto.randomUUID(), nom: banque ?? "", entete: [], colonnes: {}, formatDate: "JJ/MM/AAAA" });
   const empreinte = estPdf ? (texte.split("\n").find((l) => l.trim().length >= 4 && !/\d/.test(l))?.trim() ?? "") : entete.join("|");
+  const banqueTexte = banqueDansTexte(texte);
+  // Format déjà vu et validé : CSV/tableur par ses titres, PDF par sa banque, son en-tête et ses colonnes
+  const cle = estPdf ? `pdf|${banqueTexte ?? ""}|${empreinte}|${entete.join("|")}` : entete.join("|");
+  const connu = profils.find((p) => (p.cle ?? p.entete.join("|")) === cle);
+  const banque = (estPdf ? banqueTexte : (reconnaitreBanque(entete) ?? banqueTexte)) ?? connu?.nom;
+  const profil = connu ? structuredClone(connu) : deviner(lignes, idx, { id: crypto.randomUUID(), nom: banque ?? "", entete: [], colonnes: {}, formatDate: "JJ/MM/AAAA", cle });
   return { nom: r.nom, lignes, idx, profil, profilNouveau: !connu, estPdf, sections, choisies, enAttente, poches, empreinte, banque, devise: deviseDansTexte(texte) };
 }
 
