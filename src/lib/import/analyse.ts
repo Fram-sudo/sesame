@@ -35,15 +35,15 @@ export const normaliser = (s: string) =>
 
 // Titres connus, du plus précis au plus général (Société Générale, Revolut FR/EN, Boursobank, et usages courants).
 const SYNONYMES: Record<Role, string[]> = {
-  date: ["date de l operation", "date operation", "dateop", "date op", "completed date", "date de fin", "date comptable", "booking date", "transaction date", "date transaction", "date", "jour"],
+  date: ["date de l operation", "date operation", "dateop", "date op", "completed date", "date de fin", "date comptable", "booking date", "posting date", "posted date", "transaction date", "date transaction", "date d operation", "date", "jour", "day"],
   libelle: ["libelle", "libelle operation", "libelle simplifie", "label", "description", "intitule", "nature de l operation", "merchant", "beneficiaire", "payee", "counterparty", "contrepartie", "narrative", "details", "operation", "operations"],
-  detail: ["detail de l ecriture", "detail", "libelle complet", "informations complementaires", "comment", "commentaire", "communication", "memo", "reference"],
-  montant: ["montant de l operation", "montant", "amount", "montant eur", "amount eur", "somme"],
-  debit: ["debit", "debit eur", "debits", "sortie", "sorties", "paid out", "money out", "withdrawal", "withdrawals", "depense", "depenses"],
-  credit: ["credit", "credit eur", "credits", "entree", "entrees", "paid in", "money in", "deposit", "deposits", "recette", "recettes"],
+  detail: ["detail de l ecriture", "detail", "libelle complet", "informations complementaires", "comment", "commentaire", "communication", "memo", "note", "notes", "reference", "additional information"],
+  montant: ["montant de l operation", "montant", "amount", "montant eur", "amount eur", "transaction amount", "somme", "sum"],
+  debit: ["debit", "debit eur", "debits", "sortie", "sorties", "argent sortant", "montant sortant", "sortant", "paid out", "money out", "debit amount", "outgoing", "withdrawal", "withdrawals", "depense", "depenses", "expense", "expenses"],
+  credit: ["credit", "credit eur", "credits", "entree", "entrees", "argent entrant", "montant entrant", "entrant", "paid in", "money in", "credit amount", "incoming", "deposit", "deposits", "recette", "recettes", "income"],
   devise: ["devise", "currency", "monnaie", "ccy"],
-  solde: ["solde", "balance", "accountbalance", "solde apres operation", "running balance"],
-  frais: ["frais", "fee", "fees", "commission"],
+  solde: ["solde", "balance", "accountbalance", "solde apres operation", "nouveau solde", "running balance", "balance after"],
+  frais: ["frais", "fee", "fees", "commission", "charges"],
   etat: ["etat", "state", "status", "statut"],
   categorie: ["categorie", "category"],
 };
@@ -53,8 +53,8 @@ const PARTIEL: Partial<Record<Role, (t: string) => boolean>> = {
   date: (t) => /\bdate/.test(t) && !/valeur|value|val\b|started|debut/.test(t),
   libelle: (t) => /libelle|description|label/.test(t),
   montant: (t) => /montant|amount/.test(t),
-  debit: (t) => t.startsWith("debit"),
-  credit: (t) => t.startsWith("credit"),
+  debit: (t) => t.startsWith("debit") || /\b(sortant|money out|paid out)\b/.test(t),
+  credit: (t) => t.startsWith("credit") || /\b(entrant|money in|paid in)\b/.test(t),
   solde: (t) => /solde|balance/.test(t),
 };
 
@@ -122,9 +122,9 @@ const numMois = (m: string) => MOIS.find(([p]) => m.startsWith(p))?.[1];
 /** « 2 janv. 2026 », « 2 January 2026 », « Jan 2, 2026 » → « 2/1/2026 » (sinon null). */
 export function dateEnLettres(s: string): string | null {
   const t = normaliser(s);
-  let m = /\b(\d{1,2}) ([a-z]{3,9}) (\d{4})\b/.exec(t);
+  let m = /\b(\d{1,2})(?:er|st|nd|rd|th)? ([a-z]{3,9}) (\d{4})\b/.exec(t);
   if (m && numMois(m[2])) return `${m[1]}/${numMois(m[2])}/${m[3]}`;
-  m = /\b([a-z]{3,9}) (\d{1,2}) (\d{4})\b/.exec(t);
+  m = /\b([a-z]{3,9}) (\d{1,2})(?:st|nd|rd|th)? (\d{4})\b/.exec(t);
   if (m && numMois(m[1])) return `${m[2]}/${numMois(m[1])}/${m[3]}`;
   return null;
 }
@@ -168,7 +168,8 @@ export function lireMontant(s: string): number | null {
   return neg ? -cts : cts;
 }
 
-const NON_ABOUTI = ["pending", "en attente", "reverted", "annule", "annulee", "declined", "refuse", "refusee", "failed", "echoue", "echouee"];
+// États d'opérations pas définitives, en français et en anglais (Revolut, N26, Wise…)
+const NON_ABOUTI = ["pending", "en attente", "en cours", "reverted", "restaure", "restauree", "annule", "annulee", "cancelled", "canceled", "declined", "refuse", "refusee", "rejected", "rejete", "rejetee", "failed", "echoue", "echouee"];
 const DEVISES: Record<string, string> = { "€": "EUR", "$": "USD", "fcfa": "XOF", "cfa": "XOF" };
 
 export function lire(lignes: string[][], idxEntete: number, profil: Profil, devise: string): Lecture {

@@ -63,6 +63,38 @@ describe("relevé PDF", () => {
     ]);
   });
 
+  it("Revolut en français : « Argent sortant / entrant », titre de poches sur deux lignes, tableau de dépôts aux mêmes colonnes", () => {
+    const m: Morceau[] = [];
+    const t = (y: number, x: number, s: string, l = s.length * 4, h = 8, page = 1) => m.push({ s, x, y, l, h, page });
+    const droite = (y: number, x1: number, s: string) => t(y, x1 - s.length * 4, s);
+    const entete = (y: number) => (t(y, 43, "Date"), t(y, 125, "Description"), t(y, 335, "Argent sortant", 53), t(y, 417, "Argent entrant", 53), t(y, 535, "Solde", 21));
+    t(700, 40, "Transactions du compte : du 1 septembre 2026 au 9 novembre 2026", 300, 12);
+    entete(680);
+    t(660, 43, "18 sept. 2026"), t(660, 125, "Virement reçu"), droite(660, 470, "100,00€"), droite(660, 556, "100,00€");
+    t(640, 43, "21 sept. 2026"), t(640, 125, "Sur la Pocket EUR Vacances depuis EUR"), droite(640, 388, "30,00€"), droite(640, 556, "70,00€");
+    // Titre coupé en deux lignes, puis mêmes colonnes
+    t(560, 40, "Transactions sur des Pockets personnelles et de groupe du 1 septembre 2026 au 9", 300, 12);
+    t(545, 40, "novembre 2026", 60, 12);
+    entete(525);
+    t(505, 43, "21 sept. 2026"), t(505, 125, "Sur la Pocket EUR Vacances depuis EUR"), droite(505, 470, "30,00€"), droite(505, 556, "30,00€");
+    t(440, 40, "Transactions de dépôt du 1 septembre 2026 au 9 novembre 2026", 300, 12);
+    entete(420);
+    t(400, 43, "2 oct. 2026"), t(400, 125, "Dépôt"), droite(400, 470, "50,00€"), droite(400, 556, "50,00€");
+    const tableau = tableauDepuisPdf(m);
+    const sections = [...new Set(tableau.slice(1).map((l) => l.at(-1)))];
+    expect(sections).toEqual([
+      "Transactions du compte : du 1 septembre 2026 au 9 novembre 2026",
+      "Transactions sur des Pockets personnelles et de groupe du 1 septembre 2026 au 9 novembre 2026",
+      "Transactions de dépôt du 1 septembre 2026 au 9 novembre 2026",
+    ]);
+    const r = importer(tableau, (s) => s === sections[0]);
+    expect(r.erreurs).toEqual([]);
+    expect(r.ops.map((o) => [o.date, o.montant, o.solde])).toEqual([
+      ["2026-09-18", 10000, 10000],
+      ["2026-09-21", -3000, 7000],
+    ]);
+  });
+
   it("formes de montants", () => {
     for (const s of ["€10.00", "€1,234.56", "1 234,56", "-12,90 €", "620,00", "15 000"]) expect(estMontant(s), s).toBe(true);
     for (const s of ["9000090344", "Sep 18, 2024", "REF 123", "416598******2504"]) expect(estMontant(s), s).toBe(false);

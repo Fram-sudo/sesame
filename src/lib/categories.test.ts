@@ -115,6 +115,9 @@ describe("poches", () => {
     expect(mouvementPoche("To pocket EUR Objectif : 5000€ from EUR")).toBe("Objectif : 5000€");
     expect(mouvementPoche("To pocket EUR Repayment of the loan from EUR")).toBe("Repayment of the loan");
     expect(mouvementPoche("Pocket Withdrawal")).toBe("?");
+    // Relevé Revolut en français
+    expect(mouvementPoche("Sur la Pocket EUR Objectif : 5000€ depuis EUR")).toBe("Objectif : 5000€");
+    expect(mouvementPoche("Retrait depuis une Pocket")).toBe("?");
     expect(mouvementPoche("Vinted")).toBeUndefined();
   });
   it("retraits : poche du prêt si même montant, sinon la poche la mieux garnie ; le prêt retombe à 0", () => {

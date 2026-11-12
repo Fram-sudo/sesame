@@ -95,11 +95,16 @@ export function tableauDepuisPdf(morceaux: Morceau[]): string[][] {
     const cells = cellules(l);
     // Nouvelle ligne de titres ? Même titres qu'avant = simple répétition en haut de page.
     const cle = cells.map((c) => normaliser(c.s)).join("|");
-    if (t && cle === t.cle) return;
+    const avant = lignes[k - 1];
+    const titre = avant && avant.page === l.page ? avant.m.map((m) => m.s).join(" ").trim() : "";
+    // Mêmes titres qu'avant : répétition en haut de page, sauf s'ils suivent le titre daté d'un autre tableau
+    // (Revolut : « Transactions de dépôt du … au … » après les transactions du compte, mêmes colonnes)
+    if (t && cle === t.cle && !(/\d{4}/.test(titre) && titre !== t.section)) return;
     if (detecterEntete([cells.map((c) => c.s)]) === 0) {
-      const avant = lignes[k - 1];
-      const titre = avant && avant.page === l.page ? avant.m.map((m) => m.s).join(" ").trim() : "";
-      const nt = nouveauTableau(cells, titre || t?.section || "Relevé");
+      // Titre sur deux lignes (« … Pockets personnelles et de groupe du 16 septembre 2024 au 12 / novembre 2026 »)
+      const avant2 = lignes[k - 2];
+      const complet = titre && avant2 && avant2.page === l.page && avant2.y - avant.y < avant.h * 2.2 ? `${avant2.m.map((m) => m.s).join(" ").trim()} ${titre}` : titre;
+      const nt = nouveauTableau(cells, complet || t?.section || "Relevé");
       if (nt) {
         t = nt;
         precedente = null;
@@ -162,9 +167,9 @@ export function tableauDepuisPdf(morceaux: Morceau[]): string[][] {
 /** Tableau d'opérations pas encore définitives. */
 export const sectionEnAttente = (s: string) => /pending|en attente|en cours/i.test(s);
 /** Tableau des poches (Revolut « Personal and Group Pockets »…) : réparti automatiquement en sous-comptes. */
-export const sectionPoches = (s: string) => /pocket|poche/i.test(s) && !/pending|en attente|reverted|annul/i.test(s);
+export const sectionPoches = (s: string) => /pocket|poche/i.test(s) && !/pending|en attente|reverted|annul|cancel/i.test(s);
 /** Tableaux à ne pas importer par défaut : opérations en attente, annulées, refusées. */
-export const sectionExclue = (s: string) => sectionEnAttente(s) || /reverted|annul|declin|refus|rejet/i.test(s);
+export const sectionExclue = (s: string) => sectionEnAttente(s) || /reverted|restaur|annul|cancel|declin|refus|rejet|failed|[ée]chou/i.test(s);
 
 /** Lit un PDF (octets) : tableau d'opérations, et texte du haut de la 1re page (pour reconnaître la banque). */
 export async function lirePdf(octets: Uint8Array): Promise<{ lignes: string[][]; texte: string }> {

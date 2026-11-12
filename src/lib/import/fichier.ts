@@ -61,7 +61,9 @@ export function banqueDansTexte(texte: string): string | undefined {
 }
 
 export function deviseDansTexte(texte: string): string | undefined {
-  return /\b(EUR|USD|CAD|XOF)\b\s+(statement|relev)/i.exec(texte)?.[1].toUpperCase();
+  // « EUR Statement » (anglais) ou « Relevé EUR » (français)
+  const m = /\b(EUR|USD|CAD|XOF)\b\s+(statement|relev)/i.exec(texte) ?? /\b(?:statement|relev[ée])\s+(?:en\s+)?(EUR|USD|CAD|XOF)\b/i.exec(texte);
+  return m?.[1].toUpperCase();
 }
 
 /** Colonnes et format de date devinés pour une ligne de titres donnée. */

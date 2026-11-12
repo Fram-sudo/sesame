@@ -81,23 +81,23 @@ export const CATEGORIES_DEFAUT: Categorie[] = [
 
 // Mots-clés fournis (modifiables par l'apprentissage : vos règles passent devant)
 const MOTS: Record<string, string> = {
-  alimentation: "carrefour|leclerc|auchan|lidl|aldi|intermarche|monoprix|franprix|super u|hyper u|casino|picard|netto|boulangerie|supermarche|epicerie|marche|grand frais|biocoop",
-  restaurants: "restaurant|resto|mcdonald|mcdo|burger king|kfc|uber eats|deliveroo|just eat|brasserie|pizzeria|cafe|starbucks|sushi",
-  logement: "loyer|bailleur|agence immobiliere|syndic|assurance habitation|crous logement",
-  energie: "edf|engie|total energies|totalenergies|electricite|gaz|eau|veolia|suez",
-  telephone: "free mobile|free telecom|orange|sfr|bouygues|sosh|red by sfr|operateur|internet|box",
-  transports: "sncf|ratp|navigo|transports|uber|bolt|blablacar|essence|carburant|station|peage|parking|tcl|tisseo|ouigo",
-  sante: "pharmacie|medecin|docteur|dentiste|hopital|clinique|ameli|cpam|mutuelle|opticien|laboratoire",
-  shopping: "amazon|fnac|darty|zara|h m|decathlon|ikea|boutique|primark|cdiscount|shein|zalando|vinted|leboncoin|temu|aliexpress",
-  loisirs: "cinema|ugc|pathe|concert|spectacle|musee|steam|playstation|nintendo|salle de sport|basic fit|fitness",
-  abonnements: "netflix|spotify|deezer|disney|canal|prime video|youtube premium|apple com bill|google play|icloud|abonnement|streaming",
-  voyages: "airbnb|booking|hotel|air france|easyjet|ryanair|transavia|air senegal|expedia",
-  education: "universite|ecole|frais de scolarite|librairie|cours|formation",
-  frais: "impot|dgfip|tresor public|frais|commission|cotisation|agios|amende",
-  cadeaux: "don|cadeau|leetchi|cagnotte",
-  salaire: "salaire|paie|remuneration|employeur",
-  aides: "caf|bourse|crous|pole emploi|france travail|apl|prime d activite",
-  remboursements: "remboursement|rembt|avoir",
+  alimentation: "carrefour|leclerc|auchan|lidl|aldi|intermarche|monoprix|franprix|super u|hyper u|casino|picard|netto|boulangerie|supermarche|epicerie|marche|grand frais|biocoop|grocery|groceries|supermarket|bakery",
+  restaurants: "restaurant|resto|mcdonald|mcdo|burger king|kfc|uber eats|deliveroo|just eat|brasserie|pizzeria|cafe|starbucks|sushi|coffee|takeaway",
+  logement: "loyer|bailleur|agence immobiliere|syndic|assurance habitation|crous logement|rent|landlord|home insurance",
+  energie: "edf|engie|total energies|totalenergies|electricite|gaz|eau|veolia|suez|electricity|water|energy",
+  telephone: "free mobile|free telecom|orange|sfr|bouygues|sosh|red by sfr|operateur|internet|box|mobile|phone",
+  transports: "sncf|ratp|navigo|transports|uber|bolt|blablacar|essence|carburant|station|peage|parking|tcl|tisseo|ouigo|train|taxi|metro|bus|fuel|petrol|toll",
+  sante: "pharmacie|medecin|docteur|dentiste|hopital|clinique|ameli|cpam|mutuelle|opticien|laboratoire|pharmacy|doctor|dentist|hospital|optician",
+  shopping: "amazon|fnac|darty|zara|h m|decathlon|ikea|boutique|primark|cdiscount|shein|zalando|vinted|leboncoin|temu|aliexpress|shop|store",
+  loisirs: "cinema|ugc|pathe|concert|spectacle|musee|steam|playstation|nintendo|salle de sport|basic fit|fitness|gym|museum",
+  abonnements: "netflix|spotify|deezer|disney|canal|prime video|youtube premium|apple com bill|google play|icloud|abonnement|streaming|subscription",
+  voyages: "airbnb|booking|hotel|air france|easyjet|ryanair|transavia|air senegal|expedia|flight|airline|hostel",
+  education: "universite|ecole|frais de scolarite|librairie|cours|formation|university|school|tuition|bookshop",
+  frais: "impot|dgfip|tresor public|frais|commission|cotisation|agios|amende|fee|fees|tax|charge|charges|fine",
+  cadeaux: "don|cadeau|leetchi|cagnotte|gift|donation",
+  salaire: "salaire|paie|remuneration|employeur|salary|payroll|wages|payslip",
+  aides: "caf|bourse|crous|pole emploi|france travail|apl|prime d activite|allowance|benefit|grant|scholarship",
+  remboursements: "remboursement|rembt|avoir|refund|reimbursement|cashback",
   "autres-revenus": "vinted|leboncoin",
   // Rechargement d'un compte depuis un autre de vos comptes (ex. Revolut alimenté depuis votre banque)
   virement: "open banking deposit|top up|topup|rechargement|approvisionnement",
@@ -108,25 +108,25 @@ export const REGLES_DEFAUT: Regle[] = Object.entries(MOTS).flatMap(([cat, mots])
 
 // Catégories données par certaines banques (Boursobank…) → nos catégories
 const BANQUE: [RegExp, string][] = [
-  [/aliment|course|supermarche/, "alimentation"],
-  [/restau|bar|sortie/, "restaurants"],
-  [/logement|loyer|habitation/, "logement"],
-  [/energie|electricite|gaz|eau/, "energie"],
-  [/telephon|internet|mobile/, "telephone"],
+  [/aliment|course|supermarche|grocer|food/, "alimentation"],
+  [/restau|bar|sortie|eating out|dining/, "restaurants"],
+  [/logement|loyer|habitation|housing|rent/, "logement"],
+  [/energie|electricite|gaz|eau|utilit|energy/, "energie"],
+  [/telephon|internet|mobile|phone/, "telephone"],
   [/transport|carburant|vehicule|auto/, "transports"],
   [/sante|medical|pharmacie/, "sante"],
-  [/shopping|achat|vetement|habillement/, "shopping"],
-  [/loisir|culture|sport/, "loisirs"],
-  [/abonnement/, "abonnements"],
-  [/voyage|vacance|hotel/, "voyages"],
+  [/shopping|achat|vetement|habillement|cloth/, "shopping"],
+  [/loisir|culture|sport|entertainment|leisure/, "loisirs"],
+  [/abonnement|subscription/, "abonnements"],
+  [/voyage|vacance|hotel|travel|holiday/, "voyages"],
   [/education|scolar|etude/, "education"],
-  [/impot|taxe|frais|banque/, "frais"],
-  [/cadeau|don/, "cadeaux"],
-  [/salaire|paie/, "salaire"],
-  [/aide|allocation|bourse/, "aides"],
-  [/rembours/, "remboursements"],
-  [/virement/, "virement"],
-  [/revenu/, "autres-revenus"],
+  [/impot|taxe|frais|banque|tax|fee|bank/, "frais"],
+  [/cadeau|don|gift/, "cadeaux"],
+  [/salaire|paie|salary|payroll|wage/, "salaire"],
+  [/aide|allocation|bourse|benefit|allowance/, "aides"],
+  [/rembours|refund/, "remboursements"],
+  [/virement|transfer/, "virement"],
+  [/revenu|income/, "autres-revenus"],
 ];
 
 const MOTS_VIDES = new Set(
@@ -314,8 +314,9 @@ export function router<T extends Op & { detail?: string }>(nouvelles: T[], routa
 }
 
 // Poches (Revolut et apps semblables) : de l'argent mis de côté depuis le compte, suivi à part.
-const RE_VERS_POCHE = [/\bto pocket (?:[a-z]{3} )?(.+?)(?: from [a-z]{3})?$/i, /\bvers (?:la )?poche (?:[a-z]{3} )?(.+?)(?: depuis [a-z]{3})?$/i];
-const RE_RETRAIT_POCHE = /\bpocket withdrawal\b|\bretrait (?:de (?:la )?)?poche\b/i;
+// Revolut EN « To pocket EUR X from EUR », FR « Sur la Pocket EUR X depuis EUR » (ou « Vers la poche … »)
+const RE_VERS_POCHE = [/\bto pocket (?:[a-z]{3} )?(.+?)(?: from [a-z]{3})?$/i, /\b(?:vers|sur) (?:la )?(?:poche|pocket) (?:[a-z]{3} )?(.+?)(?: depuis [a-z]{3})?$/i];
+const RE_RETRAIT_POCHE = /\bpocket withdrawal\b|\bretrait (?:de (?:la )?|depuis (?:une |la )?)?(?:poche|pocket)\b/i;
 
 /** Nom de la poche visée par un versement, "?" pour un retrait sans nom, undefined sinon. */
 export function mouvementPoche(libelle: string): string | undefined {

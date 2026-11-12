@@ -10,8 +10,12 @@ Si ce texte n'a pas changé depuis la version précédente, la version dit simpl
 
 ## FR
 
-- Application Android deux fois plus légère à télécharger.
+- Relevés Revolut en français : les montants sont maintenant lus (avant, « Rien de nouveau dans ce relevé »).
+- Les poches et les dépôts d'épargne du relevé ne sont plus mélangés au compte principal.
+- Import en français et en anglais partout : titres de colonnes, dates, opérations en attente ou annulées, poches et catégories devinées.
 
 ## EN
 
-- The Android app is now half the size to download.
+- Revolut statements in French: amounts are now read (before, “Nothing new in this statement”).
+- Pockets and savings deposits in the statement are no longer mixed into the main account.
+- Import works in French and English throughout: column titles, dates, pending or cancelled transactions, pockets and guessed categories.
