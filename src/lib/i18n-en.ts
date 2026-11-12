@@ -873,6 +873,7 @@ export const EN: Record<string, string> = {
   "Précédent": "Back",
   "Quitter": "Exit",
   "Visite guidée": "Guided tour",
+  "Au-dessus de la démo, les boutons « Téléphone » et « Ordinateur » vous montrent les deux versions.": "Above the demo, the “Phone” and “Computer” buttons show you both versions.",
 };
 
 /** Textes volontairement identiques en anglais (codes, données de démonstration) */

@@ -6,9 +6,17 @@
   import { t } from "./i18n.svelte";
 
   // cible : un ou plusieurs repères data-visite (séparés par une espace), encadrés ensemble
+  // Démo affichée dans la page du site (et non ouverte en plein écran)
+  const dansLeSite = (() => {
+    try {
+      return window.top !== window;
+    } catch {
+      return true;
+    }
+  })();
   type Etape = { page?: Page; cible?: string; titre: string; texte: string; suite?: string };
   const ETAPES: Etape[] = $derived([
-    { page: "accueil", titre: t("Bienvenue dans la démo de Sésame"), texte: t("Tout est fictif et rien n'est enregistré : touchez ce que vous voulez. La visite dure une minute.") },
+    { page: "accueil", titre: t("Bienvenue dans la démo de Sésame"), texte: t("Tout est fictif et rien n'est enregistré : touchez ce que vous voulez. La visite dure une minute.") + (dansLeSite ? " " + t("Au-dessus de la démo, les boutons « Téléphone » et « Ordinateur » vous montrent les deux versions.") : "") },
     { page: "accueil", cible: "solde", titre: t("Votre argent vraiment disponible"), texte: t("Le chiffre du haut, c'est ce que vous pouvez dépenser : l'épargne est mise à part. Touchez « en euros » pour tout afficher en francs CFA ou en dollars.") },
     { page: "import", cible: "import", titre: t("Importez un relevé"), texte: t("Touchez « Choisir des fichiers » : un relevé d'exemple est chargé. Sésame reconnaît la banque et le compte tout seul."), suite: "importer" },
     { page: "import", cible: "fichier importer", titre: t("Les doublons sont écartés"), texte: t("Seules les nouvelles opérations sont gardées. Touchez « Tout importer » : elles sont rangées dans leurs catégories automatiquement."), suite: "importe" },

@@ -10,8 +10,8 @@ Si ce texte n'a pas changé depuis la version précédente, la version dit simpl
 
 ## FR
 
-- Application Android trois fois plus légère à télécharger.
+- Application Android deux fois plus légère à télécharger.
 
 ## EN
 
-- The Android app is now three times smaller to download.
+- The Android app is now half the size to download.
