@@ -10,10 +10,8 @@ Si ce texte n'a pas changé depuis la version précédente, la version dit simpl
 
 ## FR
 
-- Mises à jour automatiques : Sésame vous prévient quand une nouvelle version est disponible et vous montre ce qui change.
-- Historique des versions dans l'Aide et sur le site.
+- Application Android trois fois plus légère à télécharger.
 
 ## EN
 
-- Automatic updates: Sesame lets you know when a new version is available and shows you what changed.
-- Version history in Help and on the website.
+- The Android app is now three times smaller to download.

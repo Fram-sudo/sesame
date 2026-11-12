@@ -101,7 +101,7 @@
 </script>
 
 <div class="pile">
-  <div class="carte resume">
+  <div class="carte resume" data-visite="epargne">
     <div>
       <p class="sous">{t("Total mis de côté")}<Aide texte={t("Somme de vos poches, livrets, tirelires et autres épargnes (hors poches archivées). Cet argent n'est pas compté dans votre argent disponible sur l'accueil.")} /></p>
       <p class="montant total">{argent(total, "EUR")}</p>

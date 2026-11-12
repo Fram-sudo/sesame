@@ -88,7 +88,7 @@
   </section>
 
   {#if prevision}
-    <section class="carte pile">
+    <section class="carte pile" data-visite="prevision">
       <h2>{t("Prévision sur 3 mois")}<Aide texte={t("Argent disponible (sans l'épargne) semaine par semaine : les opérations qui reviennent (salaire, loyer, abonnements…) à leur date, plus vos autres dépenses habituelles des 3 derniers mois. C'est une estimation, pas une certitude.")} /></h2>
       <p>
         {#if prevision.sousSeuil}

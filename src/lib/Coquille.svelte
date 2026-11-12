@@ -18,6 +18,8 @@
   import Guide from "./pages/Guide.svelte";
   import Bienvenue from "./Bienvenue.svelte";
   import CarteMaj from "./CarteMaj.svelte";
+  import VisiteDemo from "./VisiteDemo.svelte";
+  const visite = import.meta.env.MODE === "demo" || new URLSearchParams(location.search).has("visite");
   import { maj } from "./maj.svelte";
   import Saisie from "./Saisie.svelte";
   import Synchro from "./Synchro.svelte";
@@ -172,6 +174,9 @@
 </div>
 
 <div class="mobile"><BarreMobile /></div>
+
+<!-- Démo du site : visite guidée -->
+{#if visite}<VisiteDemo />{/if}
 
 <!-- Premier lancement : guide, seulement tant que le coffre est vide -->
 {#if app.revoirGuide || (!app.params.guideVu && !donnees.comptes.length && !donnees.operations.length)}<Bienvenue />{/if}

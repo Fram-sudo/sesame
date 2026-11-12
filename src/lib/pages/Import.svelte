@@ -98,7 +98,7 @@
     <Icone nom="importer" taille={28} />
     <p><strong>{estAndroid ? t("Choisissez vos relevés") : t("Déposez vos relevés ici")}</strong></p>
     <p class="sous">{t("PDF, CSV, Excel, de n'importe quelle banque, un ou plusieurs à la fois. La banque et le compte sont reconnus automatiquement.")}</p>
-    <button class="principal" onclick={choisir} disabled={enCours}>{enCours ? t("Lecture…") : t("Choisir des fichiers")}</button>
+    <button class="principal" data-visite="import" onclick={choisir} disabled={enCours}>{enCours ? t("Lecture…") : t("Choisir des fichiers")}</button>
   </section>
 
   {#each erreurs as e, i (i)}<p class="erreur">{e}</p>{/each}
@@ -110,7 +110,7 @@
   {#if nbPrets}
     <div class="actions">
       <button onclick={() => (fichiers = [])}>{t("Tout effacer")}</button>
-      <button class="principal" onclick={toutImporter} disabled={enCours}>{enCours ? t("Import en cours…") : t("Tout importer")}</button>
+      <button class="principal" data-visite="importer" onclick={toutImporter} disabled={enCours}>{enCours ? t("Import en cours…") : t("Tout importer")}</button>
     </div>
   {/if}
 

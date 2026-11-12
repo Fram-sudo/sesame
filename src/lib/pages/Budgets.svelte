@@ -111,7 +111,7 @@
     </div>
   {/if}
 
-  <div class="carte resume">
+  <div class="carte resume" data-visite="budgets">
     <div>
       <p class="sous">{t("Reste à dépenser")}<Aide texte={t("Plafond global s'il existe (sinon la somme de vos budgets mensuels de la période), moins ce que vous avez déjà dépensé. Le trait vertical sur chaque barre montre où vous devriez en être aujourd'hui si vous dépensiez régulièrement.")} /></p>
       {#if plafond}

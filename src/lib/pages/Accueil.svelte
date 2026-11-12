@@ -183,7 +183,7 @@
     <!-- Grand écran : ce que j'ai à gauche, comment se passe le mois à droite -->
     <div class="haut">
       <div class="haut-gauche">
-      <section class="tete-solde">
+      <section class="tete-solde" data-visite="solde">
         <p class="sous">
           {estActuel ? t("Argent disponible") : t("Disponible au {0}", dateCourte(jusquAu))} <ChoixDevise />
           <Aide texte={t("Ce qu'il y a sur vos comptes courants, opérations en attente incluses (comme dans l'appli de votre banque). L'argent de vos poches, livrets et tirelires n'est pas compté : il a un but, il est affiché à part.")} />

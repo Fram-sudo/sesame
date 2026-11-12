@@ -117,7 +117,7 @@
         {#each ops as o (o.id)}
           {@const c = comptes.get(o.compteId)}
           {@const cat = o.categorieId ? categories.get(o.categorieId) : undefined}
-          <button class="op" onclick={() => (fiche = o)}>
+          <button class="op" data-visite="operation" onclick={() => (fiche = o)}>
             <IconeCategorie id={o.categorieId} taille={40} />
             <span class="texte">
               <span class="libelle">{#if o.enAttente}<span class="attente">{t("en attente")}</span> {/if}{libelleLisible(o.libelle)}</span>

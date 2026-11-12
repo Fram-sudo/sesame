@@ -61,6 +61,7 @@ mockIPC(async (cmd, a) => {
       for (const c of args.changements) c.valeur === null ? memoire.delete(c.id) : memoire.set(c.id, c);
       return;
     case "lire_releves": {
+      if (import.meta.env.MODE === "demo" || new URLSearchParams(location.search).has("visite")) return [releveExemple()];
       // Choix du fichier d'exemple : localStorage.fichier = "boursobank.csv" par exemple
       const nom = localStorage.getItem("fichier") ?? "revolut.csv";
       const octets = await (await fetch(`/tests/fixtures/${nom}`)).arrayBuffer();
@@ -84,3 +85,22 @@ mockIPC(async (cmd, a) => {
       throw `Simulation : commande ${cmd} non simulÃ©e.`;
   }
 });
+
+/** Démo du site : relevé Boursobank fictif des derniers jours (aucun fichier à télécharger) */
+function releveExemple() {
+  const jour = (n: number) => new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
+  const lignes: [number, string, string][] = [
+    [1, "CARTE PHARMACIE DU CENTRE", "-12,90"],
+    [2, "CARTE CARREFOUR MARKET", "-46,35"],
+    [3, "PRLV SEPA FREE MOBILE", "-15,99"],
+    [4, "CARTE SNCF CONNECT", "-38,00"],
+    [5, "VIR SEPA REMBOURSEMENT AMELI", "23,10"],
+    [6, "CARTE BOULANGERIE PAUL", "-6,80"],
+    [8, "PRLV SEPA NETFLIX", "-13,49"],
+    [9, "CARTE CINEMA PATHE", "-11,50"],
+  ];
+  const texte =
+    "dateOp;dateVal;label;category;categoryParent;supplierFound;amount;comment;accountNum;accountLabel;accountbalance\n" +
+    lignes.map(([n, l, m]) => `${jour(n)};${jour(n)};"${l}";;;;"${m}";;00000000000;"COMPTE BOURSOBANK (DÉMO)";`).join("\n");
+  return { nom: "releve-boursobank-demo.csv", lignes: null, texte, pdf: null, erreur: null };
+}

@@ -158,7 +158,7 @@
   </label>
 {/snippet}
 
-<section class="carte pile">
+<section class="carte pile" data-visite="fichier">
   <div class="tete">
     <div class="titre">
       <strong>{prep.nom}</strong>
@@ -168,7 +168,7 @@
   </div>
 
   {#if etat === "fait" && resultat}
-    <p class="ok">✓ {resultat.nb} {t("opération")}{resultat.nb > 1 ? "s" : ""} {t("dans «")} {resultat.compte?.nom} »{resultat.poches ? t(", {0} dans les poches", resultat.poches) : ""}.</p>
+    <p class="ok" data-visite="importe">✓ {resultat.nb} {t("opération")}{resultat.nb > 1 ? "s" : ""} {t("dans «")} {resultat.compte?.nom} »{resultat.poches ? t(", {0} dans les poches", resultat.poches) : ""}.</p>
     {#each resultat.nouvellesPoches as n (n)}<p class="info">{t("Nouvelle poche détectée : «")} {n} {t("». Renommez-la ou fixez-lui un objectif depuis sa fiche.")}</p>{/each}
     {#if resultat.compte && resultat.soldeBanque !== undefined}
       <ControleSolde compte={resultat.compte} soldeBanque={resultat.soldeBanque} date={resultat.date} />

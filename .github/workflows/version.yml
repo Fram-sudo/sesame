@@ -100,11 +100,11 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
       - uses: dtolnay/rust-toolchain@stable
-        with: { targets: "aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android" }
+        with: { targets: "aarch64-linux-android,armv7-linux-androideabi" }
       - uses: Swatinem/rust-cache@v2
         with: { workspaces: src-tauri }
       - run: cp publication/nouveautes.json src/lib/ && npm ci
-      - run: NDK_HOME="$ANDROID_HOME/ndk/27.2.12479018" npx tauri android build --apk --config publication/version.json
+      - run: NDK_HOME="$ANDROID_HOME/ndk/27.2.12479018" npx tauri android build --apk --target aarch64 --target armv7 --config publication/version.json
       - name: Signature (toujours la même clé, sinon Android refuse la mise à jour)
         env:
           CLE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
