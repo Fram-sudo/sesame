@@ -1,0 +1,6 @@
+Type,Product,Started Date,Completed Date,Description,Amount,Fee,Currency,State,Balance
+CARD_PAYMENT,Current,2026-01-30 10:12:01,2026-01-31 08:00:00,Supermarché Exemple,-23.40,0.00,EUR,COMPLETED,476.60
+TOPUP,Current,2026-01-29 09:00:00,2026-01-29 09:00:05,Rechargement fictif,500.00,0.00,EUR,COMPLETED,500.00
+CARD_PAYMENT,Current,2026-01-31 18:00:00,,Restaurant Exemple,-15.00,0.00,EUR,PENDING,
+EXCHANGE,Current,2026-01-30 12:00:00,2026-01-30 12:00:01,Change fictif,20.00,0.00,USD,COMPLETED,20.00
+CARD_PAYMENT,Current,2026-01-31 11:00:00,2026-01-31 11:00:02,"Abonnement, Exemple",-9.99,0.50,EUR,COMPLETED,466.11

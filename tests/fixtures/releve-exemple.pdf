@@ -1,0 +1,90 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R 7 0 R] /Count 2 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Length 1444 >>
+stream
+BT /F1 11 Tf 40 800 Td (BANQUE EXEMPLE - RELEVÉ DE COMPTE) Tj ET
+BT /F1 11 Tf 40 784 Td (Compte EXEMPLE n° 00000 00000000000) Tj ET
+BT /F1 11 Tf 40 768 Td (du 01/01/2026 au 31/01/2026) Tj ET
+BT /F1 11 Tf 40 730 Td (Date) Tj ET
+BT /F1 11 Tf 100 730 Td (Valeur) Tj ET
+BT /F1 11 Tf 160 730 Td (Nature de l'opération) Tj ET
+BT /F1 11 Tf 440 730 Td (Débit) Tj ET
+BT /F1 11 Tf 514 730 Td (Crédit) Tj ET
+BT /F1 11 Tf 160 710 Td (SOLDE PRÉCÉDENT AU 31/12/2025) Tj ET
+BT /F1 11 Tf 502 710 Td (1 000,00) Tj ET
+BT /F1 11 Tf 40 690 Td (02/01) Tj ET
+BT /F1 11 Tf 100 690 Td (02/01) Tj ET
+BT /F1 11 Tf 160 690 Td (CARTE X1234 BOULANGERIE EXEMPLE) Tj ET
+BT /F1 11 Tf 446 690 Td (4,20) Tj ET
+BT /F1 11 Tf 160 678 Td (CARTE X1234 01/01 BOULANGERIE) Tj ET
+BT /F1 11 Tf 40 660 Td (05/01) Tj ET
+BT /F1 11 Tf 100 660 Td (05/01) Tj ET
+BT /F1 11 Tf 160 660 Td (PRLV SEPA LOYER BAILLEUR FICTIF) Tj ET
+BT /F1 11 Tf 434 660 Td (620,00) Tj ET
+BT /F1 11 Tf 40 620 Td (18/01) Tj ET
+BT /F1 11 Tf 100 620 Td (18/01) Tj ET
+BT /F1 11 Tf 160 620 Td (PRLV SEPA OPERATEUR EXEMPLE) Tj ET
+BT /F1 11 Tf 440 620 Td (19,99) Tj ET
+BT /F1 11 Tf 375 620 Td (9000090344) Tj ET
+BT /F1 11 Tf 40 640 Td (15/01) Tj ET
+BT /F1 11 Tf 100 640 Td (15/01) Tj ET
+BT /F1 11 Tf 160 640 Td (VIR RECU SALAIRE EXEMPLE) Tj ET
+BT /F1 11 Tf 502 640 Td (1 850,00) Tj ET
+BT /F1 11 Tf 160 628 Td (DE: EMPLOYEUR FICTIF REF 123) Tj ET
+BT /F1 11 Tf 40 60 Td (Banque Exemple - SA au capital fictif - page 1/2) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 4 0 R >>
+endobj
+6 0 obj
+<< /Length 862 >>
+stream
+BT /F1 11 Tf 40 790 Td (Date) Tj ET
+BT /F1 11 Tf 100 790 Td (Valeur) Tj ET
+BT /F1 11 Tf 160 790 Td (Nature de l'opération) Tj ET
+BT /F1 11 Tf 440 790 Td (Débit) Tj ET
+BT /F1 11 Tf 514 790 Td (Crédit) Tj ET
+BT /F1 11 Tf 40 770 Td (20/01) Tj ET
+BT /F1 11 Tf 100 770 Td (20/01) Tj ET
+BT /F1 11 Tf 160 770 Td (CARTE X1234 PHARMACIE EXEMPLE) Tj ET
+BT /F1 11 Tf 440 770 Td (12,90) Tj ET
+BT /F1 11 Tf 40 750 Td (28/01) Tj ET
+BT /F1 11 Tf 100 750 Td (28/01) Tj ET
+BT /F1 11 Tf 160 750 Td (AVOIR BOUTIQUE EXEMPLE) Tj ET
+BT /F1 11 Tf 520 750 Td (35,00) Tj ET
+BT /F1 11 Tf 160 720 Td (TOTAUX DES MOUVEMENTS) Tj ET
+BT /F1 11 Tf 434 720 Td (637,10) Tj ET
+BT /F1 11 Tf 502 720 Td (1 885,00) Tj ET
+BT /F1 11 Tf 160 700 Td (NOUVEAU SOLDE AU 31/01/2026) Tj ET
+BT /F1 11 Tf 502 700 Td (2 247,90) Tj ET
+BT /F1 11 Tf 40 60 Td (Banque Exemple - SA au capital fictif - page 2/2) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 6 0 R >>
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000121 00000 n 
+0000000218 00000 n 
+0000001714 00000 n 
+0000001840 00000 n 
+0000002753 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R >>
+startxref
+2879
+%%EOF

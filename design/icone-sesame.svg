@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Sésame : une pièce blanche percée d'une serrure, sur le bleu d'action de l'appli -->
+  <rect width="1024" height="1024" rx="230" fill="#3B5BFD"/>
+  <circle cx="512" cy="512" r="318" fill="#FFFFFF"/>
+  <circle cx="512" cy="512" r="262" fill="none" stroke="#3B5BFD" stroke-width="14" opacity="0.18"/>
+  <circle cx="512" cy="452" r="82" fill="#3B5BFD"/>
+  <path d="M466 500 L440 662 Q438 676 452 676 L572 676 Q586 676 584 662 L558 500 Z" fill="#3B5BFD"/>
+</svg>

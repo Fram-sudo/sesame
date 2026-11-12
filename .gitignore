@@ -1,0 +1,49 @@
+# Relevés et données personnelles : ne JAMAIS les mettre dans Git
+exemples/
+releves/
+*.csv
+*.ofx
+*.qfx
+*.qif
+*.sta
+*.940
+*.xlsx
+*.xls
+*.pdf
+*.portefeuille
+*.sauvegarde
+*.cle
+
+# Exceptions : fichiers fictifs de test, créés exprès
+!tests/fixtures/**
+
+# Dépendances et constructions
+node_modules/
+/build
+/.svelte-kit
+/package
+dist/
+target/
+src-tauri/gen/android/app/build/
+src-tauri/gen/android/.gradle/
+*.apk
+*.aab
+*.keystore
+*.jks
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Système
+.DS_Store
+Thumbs.db
+
+# Fichiers d installation Linux construits (scripts/construire-linux.sh)
+linux/
+
+# Démo web construite (npm run build:demo), publiée par le workflow du site
+site/demo/

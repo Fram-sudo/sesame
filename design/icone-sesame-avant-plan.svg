@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Avant-plan de l'icône adaptative Android (le fond bleu est une couleur à part) -->
+  <circle cx="512" cy="512" r="250" fill="#FFFFFF"/>
+  <circle cx="512" cy="512" r="206" fill="none" stroke="#3B5BFD" stroke-width="11" opacity="0.18"/>
+  <circle cx="512" cy="465" r="64" fill="#3B5BFD"/>
+  <path d="M476 503 L456 630 Q454 641 465 641 L559 641 Q570 641 568 630 L548 503 Z" fill="#3B5BFD"/>
+</svg>

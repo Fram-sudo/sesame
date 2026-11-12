@@ -1,0 +1,222 @@
+<script lang="ts">
+  import { t, locale } from "../i18n.svelte";
+  import { tauxConnus } from "../taux";
+  // Analyse : tendances sur plusieurs mois (solde, revenus et dépenses, moyennes par catégorie).
+  import Aide from "../Aide.svelte";
+  import BarresMois from "../BarresMois.svelte";
+  import { libelleLisible } from "../categories";
+  import Courbe from "../Courbe.svelte";
+  import { donnees } from "../donnees.svelte";
+  import { app, deviseAffichee } from "../etat.svelte";
+  import { argent, dateCourte } from "../format";
+  import Periode from "../Periode.svelte";
+  import { prevoir } from "../prevision";
+  import { bornes, cleMois, derniersMois, finDeMois, flux, moisPasses, perimetre, solde, variation, type Contexte } from "../stats";
+  import { premiereDate } from "../donnees.svelte";
+
+  const ctx: Contexte = $derived({ ops: donnees.operations, comptes: donnees.comptes, categories: donnees.categories, taux: tauxConnus(app.params.taux), devise: deviseAffichee() });
+  const filtre = $derived(app.filtreCompte);
+  const p = $derived(perimetre(ctx, filtre));
+  const devise = $derived(p.devise);
+  const b = $derived(bornes(app.periode, premiereDate()));
+  // Un seul mois choisi : on montre les 12 derniers mois pour voir la tendance
+  const mois = $derived(b.mois.length > 1 ? moisPasses(b.mois) : derniersMois(b.mois[0], 12));
+  const court = (m: { a: number; m: number }) => new Date(m.a, m.m, 1).toLocaleDateString(locale(), mois.length > 12 ? { month: "short", year: "2-digit" } : { month: "short" }).replace(".", "");
+  const parMois = $derived(mois.map((m) => ({ m, f: flux(ctx, filtre, [cleMois(m)]) })));
+
+  const soldes = $derived(mois.map((m) => ({ libelle: `${court(m)} ${String(m.a).slice(2)}`, valeur: solde(ctx, filtre, finDeMois(m)) })));
+  const barres = $derived(parMois.map(({ m, f }) => ({ libelle: court(m), revenus: Math.max(0, f.revenus), depenses: Math.max(0, f.depenses) })));
+
+  // Moyennes mensuelles sur la période (mois sans aucune opération exclus, pour ne pas fausser un historique récent)
+  const actifs = $derived(parMois.filter(({ f }) => f.revenus || f.depenses || f.misDeCote));
+  const nb = $derived(Math.max(1, actifs.length));
+  const moyDepenses = $derived(actifs.reduce((a, { f }) => a + f.depenses, 0) / nb);
+  const moyRevenus = $derived(actifs.reduce((a, { f }) => a + f.revenus, 0) / nb);
+  const moyEpargne = $derived(actifs.reduce((a, { f }) => a + f.misDeCote - f.pioche, 0) / nb);
+
+  const categories = $derived(new Map(donnees.categories.map((c) => [c.id, c])));
+  const parCategorie = $derived.by(() => {
+    const total = new Map<string, number>();
+    for (const { f } of actifs) for (const [k, v] of f.parCategorie) total.set(k, (total.get(k) ?? 0) + v);
+    const ceMois = parMois.at(-1)!.f.parCategorie;
+    return [...total]
+      .map(([id, v]) => ({ id, nom: categories.get(id)?.nom ?? t("Sans catégorie"), couleur: categories.get(id)?.couleur ?? "var(--pale)", moyenne: v / nb, ceMois: ceMois.get(id) ?? 0 }))
+      .filter((x) => x.moyenne > 0)
+      .sort((a, b) => b.moyenne - a.moyenne);
+  });
+  const maxCat = $derived(Math.max(1, ...parCategorie.map((x) => Math.max(x.moyenne, x.ceMois))));
+
+  const prevision = $derived(donnees.operations.length ? prevoir({ ...ctx, ops: donnees.operations }, filtre, new Date().toISOString().slice(0, 10)) : undefined);
+  const pointsPrevision = $derived((prevision?.points ?? []).map((x) => ({ libelle: dateCourte(x.date), valeur: x.solde })));
+
+  const grosses = $derived(
+    donnees.operations
+      .filter((o) => p.courants.has(o.compteId) && o.date >= b.de && o.date <= b.fin && o.montant < 0 && !o.virementId && categories.get(o.categorieId ?? "")?.type !== "virement")
+      .sort((a, b) => a.montant - b.montant)
+      .slice(0, 5),
+  );
+</script>
+
+<div class="pile">
+  <Periode />
+  {#if !donnees.operations.length}
+    <div class="carte pile vide-guide">
+      <h2>{t("Pas encore de données à analyser")}</h2>
+      <p class="sous">{t("Importez un relevé pour voir l'évolution de votre solde, vos revenus et dépenses mois par mois, et la prévision sur 3 mois.")}</p>
+      <button class="principal" onclick={() => (app.page = "import")}>{t("Importer un relevé")}</button>
+    </div>
+  {/if}
+
+  <div class="indicateurs">
+    <div class="carte indicateur">
+      <p class="sous">{t("Dépenses moyennes")}<Aide texte={t("Moyenne mensuelle des dépenses sur la période choisie, sans compter les mois où aucune opération n'est enregistrée.")} /></p>
+      <p class="montant chiffre">{argent(moyDepenses, devise)}</p><p class="sous">{t("par mois")}</p>
+    </div>
+    <div class="carte indicateur">
+      <p class="sous">{t("Revenus moyens")}</p>
+      <p class="montant chiffre">{argent(moyRevenus, devise)}</p><p class="sous">{t("par mois")}</p>
+    </div>
+    <div class="carte indicateur">
+      <p class="sous">{t("Épargne nette")}<Aide texte={t("Moyenne mensuelle de ce que vous mettez de côté, moins ce que vous en reprenez.")} /></p>
+      <p class="montant chiffre">{argent(moyEpargne, devise, true)}</p><p class="sous">{t("par mois")}</p>
+    </div>
+  </div>
+
+  <section class="carte pile">
+    <h2>{t("Évolution du solde")}<Aide texte={t("Solde à la fin de chaque mois, épargne et poches comprises.")} /></h2>
+    <Courbe points={soldes} {devise} />
+  </section>
+
+  {#if prevision}
+    <section class="carte pile">
+      <h2>{t("Prévision sur 3 mois")}<Aide texte={t("Argent disponible (sans l'épargne) semaine par semaine : les opérations qui reviennent (salaire, loyer, abonnements…) à leur date, plus vos autres dépenses habituelles des 3 derniers mois. C'est une estimation, pas une certitude.")} /></h2>
+      <p>
+        {#if prevision.sousSeuil}
+          {t("Attention : à ce rythme, votre argent disponible passerait sous 0 € vers le")} <strong>{dateCourte(prevision.sousSeuil)}</strong>.
+        {:else}
+          {t("À ce rythme, vous resterez au-dessus de 0 €. Au plus bas :")} <strong class="montant">{argent(prevision.plusBas.solde, devise)}</strong> {t("vers le")} {dateCourte(prevision.plusBas.date)}.
+        {/if}
+        {t("Dans 3 mois : environ")} <strong class="montant">{argent(prevision.points.at(-1)!.solde, devise)}</strong>.
+      </p>
+      <Courbe points={pointsPrevision} {devise} couleur={prevision.sousSeuil ? "var(--serie-depenses)" : "var(--serie-revenus)"} reference={prevision.plusBas.solde < 0 ? { valeur: 0, libelle: "0 €" } : undefined} />
+    </section>
+  {/if}
+
+  <section class="carte pile">
+    <h2>{t("Revenus et dépenses par mois")}</h2>
+    <BarresMois donnees={barres} {devise} />
+  </section>
+
+  <section class="carte pile">
+    <h2>{t("Dépenses par catégorie")}<Aide texte={t("Barre pleine : moyenne mensuelle sur la période. Trait : le mois choisi. La flèche compare le mois choisi à la moyenne.")} /></h2>
+    {#each parCategorie as x (x.id)}
+      {@const v = variation(x.ceMois, x.moyenne)}
+      <div class="cat">
+        <div class="tete">
+          <span><i class="point" style:background={x.couleur}></i>{x.nom}</span>
+          <span class="sous"><span class="montant">{argent(x.moyenne, devise)}</span>{t("/mois · dernier mois")} <span class="montant">{argent(x.ceMois, devise)}</span>{v !== undefined && v !== 0 ? ` ${v > 0 ? "▲" : "▼"} ${Math.abs(v)} %` : ""}</span>
+        </div>
+        <div class="jauge">
+          <span style:width="{(x.moyenne / maxCat) * 100}%" style:background={x.couleur}></span>
+          <i class="repere" style:left="{(x.ceMois / maxCat) * 100}%"></i>
+        </div>
+      </div>
+    {:else}
+      <p class="sous">{t("Pas encore de dépenses sur cette période.")}</p>
+    {/each}
+  </section>
+
+  <section class="carte pile">
+    <h2>{t("Plus grosses dépenses ·")} {b.libelle}</h2>
+    {#each grosses as o (o.id)}
+      <div class="op">
+        <span class="libelle">{libelleLisible(o.libelle)}<span class="sous"> · {dateCourte(o.date)} · {categories.get(o.categorieId ?? "")?.nom ?? t("Sans catégorie")}</span></span>
+        <span class="montant fort">{argent(o.montant, devise, true)}</span>
+      </div>
+    {:else}
+      <p class="sous">{t("Aucune dépense ce mois-ci.")}</p>
+    {/each}
+  </section>
+</div>
+
+<style>
+  .vide-guide {
+    align-items: flex-start;
+  }
+  .indicateurs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .indicateur {
+    padding: 12px 14px;
+  }
+  .chiffre {
+    font-size: 20px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  h2 {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .cat {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .tete {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 14px;
+    flex-wrap: wrap;
+  }
+  .point {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    margin-right: 8px;
+  }
+  .jauge {
+    position: relative;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--surface-2);
+  }
+  .jauge > span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+  }
+  .repere {
+    position: absolute;
+    top: -3px;
+    width: 2px;
+    height: 14px;
+    background: var(--texte);
+    border-radius: 1px;
+  }
+  .op {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 14px;
+  }
+  .libelle {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .fort {
+    flex: none;
+    font-weight: 600;
+  }
+  @media (max-width: 599px) {
+    .indicateurs {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

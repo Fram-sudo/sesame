@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sésame · vos finances, chez vous</title>
+<meta name="description" content="Sésame : suivi de budget 100 % local et chiffré. Importez les relevés de n'importe quelle banque, suivez budgets, épargne et prêts. Windows, Android et Linux.">
+<link rel="icon" href="assets/icone.svg" type="image/svg+xml">
+<style>
+@font-face { font-family: Manrope; src: url(assets/manrope.woff2) format("woff2"); font-weight: 200 800; font-display: swap; }
+:root {
+  --fond: #f4f3ef; --surface: #eae9e3; --surface-2: #dfded7; --texte: #16171b; --doux: #55575f; --bord: #dad8d0;
+  --accent: #3b5bfd; --accent-fond: #e3e8ff; --sur-accent: #fff; --nuit: #0b0d12;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: Manrope, system-ui, sans-serif; background: var(--fond); color: var(--texte); line-height: 1.55; font-weight: 500; -webkit-font-smoothing: antialiased; }
+::selection { background: var(--accent); color: #fff; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
+html[lang="fr"] [lang="en"], html[lang="en"] [lang="fr"] { display: none !important; }
+.cadre { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
+svg.i { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+/* En-tête */
+header { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--fond) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--bord); }
+header .cadre { display: flex; align-items: center; gap: 24px; height: 64px; }
+.marque { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; text-decoration: none; }
+.marque img { width: 32px; height: 32px; border-radius: 9px; }
+nav.liens { display: flex; gap: 22px; margin-left: auto; font-weight: 600; font-size: 15px; }
+nav.liens a { text-decoration: none; color: var(--doux); }
+nav.liens a:hover { color: var(--texte); }
+.langues { display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--surface); }
+.langues button { border: 0; background: none; font: inherit; font-size: 13px; font-weight: 700; padding: 5px 10px; border-radius: 999px; cursor: pointer; color: var(--doux); }
+.langues button[aria-pressed="true"] { background: var(--fond); color: var(--texte); }
+
+/* Ouverture */
+.ouverture { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 56px; align-items: center; padding: 64px 0 72px; }
+h1 { font-size: clamp(40px, 6vw, 68px); line-height: 1.02; font-weight: 800; letter-spacing: -0.035em; }
+h1 em { font-style: normal; color: var(--accent); }
+.chapeau { font-size: 19px; color: var(--doux); margin: 22px 0 30px; max-width: 34em; }
+.boutons { display: flex; flex-wrap: wrap; gap: 12px; }
+.bouton { display: inline-flex; align-items: center; gap: 10px; padding: 14px 22px; border-radius: 999px; font-weight: 800; text-decoration: none; font-size: 16px; border: 0; cursor: pointer; transition: transform .12s; }
+.bouton:active { transform: scale(.97); }
+.bouton.plein { background: var(--accent); color: var(--sur-accent); }
+.bouton.doux { background: var(--surface-2); color: var(--texte); }
+.garanties { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 28px; color: var(--doux); font-size: 14px; font-weight: 600; }
+.garanties span { display: inline-flex; align-items: center; gap: 6px; }
+.garanties svg { width: 18px; height: 18px; color: var(--accent); }
+.telephone { width: 400px; height: 800px; border-radius: 52px; background: var(--nuit); padding: 12px; box-shadow: 0 30px 60px -20px rgba(11, 13, 18, .45); position: relative; }
+.telephone iframe { width: 100%; height: 100%; border: 0; border-radius: 41px; background: #fff; display: block; }
+.telephone .note { position: absolute; left: 50%; bottom: -34px; transform: translateX(-50%); font-size: 13px; color: var(--doux); white-space: nowrap; font-weight: 600; }
+.demo-mobile { display: none; }
+
+/* Sections */
+section.bloc { padding: 80px 0; }
+section.bloc + section.bloc { border-top: 1px solid var(--bord); }
+h2 { font-size: clamp(30px, 4vw, 42px); line-height: 1.1; font-weight: 800; letter-spacing: -0.025em; max-width: 20em; }
+.intro { color: var(--doux); font-size: 18px; margin-top: 14px; max-width: 40em; }
+
+.fonctions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 36px 40px; margin-top: 48px; }
+.fonction .pastille { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; color: #fff; margin-bottom: 16px; }
+.fonction h3 { font-size: 19px; font-weight: 800; margin-bottom: 6px; }
+.fonction p { color: var(--doux); }
+
+/* Installer */
+.onglets { display: flex; gap: 6px; padding: 5px; border-radius: 999px; background: var(--surface); width: fit-content; margin: 36px 0 24px; flex-wrap: wrap; }
+.onglets button { border: 0; background: none; font: inherit; font-weight: 700; font-size: 15px; padding: 10px 18px; border-radius: 999px; cursor: pointer; color: var(--doux); display: inline-flex; align-items: center; gap: 8px; }
+.onglets button[aria-selected="true"] { background: var(--fond); color: var(--texte); box-shadow: 0 1px 3px rgba(11, 13, 18, .12); }
+.plateforme { display: none; grid-template-columns: minmax(0, 1fr) 320px; gap: 40px; background: var(--surface); border-radius: 24px; padding: 32px; }
+.plateforme.on { display: grid; }
+.plateforme ol { padding-left: 22px; display: flex; flex-direction: column; gap: 12px; }
+.plateforme li::marker { font-weight: 800; color: var(--accent); }
+.plateforme .telecharger { display: flex; flex-direction: column; gap: 10px; align-self: start; }
+.fichier { font-size: 13px; color: var(--doux); font-weight: 600; }
+.astuce { margin-top: 18px; padding: 14px 16px; background: var(--fond); border-radius: 14px; font-size: 14px; color: var(--doux); }
+code { font-family: ui-monospace, Consolas, monospace; font-size: .92em; background: var(--fond); padding: 2px 6px; border-radius: 6px; }
+pre { background: var(--nuit); color: #e7e9f0; padding: 14px 16px; border-radius: 14px; overflow-x: auto; font-size: 14px; margin-top: 10px; }
+pre code { background: none; padding: 0; color: inherit; }
+
+/* Sécurité */
+.securite { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 40px; }
+.securite div { background: var(--surface); border-radius: 20px; padding: 22px 24px; }
+.securite h3 { font-size: 17px; font-weight: 800; margin-bottom: 6px; display: flex; gap: 10px; align-items: center; }
+.securite h3 svg { color: var(--accent); }
+.securite p { color: var(--doux); }
+
+footer { padding: 40px 0 56px; color: var(--doux); font-size: 14px; border-top: 1px solid var(--bord); }
+footer .cadre { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+
+@media (max-width: 980px) {
+  .ouverture { grid-template-columns: 1fr; padding-top: 40px; }
+  .telephone { display: none; }
+  .demo-mobile { display: inline-flex; }
+  .fonctions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .plateforme { grid-template-columns: 1fr; padding: 24px; }
+  nav.liens { display: none; }
+  .langues { margin-left: auto; }
+}
+@media (max-width: 620px) {
+  .cadre { padding: 0 16px; }
+  .fonctions, .securite { grid-template-columns: 1fr; }
+  section.bloc { padding: 56px 0; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="cadenas" viewBox="0 0 24 24"><path d="M5 13a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2zM8 11V7a4 4 0 1 1 8 0v4"/></symbol>
+  <symbol id="nuage" viewBox="0 0 24 24"><path d="M6.6 19a4.6 4.6 0 0 1-.6-9.2 6 6 0 0 1 11.6 1.6 4 4 0 0 1 .4 7.6M3 3l18 18"/></symbol>
+  <symbol id="import" viewBox="0 0 24 24"><path d="M14 3v4a1 1 0 0 0 1 1h4M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2zM12 17v-6M9.5 13.5L12 11l2.5 2.5"/></symbol>
+  <symbol id="cible" viewBox="0 0 24 24"><path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0M12 12m-5 0a5 5 0 1 0 10 0a5 5 0 1 0-10 0M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0-18 0"/></symbol>
+  <symbol id="tirelire" viewBox="0 0 24 24"><path d="M15 11v.01M16 4v3.8a6 6 0 0 1 2.7 3.2H20a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-1.3a6 6 0 0 1-1.7 2.5V20a1.5 1.5 0 0 1-3 0v-.6a6 6 0 0 1-1 .1h-4a6 6 0 0 1-1-.1v.6a1.5 1.5 0 0 1-3 0v-2a6 6 0 0 1 4-10.5h2.5z"/></symbol>
+  <symbol id="banque" viewBox="0 0 24 24"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/></symbol>
+  <symbol id="synchro" viewBox="0 0 24 24"><path d="M20 11A8.1 8.1 0 0 0 4.5 9M4 5v4h4M4 13a8.1 8.1 0 0 0 15.5 2M20 19v-4h-4"/></symbol>
+  <symbol id="courbe" viewBox="0 0 24 24"><path d="M4 19h16M4 15l4-6 4 2 4-5 4 4"/></symbol>
+  <symbol id="globe" viewBox="0 0 24 24"><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0-18 0M3.6 9h16.8M3.6 15h16.8M11.5 3a17 17 0 0 0 0 18M12.5 3a17 17 0 0 1 0 18"/></symbol>
+  <symbol id="empreinte" viewBox="0 0 24 24"><path d="M18.9 7a8 8 0 0 1 1.1 5v1a6 6 0 0 0 .8 3M8 11a4 4 0 0 1 8 0v1a10 10 0 0 0 2 6M12 11v2a14 14 0 0 0 2.5 8M8 15a18 18 0 0 0 1.8 6M4.9 19a22 22 0 0 1-.9-7v-1a8 8 0 0 1 12-6.95"/></symbol>
+  <symbol id="cle" viewBox="0 0 24 24"><path d="M16.6 3c2.1 0 3.4 1.3 3.4 3.4v.2c0 2.1-1.3 3.4-3.4 3.4h-.2l-2.4 2.4-1 1H11v2H9v2H6v-3l5.6-5.6-.6-.6v-.2C11 4.3 12.3 3 14.4 3zM16 7h.01"/></symbol>
+  <symbol id="telecharger" viewBox="0 0 24 24"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 11l5 5 5-5M12 4v12"/></symbol>
+  <symbol id="jouer" viewBox="0 0 24 24"><path d="M7 4v16l13-8z"/></symbol>
+  <symbol id="windows" viewBox="0 0 24 24"><path d="M4 6l7-1v6H4zM13 4.7L20 4v7h-7zM4 13h7v6l-7-1zM13 13h7v7l-7-.7z"/></symbol>
+  <symbol id="android" viewBox="0 0 24 24"><path d="M4 10v6M20 10v6M7 9h10v8a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1zM8 3l1 2M16 3l-1 2M9 18v3M15 18v3M7 9a5 5 0 0 1 10 0"/></symbol>
+  <symbol id="linux" viewBox="0 0 24 24"><path d="M9 7a3 3 0 1 1 6 0v3c0 2 2 3 3 6s-1 5-6 5-7-2-6-5 3-4 3-6zM10 7h.01M14 7h.01M10.5 10h3"/></symbol>
+  <symbol id="github" viewBox="0 0 24 24"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></symbol>
+</svg>
+
+<header>
+  <div class="cadre">
+    <a class="marque" href="#"><img src="assets/icone.svg" alt="">Sésame</a>
+    <nav class="liens" aria-label="Sections">
+      <a href="#fonctions"><span lang="fr">Fonctionnalités</span><span lang="en">Features</span></a>
+      <a href="#installer"><span lang="fr">Installer</span><span lang="en">Install</span></a>
+      <a href="#securite"><span lang="fr">Sécurité</span><span lang="en">Security</span></a>
+      <a href="https://github.com/Fram-sudo/sesame">GitHub</a>
+    </nav>
+    <div class="langues" role="group" aria-label="Langue / Language">
+      <button data-langue="fr" aria-pressed="true">FR</button>
+      <button data-langue="en" aria-pressed="false">EN</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="cadre ouverture">
+    <div>
+      <h1><span lang="fr">Vos finances,<br><em>chez vous.</em></span><span lang="en">Your finances,<br><em>at home.</em></span></h1>
+      <p class="chapeau">
+        <span lang="fr">Sésame réunit tous vos comptes, vos budgets, votre épargne et vos prêts, sans serveur, sans compte en ligne, sans connexion à votre banque. Importez simplement vos relevés : tout se range tout seul, et tout reste chiffré sur vos appareils.</span>
+        <span lang="en">Sesame brings together all your accounts, budgets, savings and loans, with no server, no online account and no bank connection. Just import your statements: everything files itself, and everything stays encrypted on your devices.</span>
+      </p>
+      <div class="boutons">
+        <a class="bouton plein" href="#installer"><svg class="i"><use href="#telecharger"/></svg><span lang="fr">Télécharger</span><span lang="en">Download</span></a>
+        <a class="bouton doux demo-mobile" href="demo/"><svg class="i"><use href="#jouer"/></svg><span lang="fr">Essayer la démo</span><span lang="en">Try the demo</span></a>
+      </div>
+      <div class="garanties">
+        <span><svg class="i"><use href="#cadenas"/></svg><span lang="fr">Chiffré sur l'appareil</span><span lang="en">Encrypted on device</span></span>
+        <span><svg class="i"><use href="#nuage"/></svg><span lang="fr">Aucun cloud, aucun pistage</span><span lang="en">No cloud, no tracking</span></span>
+        <span><svg class="i"><use href="#globe"/></svg><span lang="fr">Français et anglais</span><span lang="en">French and English</span></span>
+      </div>
+    </div>
+    <div class="telephone">
+      <iframe src="demo/" title="Démo interactive de Sésame" loading="lazy"></iframe>
+      <p class="note"><span lang="fr">Démo interactive · données fictives, rien n'est enregistré</span><span lang="en">Interactive demo · fictional data, nothing is saved</span></p>
+    </div>
+  </div>
+
+  <section class="bloc" id="fonctions">
+    <div class="cadre">
+      <h2><span lang="fr">Savoir où vous en êtes, sans effort.</span><span lang="en">Know where you stand, without effort.</span></h2>
+      <p class="intro"><span lang="fr">L'argent vraiment disponible d'abord, puis où il part, ce qu'il vous reste à dépenser et ce qui arrive.</span><span lang="en">Your truly available money first, then where it goes, what you have left to spend and what's coming.</span></p>
+      <div class="fonctions">
+        <div class="fonction"><span class="pastille" style="background:#3b5bfd"><svg class="i"><use href="#import"/></svg></span>
+          <h3><span lang="fr">Tous vos relevés, toutes vos banques</span><span lang="en">Every statement, every bank</span></h3>
+          <p><span lang="fr">PDF, CSV ou Excel : la banque, le compte, les poches et les catégories sont reconnus automatiquement. Les doublons sont ignorés.</span><span lang="en">PDF, CSV or Excel: the bank, account, pockets and categories are recognised automatically. Duplicates are skipped.</span></p></div>
+        <div class="fonction"><span class="pastille" style="background:#ec4899"><svg class="i"><use href="#cible"/></svg></span>
+          <h3><span lang="fr">Des budgets qui préviennent</span><span lang="en">Budgets that warn you</span></h3>
+          <p><span lang="fr">Proposés d'après vos habitudes, mensuels ou annuels, avec ce qu'il reste par jour et une alerte quand le rythme dérape.</span><span lang="en">Suggested from your habits, monthly or yearly, with what's left per day and an alert when spending drifts.</span></p></div>
+        <div class="fonction"><span class="pastille" style="background:#f59e0b"><svg class="i"><use href="#tirelire"/></svg></span>
+          <h3><span lang="fr">Épargne et poches</span><span lang="en">Savings and pockets</span></h3>
+          <p><span lang="fr">Livrets, poches Revolut, tirelire en espèces : votre épargne est suivie à part, avec des objectifs.</span><span lang="en">Savings accounts, Revolut pockets, a cash piggy bank: your savings are tracked separately, with goals.</span></p></div>
+        <div class="fonction"><span class="pastille" style="background:#6366f1"><svg class="i"><use href="#banque"/></svg></span>
+          <h3><span lang="fr">Prêts</span><span lang="en">Loans</span></h3>
+          <p><span lang="fr">Échéancier, capital restant dû et simulation d'un remboursement anticipé avant de vous décider.</span><span lang="en">Schedule, outstanding principal and an early-repayment simulation before you decide.</span></p></div>
+        <div class="fonction"><span class="pastille" style="background:#14b8a6"><svg class="i"><use href="#courbe"/></svg></span>
+          <h3><span lang="fr">Prévision sur 3 mois</span><span lang="en">3-month forecast</span></h3>
+          <p><span lang="fr">Salaire, loyer et abonnements à leur date : Sésame vous prévient si votre compte risque de passer à découvert.</span><span lang="en">Salary, rent and subscriptions on their dates: Sesame warns you if your account may go overdrawn.</span></p></div>
+        <div class="fonction"><span class="pastille" style="background:#84cc16"><svg class="i"><use href="#synchro"/></svg></span>
+          <h3><span lang="fr">PC et téléphone, sans cloud</span><span lang="en">PC and phone, no cloud</span></h3>
+          <p><span lang="fr">Vos appareils s'échangent leurs changements par un simple fichier (Quick Share, Bluetooth, e-mail). Plusieurs devises, dont le franc CFA.</span><span lang="en">Your devices swap their changes through a simple file (Quick Share, Bluetooth, email). Several currencies, including the CFA franc.</span></p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bloc" id="installer">
+    <div class="cadre">
+      <h2><span lang="fr">Installer Sésame</span><span lang="en">Install Sesame</span></h2>
+      <p class="intro"><span lang="fr">Gratuit et libre. Choisissez votre appareil : chaque version lit les mêmes données.</span><span lang="en">Free and open source. Pick your device: every version reads the same data.</span></p>
+      <div class="onglets" role="tablist">
+        <button role="tab" data-plateforme="windows" aria-selected="true"><svg class="i"><use href="#windows"/></svg>Windows</button>
+        <button role="tab" data-plateforme="android" aria-selected="false"><svg class="i"><use href="#android"/></svg>Android</button>
+        <button role="tab" data-plateforme="ubuntu" aria-selected="false"><svg class="i"><use href="#linux"/></svg>Ubuntu, Debian</button>
+        <button role="tab" data-plateforme="linux" aria-selected="false"><svg class="i"><use href="#linux"/></svg><span lang="fr">Autres Linux (CachyOS…)</span><span lang="en">Other Linux (CachyOS…)</span></button>
+      </div>
+
+      <div class="plateforme on" id="p-windows" role="tabpanel">
+        <div>
+          <ol lang="fr">
+            <li>Téléchargez l'installeur.</li>
+            <li>Ouvrez-le. Windows peut afficher « Windows a protégé votre ordinateur » : cliquez sur <b>Informations complémentaires</b>, puis <b>Exécuter quand même</b> (l'appli n'est pas encore signée par un certificat payant).</li>
+            <li>Suivez l'installation, puis lancez Sésame depuis le menu Démarrer.</li>
+            <li>Créez votre mot de passe et notez votre clé de récupération : un petit guide vous accompagne ensuite.</li>
+          </ol>
+          <ol lang="en">
+            <li>Download the installer.</li>
+            <li>Open it. Windows may show “Windows protected your PC”: click <b>More info</b>, then <b>Run anyway</b> (the app is not yet signed with a paid certificate).</li>
+            <li>Follow the installer, then start Sesame from the Start menu.</li>
+            <li>Create your password and write down your recovery key: a short guide then walks you through.</li>
+          </ol>
+        </div>
+        <div class="telecharger">
+          <a class="bouton plein" href="https://github.com/Fram-sudo/sesame/releases/latest/download/Sesame-Windows-Setup.exe"><svg class="i"><use href="#telecharger"/></svg><span lang="fr">Télécharger pour Windows</span><span lang="en">Download for Windows</span></a>
+          <span class="fichier">Sesame-Windows-Setup.exe · Windows 10/11, 64 bits</span>
+        </div>
+      </div>
+
+      <div class="plateforme" id="p-android" role="tabpanel">
+        <div>
+          <ol lang="fr">
+            <li>Sur votre téléphone, téléchargez le fichier APK.</li>
+            <li>Ouvrez-le. Android demande d'<b>autoriser l'installation depuis cette source</b> (votre navigateur ou l'appli Fichiers) : acceptez pour cette fois.</li>
+            <li>Touchez <b>Installer</b>, puis ouvrez Sésame.</li>
+            <li>Dans Paramètres → Sécurité, vous pouvez activer l'ouverture par empreinte.</li>
+          </ol>
+          <ol lang="en">
+            <li>On your phone, download the APK file.</li>
+            <li>Open it. Android asks you to <b>allow installs from this source</b> (your browser or Files app): allow it this once.</li>
+            <li>Tap <b>Install</b>, then open Sesame.</li>
+            <li>In Settings → Security, you can turn on fingerprint unlock.</li>
+          </ol>
+          <p class="astuce"><span lang="fr">Les mises à jour s'installent de la même façon, par-dessus : vos données sont gardées.</span><span lang="en">Updates install the same way, on top: your data is kept.</span></p>
+        </div>
+        <div class="telecharger">
+          <a class="bouton plein" href="https://github.com/Fram-sudo/sesame/releases/latest/download/Sesame-Android.apk"><svg class="i"><use href="#telecharger"/></svg><span lang="fr">Télécharger pour Android</span><span lang="en">Download for Android</span></a>
+          <span class="fichier">Sesame-Android.apk · Android 7+, 64 bits</span>
+        </div>
+      </div>
+
+      <div class="plateforme" id="p-ubuntu" role="tabpanel">
+        <div>
+          <ol lang="fr">
+            <li>Téléchargez le paquet <code>.deb</code>.</li>
+            <li>Double-cliquez dessus et choisissez <b>Installer</b> (ou utilisez la commande ci-dessous).</li>
+            <li>Lancez Sésame depuis vos applications.</li>
+          </ol>
+          <ol lang="en">
+            <li>Download the <code>.deb</code> package.</li>
+            <li>Double-click it and choose <b>Install</b> (or use the command below).</li>
+            <li>Start Sesame from your applications.</li>
+          </ol>
+          <pre><code>sudo apt install ./sesame-linux.deb</code></pre>
+        </div>
+        <div class="telecharger">
+          <a class="bouton plein" href="https://github.com/Fram-sudo/sesame/releases/latest/download/sesame-linux.deb"><svg class="i"><use href="#telecharger"/></svg><span lang="fr">Télécharger le .deb</span><span lang="en">Download the .deb</span></a>
+          <span class="fichier">sesame-linux.deb · Ubuntu 22.04+, Debian 12+, x86_64</span>
+        </div>
+      </div>
+
+      <div class="plateforme" id="p-linux" role="tabpanel">
+        <div>
+          <ol lang="fr">
+            <li>Téléchargez l'<code>AppImage</code> : un seul fichier qui fonctionne sur la plupart des distributions (CachyOS, Arch, Fedora…).</li>
+            <li>Rendez-le exécutable : clic droit → Propriétés → <b>Autoriser l'exécution</b>, ou la commande ci-dessous.</li>
+            <li>Double-cliquez dessus pour lancer Sésame.</li>
+          </ol>
+          <ol lang="en">
+            <li>Download the <code>AppImage</code>: a single file that runs on most distributions (CachyOS, Arch, Fedora…).</li>
+            <li>Make it executable: right-click → Properties → <b>Allow executing</b>, or use the command below.</li>
+            <li>Double-click it to start Sesame.</li>
+          </ol>
+          <pre><code>chmod +x Sesame-Linux.AppImage && ./Sesame-Linux.AppImage</code></pre>
+          <p class="astuce"><span lang="fr">Il faut la bibliothèque WebKitGTK 4.1 (déjà présente sur la plupart des bureaux). Sur Arch / CachyOS : <code>sudo pacman -S webkit2gtk-4.1</code>.</span><span lang="en">WebKitGTK 4.1 is required (already present on most desktops). On Arch / CachyOS: <code>sudo pacman -S webkit2gtk-4.1</code>.</span></p>
+        </div>
+        <div class="telecharger">
+          <a class="bouton plein" href="https://github.com/Fram-sudo/sesame/releases/latest/download/Sesame-Linux.AppImage"><svg class="i"><use href="#telecharger"/></svg><span lang="fr">Télécharger l'AppImage</span><span lang="en">Download the AppImage</span></a>
+          <span class="fichier">Sesame-Linux.AppImage · x86_64</span>
+        </div>
+      </div>
+      <p class="astuce"><span lang="fr">Déjà Sésame sur un autre appareil ? Exportez une sauvegarde (Paramètres → Sauvegarde), restaurez-la sur le nouveau, puis synchronisez vos changements.</span><span lang="en">Already using Sesame on another device? Export a backup (Settings → Backup), restore it on the new one, then sync your changes.</span></p>
+    </div>
+  </section>
+
+  <section class="bloc" id="securite">
+    <div class="cadre">
+      <h2><span lang="fr">Personne d'autre que vous.</span><span lang="en">Nobody but you.</span></h2>
+      <p class="intro"><span lang="fr">Sésame ne se connecte ni à votre banque, ni à un serveur. Vos données ne quittent vos appareils que si vous les envoyez vous-même.</span><span lang="en">Sesame connects neither to your bank nor to a server. Your data only leaves your devices if you send it yourself.</span></p>
+      <div class="securite">
+        <div><h3><svg class="i"><use href="#cadenas"/></svg><span lang="fr">Tout est chiffré</span><span lang="en">Everything is encrypted</span></h3>
+          <p><span lang="fr">AES-256 et Argon2id, comme les gestionnaires de mots de passe. Chaque essai de mot de passe est volontairement lent.</span><span lang="en">AES-256 and Argon2id, like password managers. Every password attempt is deliberately slow.</span></p></div>
+        <div><h3><svg class="i"><use href="#nuage"/></svg><span lang="fr">Rien en ligne</span><span lang="en">Nothing online</span></h3>
+          <p><span lang="fr">Pas de compte, pas de pistage, pas de sauvegarde cloud cachée. Seuls les taux de change publics peuvent être téléchargés, si vous le décidez.</span><span lang="en">No account, no tracking, no hidden cloud backup. Only public exchange rates can be downloaded, if you choose to.</span></p></div>
+        <div><h3><svg class="i"><use href="#cle"/></svg><span lang="fr">Une clé de récupération</span><span lang="en">A recovery key</span></h3>
+          <p><span lang="fr">Si vous oubliez votre mot de passe, la clé remise à la création rouvre vos données. Personne d'autre ne peut le faire.</span><span lang="en">If you forget your password, the key you get at setup reopens your data. Nobody else can.</span></p></div>
+        <div><h3><svg class="i"><use href="#empreinte"/></svg><span lang="fr">L'empreinte sur Android</span><span lang="en">Fingerprint on Android</span></h3>
+          <p><span lang="fr">Posez le doigt au lieu de taper le mot de passe : la clé reste dans le coffre-fort matériel du téléphone.</span><span lang="en">Touch the sensor instead of typing your password: the key stays in the phone's hardware vault.</span></p></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="cadre">
+    <span><span lang="fr">Sésame · logiciel libre sous licence MIT · ce site n'utilise ni cookies ni pistage.</span><span lang="en">Sesame · free software under the MIT licence · this site uses no cookies and no tracking.</span></span>
+    <a href="https://github.com/Fram-sudo/sesame"><span lang="fr">Code source sur GitHub</span><span lang="en">Source code on GitHub</span></a>
+  </div>
+</footer>
+
+<script>
+  // Langue : préférence mémorisée, sinon celle du navigateur
+  const racine = document.documentElement;
+  function langue(l) {
+    racine.lang = l;
+    document.querySelectorAll("[data-langue]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.langue === l)));
+    try { localStorage.setItem("sesame-site-langue", l); } catch {}
+  }
+  let depart = "fr";
+  try { depart = localStorage.getItem("sesame-site-langue") || (navigator.language.startsWith("fr") ? "fr" : "en"); } catch {}
+  langue(depart);
+  document.querySelectorAll("[data-langue]").forEach((b) => b.addEventListener("click", () => langue(b.dataset.langue)));
+
+  // Onglets d'installation : celui de l'appareil du visiteur d'abord
+  function plateforme(p) {
+    document.querySelectorAll("[data-plateforme]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.plateforme === p)));
+    document.querySelectorAll(".plateforme").forEach((d) => d.classList.toggle("on", d.id === "p-" + p));
+  }
+  document.querySelectorAll("[data-plateforme]").forEach((b) => b.addEventListener("click", () => plateforme(b.dataset.plateforme)));
+  const ua = navigator.userAgent;
+  plateforme(/Android/i.test(ua) ? "android" : /Ubuntu|Debian/i.test(ua) ? "ubuntu" : /Linux/i.test(ua) ? "linux" : "windows");
+</script>
+</body>
+</html>
