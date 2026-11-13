@@ -918,6 +918,9 @@ export const EN: Record<string, string> = {
   "opération(s) déjà notée(s) (à la main ou en attente) retrouvée(s) : la ligne de la banque la (les) remplacera, catégorie gardée": "already-recorded transaction(s) (manual or pending) found: the bank's line will replace it (them), category kept",
   "en attente : déduites tout de suite comme chez votre banque, remplacées ensuite par la version définitive": "pending: deducted right away as your bank does, then replaced by the final version",
   "{0} en attente déjà déduits": "{0} pending already deducted",
+  "Voir les nouveautés": "See what's new",
+  "Publiée le {0}": "Released on {0}",
+  "La mise à jour s'installe par-dessus : vos données sont gardées.": "The update installs on top: your data is kept.",
 };
 
 /** Textes volontairement identiques en anglais (codes, données de démonstration) */

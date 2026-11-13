@@ -4,7 +4,8 @@
   import type { Snippet } from "svelte";
   import Icone from "./Icone.svelte";
 
-  let { titre, fermer, children }: { titre: string; fermer: () => void; children: Snippet } = $props();
+  // centre : boîte centrée aussi sur téléphone (petite fenêtre d'information plutôt que panneau du bas)
+  let { titre, fermer, children, centre = false }: { titre: string; fermer: () => void; children: Snippet; centre?: boolean } = $props();
 
   // Bouton ou geste « retour » (Android, navigateur) : ferme la fenêtre du dessus au lieu de changer de page
   onMount(() => {
@@ -34,7 +35,7 @@
 
 <svelte:window onkeydown={(e) => e.key === "Escape" && fermer()} />
 
-<div class="fond" role="presentation" onclick={(e) => e.target === e.currentTarget && fermer()}>
+<div class="fond" class:centre role="presentation" onclick={(e) => e.target === e.currentTarget && fermer()}>
   <div class="feuille pile" role="dialog" aria-modal="true" aria-label={titre}>
     <div class="tete">
       <h2>{titre}</h2>
@@ -82,11 +83,11 @@
     }
   }
   @media (max-width: 899px) {
-    .fond {
+    .fond:not(.centre) {
       place-items: end stretch;
       padding: 0;
     }
-    .feuille {
+    .fond:not(.centre) .feuille {
       width: 100%;
       border-radius: 24px 24px 0 0;
       padding-bottom: calc(18px + env(safe-area-inset-bottom));
