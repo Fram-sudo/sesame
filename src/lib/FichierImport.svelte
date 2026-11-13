@@ -6,13 +6,14 @@
   import { attribuerPoches } from "./categories";
   import ControleSolde from "./ControleSolde.svelte";
   import { optionsDevises } from "./devises";
-  import { classerEtLier, donnees, ecrire, nouvelId, soldes, type Changement, type Compte, type Devise, type Import, type Operation } from "./donnees.svelte";
+  import { classerEtLier, comptesImport, donnees, ecrire, nouvelId, soldes, type Changement, type Compte, type Devise, type Operation } from "./donnees.svelte";
   import { argent, dateCourte } from "./format";
   import { coherenceSoldes, lire, manques, type FormatDate, type Role } from "./import/analyse";
   import { cleOp, rapprocherSaisies, separerDoublons } from "./import/doublons";
   import { choisirCompte, deviner, type Preparation } from "./import/fichier";
 
-  let { prep, retirer }: { prep: Preparation; retirer: () => void } = $props();
+  // dansUnLot : plusieurs relevés importés ensemble (une seule validation, un seul historique)
+  let { prep, retirer, dansUnLot = false }: { prep: Preparation; retirer: () => void; dansUnLot?: boolean } = $props();
 
   // L'état de départ vient du fichier lu ; l'utilisateur peut ensuite tout ajuster
   /* svelte-ignore state_referenced_locally */
@@ -53,7 +54,7 @@
   // Doublons : opérations du compte (et celles importées ici puis déplacées ailleurs)
   const tri = $derived.by(() => {
     if (!lecture) return null;
-    const imports = new Set(donnees.imports.filter((i) => i.compteId === compteId).map((i) => i.id));
+    const imports = new Set(donnees.imports.filter((i) => comptesImport(i).includes(compteId)).map((i) => i.id));
     return separerDoublons(lecture.ops, compteId ? donnees.operations.filter((o) => o.compteId === compteId || (o.importId && imports.has(o.importId))) : []);
   });
   const sousComptes = $derived(compteId ? donnees.comptes.filter((c) => c.parentId === compteId) : []);
@@ -79,7 +80,7 @@
   let valide = $state(!prep.profilNouveau);
   const cleProfil = (p: { cle?: string; entete: string[] }) => p.cle ?? p.entete.join("|");
   const aValider = $derived(!valide && !donnees.profils.some((p) => cleProfil(p) === cleProfil(profil)));
-  async function valider() {
+  export async function valider() {
     await ecrire([{ collection: "profils", id: profil.id, valeur: $state.snapshot(profil) }]);
     valide = true;
     assistant = false;
@@ -100,7 +101,21 @@
   const nbAttente = $derived(tri ? tri.nouvelles.filter((o) => o.enAttente || prep.enAttente.includes(principal[o.ligne - 1]?.[iSection] ?? "")).length : 0);
   const pret = $derived(ok && !aValider && !!tri && (tri.nouvelles.length > 0 || nbPoches > 0));
 
-  export async function importer() {
+  /** Ce que la carte a importé, pour l'historique commun du lot */
+  export interface Bilan {
+    compteId: string;
+    fichier: string;
+    banque: string;
+    nb: number;
+    doublons: number;
+    dates: string[];
+    remplacees: Operation[];
+  }
+
+  // Lot : identifiant commun, et comptes créés par les relevés précédents du même lot (pas de compte en double)
+  export async function importer(lot: { id: string; crees: Map<string, string> }): Promise<Bilan | undefined> {
+    const cleLot = prep.empreinte || prep.banque || nouveauNom.trim();
+    if (!compteId && lot.crees.has(cleLot)) compteId = lot.crees.get(cleLot)!;
     if (!pret || etat !== "pret" || !tri || !lecture) return;
     etat = "encours";
     erreur = "";
@@ -112,10 +127,11 @@
       let cid = compteId;
       if (!cid) {
         cid = nouvelId();
+        lot.crees.set(cleLot, cid);
         ch.push({ collection: "comptes", id: cid, valeur: { id: cid, nom: nouveauNom.trim() || t("Compte"), banque: prep.banque ?? "", devise: nouvelleDevise, soldeInitial: 0, type: "courant", empreinte: prep.empreinte } });
       } else if (!compte?.empreinte && prep.empreinte) ch.push({ collection: "comptes", id: cid, valeur: { ...compte!, empreinte: prep.empreinte } });
 
-      const importId = nouvelId();
+      const importId = lot.id;
       const ops: Operation[] = tri.nouvelles.map((o) => {
         const { ligne, solde: _s, enAttente: attenteLue, ...op } = o;
         const attente = attenteLue || prep.enAttente.includes(principal[ligne - 1]?.[iSection] ?? "");
@@ -124,7 +140,8 @@
         const garde = s ? { ...(s.categorieId ? { categorieId: s.categorieId, categorieManuelle: true } : {}), ...(s.note ? { note: s.note } : {}) } : {};
         return { ...op, ...garde, id: nouvelId(), compteId: cid, importId, ...(attente ? { enAttente: true } : {}) };
       });
-      for (const s of reconnues.values()) ch.push({ collection: "operations", id: s.id, valeur: null });
+      const remplacees = [...reconnues.values()].map((s) => $state.snapshot(s) as Operation);
+      for (const s of remplacees) ch.push({ collection: "operations", id: s.id, valeur: null });
       const nbReconnues = reconnues.size;
       // Poches : un sous-compte d'épargne par poche, créé au premier import ; reconnu ensuite par son nom
       // dans le relevé (même si vous l'avez renommé dans l'appli) ; une poche archivée qui bouge à nouveau réapparaît
@@ -142,8 +159,8 @@
         }
       }
       const dates = ops.map((o) => o.date).sort();
-      const imp: Import = { id: importId, compteId: cid, quand: Date.now(), fichier: prep.nom, banque: prep.banque ?? profil.nom, nb: ops.length, doublons: tri.doublons.length + (poches?.doublons ?? 0), de: dates[0], a: dates[dates.length - 1] };
-      ch.push(...ops.map((o) => ({ collection: "operations", id: o.id, valeur: o }) as Changement), { collection: "imports", id: importId, valeur: imp });
+      const bilan: Bilan = { compteId: cid, fichier: prep.nom, banque: prep.banque ?? profil.nom, nb: ops.length, doublons: tri.doublons.length + (poches?.doublons ?? 0), dates, remplacees };
+      ch.push(...ops.map((o) => ({ collection: "operations", id: o.id, valeur: o }) as Changement));
       if (prep.profilNouveau || profilModifie) ch.push({ collection: "profils", id: profil.id, valeur: $state.snapshot(profil) });
       await ecrire(ch);
       await classerEtLier();
@@ -157,6 +174,7 @@
       compteId = cid;
       resultat = { nb: nbPrincipal, reconnues: nbReconnues, poches: nbDansPoches, nouvellesPoches, soldeBanque: ref?.solde, date: ref?.date, compte: donnees.comptes.find((c) => c.id === cid) };
       etat = "fait";
+      return bilan;
     } catch (e) {
       erreur = String(e);
       etat = "pret";
@@ -164,6 +182,12 @@
   }
   export const estPret = () => pret && etat === "pret";
   export const attendValidation = () => aValider && etat === "pret";
+  export const peutValider = () => aValider && etat === "pret" && !!lecture?.ops.length;
+  // Récapitulatif du lot : compte visé et nouvelles opérations (pour compter une seule fois les relevés qui se chevauchent)
+  export const resume = () =>
+    tri && etat === "pret"
+      ? { cle: compteId || `nouveau|${prep.empreinte || prep.banque || nouveauNom.trim()}`, nom: compte?.nom ?? (nouveauNom.trim() || t("Nouveau compte")), nouvelles: tri.nouvelles, poches: nbPoches }
+      : undefined;
   // Import terminé et soldes d'accord avec la banque (ou pas de solde à comparer) : la carte peut se retirer
   const ecartFinal = $derived(resultat?.compte && resultat.soldeBanque !== undefined && resultat.date ? resultat.soldeBanque - (soldes(resultat.date).get(resultat.compte.id) ?? 0) : 0);
   export const fini = () => etat === "fait" && ecartFinal === 0;
@@ -294,7 +318,7 @@
         <p class="sous">{t("Dates, libellés et montants (dépenses en rouge, entrées en vert) sont-ils justes ?")}</p>
         <div class="actions">
           {#if !assistantOuvert}<button onclick={() => (assistant = true)}>{t("Corriger les colonnes")}</button>{/if}
-          <button class="principal" data-visite="valider" onclick={valider} disabled={!lecture.ops.length}>{t("C'est bon")}</button>
+          {#if !dansUnLot}<button class="principal" data-visite="valider" onclick={valider} disabled={!lecture.ops.length}>{t("C'est bon")}</button>{/if}
         </div>
         <p class="sous">{t("Une seule fois : les prochains relevés de ce format seront reconnus tout seuls.")}</p>
       </div>

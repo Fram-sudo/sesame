@@ -73,7 +73,13 @@ export interface Operation {
 
 export interface Import {
   id: string;
+  /** Premier compte concerné ; tous les comptes d'un import de plusieurs relevés sont dans `comptes` */
   compteId: string;
+  comptes?: string[];
+  /** Noms des relevés importés ensemble */
+  fichiers?: string[];
+  /** Saisies à la main et opérations en attente remplacées par les lignes de la banque : remises si on annule */
+  remplacees?: Operation[];
   quand: number;
   fichier: string;
   banque: string;
@@ -160,13 +166,17 @@ export function soldes(jusquAu?: string): Map<string, number> {
 }
 
 /** Supprime un compte avec ses opérations et l'historique de ses imports. */
+/** Comptes concernés par un import (un seul pour les imports d'avant le regroupement). */
+export const comptesImport = (i: Import) => i.comptes ?? [i.compteId];
+
 export async function supprimerCompte(c: Compte) {
   const poches = donnees.comptes.filter((x) => x.parentId === c.id);
   for (const p of poches) await supprimerCompte(p);
   await ecrire([
     ...supprimer("routages", donnees.routages.filter((r) => r.source === c.id || r.cible === c.id)),
     ...supprimer("operations", donnees.operations.filter((o) => o.compteId === c.id)),
-    ...supprimer("imports", donnees.imports.filter((i) => i.compteId === c.id)),
+    // L'historique d'un import n'est retiré que s'il ne concerne plus aucun autre compte
+    ...supprimer("imports", donnees.imports.filter((i) => comptesImport(i).every((id) => id === c.id))),
     { collection: "comptes", id: c.id, valeur: null },
   ]);
   await classerEtLier();

@@ -57,6 +57,19 @@ if (import.meta.env.MODE === "demo" || new URLSearchParams(location.search).has(
       }
       await classerEtLier();
     }
+    // ?etape=1 : relevés choisis ; 2 : et validés ; 3 : et importés (captures de l'import groupé)
+    const etape = +(q.get("etape") ?? 0);
+    if (etape) {
+      const { app } = await import("./etat.svelte");
+      app.page = "import";
+      const clic = async (texte: string) => {
+        await new Promise((r) => setTimeout(r, 700));
+        [...document.querySelectorAll("button")].find((b) => b.textContent?.trim() === texte)?.click();
+      };
+      await clic("Choisir des fichiers");
+      if (etape >= 2) await clic("C'est bon pour tous");
+      if (etape >= 3) await clic("Importer tout");
+    }
     // ?survol=0.4 : doigt posé à 40 % de la largeur du premier graphique (captures)
     if (q.has("survol"))
       setTimeout(() => {
@@ -104,6 +117,8 @@ mockIPC(async (cmd, a) => {
       for (const c of args.changements) c.valeur === null ? memoire.delete(c.id) : memoire.set(c.id, c);
       return;
     case "lire_releves": {
+      // ?deux : deux relevés de la même banque qui se chevauchent (essai de l'import groupé)
+      if (new URLSearchParams(location.search).has("deux")) return [releveExemple(0, 6, "releve-octobre.csv"), releveExemple(4, 9, "releve-novembre.csv")];
       if (import.meta.env.MODE === "demo" || new URLSearchParams(location.search).has("visite")) return [releveExemple()];
       // Choix du fichier d'exemple : localStorage.fichier = "boursobank.csv" par exemple
       const nom = localStorage.getItem("fichier") ?? "revolut.csv";
@@ -135,7 +150,7 @@ mockIPC(async (cmd, a) => {
 });
 
 /** Démo du site : relevé Boursobank fictif des derniers jours (aucun fichier à télécharger) */
-function releveExemple() {
+function releveExemple(de = 0, a = 99, nom = "releve-boursobank-demo.csv") {
   const jour = (n: number) => new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
   const lignes: [number, string, string][] = [
     [1, "CARTE PHARMACIE DU CENTRE", "-12,90"],
@@ -149,6 +164,6 @@ function releveExemple() {
   ];
   const texte =
     "dateOp;dateVal;label;category;categoryParent;supplierFound;amount;comment;accountNum;accountLabel;accountbalance\n" +
-    lignes.map(([n, l, m]) => `${jour(n)};${jour(n)};"${l}";;;;"${m}";;00000000000;"COMPTE BOURSOBANK (DÉMO)";`).join("\n");
-  return { nom: "releve-boursobank-demo.csv", lignes: null, texte, pdf: null, erreur: null };
+    lignes.slice(de, a).map(([n, l, m]) => `${jour(n)};${jour(n)};"${l}";;;;"${m}";;00000000000;"COMPTE BOURSOBANK (DÉMO)";`).join("\n");
+  return { nom, lignes: null, texte, pdf: null, erreur: null };
 }

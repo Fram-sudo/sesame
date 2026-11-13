@@ -2,7 +2,7 @@
   import Choix from "../Choix.svelte";
   import { t } from "../i18n.svelte";
   // Banques et imports : ce que l'appli a retenu pour chaque compte (reconnaissance des relevés, colonnes, options).
-  import { donnees, ecrire, type Compte } from "../donnees.svelte";
+  import { comptesImport, donnees, ecrire, type Compte } from "../donnees.svelte";
   import { annoncer, app } from "../etat.svelte";
   import Icone from "../Icone.svelte";
   import RemiseAZero from "../RemiseAZero.svelte";
@@ -51,7 +51,7 @@
     {@const p = profilDe(c)}
     {@const poches = donnees.comptes.filter((x) => x.parentId === c.id)}
     {@const routages = donnees.routages.filter((r) => r.source === c.id || r.cible === c.id)}
-    {@const nbImports = donnees.imports.filter((i) => i.compteId === c.id).length}
+    {@const nbImports = donnees.imports.filter((i) => comptesImport(i).includes(c.id)).length}
     <section class="carte pile">
       <div>
         <h2>{c.nom}</h2>

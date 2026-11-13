@@ -144,9 +144,9 @@ interface CompteRef {
  * Compte de destination : celui déjà associé à ce type de relevé, sinon celui de la même banque
  * (et même devise), sinon le dernier utilisé parmi plusieurs. "" = créer un nouveau compte.
  */
-export function choisirCompte(p: Preparation, comptes: CompteRef[], imports: { compteId: string; quand: number }[]): string {
+export function choisirCompte(p: Preparation, comptes: CompteRef[], imports: { compteId: string; comptes?: string[]; quand: number }[]): string {
   const dernier = (ids: string[]) =>
-    ids.length < 2 ? (ids[0] ?? "") : ([...imports].sort((a, b) => b.quand - a.quand).find((i) => ids.includes(i.compteId))?.compteId ?? ids[0]);
+    ids.length < 2 ? (ids[0] ?? "") : ([...imports].sort((a, b) => b.quand - a.quand).map((i) => (i.comptes ?? [i.compteId]).find((id) => ids.includes(id))).find(Boolean) ?? ids[0]);
   const parEmpreinte = comptes.filter((c) => c.empreinte && (p.estPdf ? p.empreinte === c.empreinte : c.empreinte === p.empreinte));
   if (parEmpreinte.length) return dernier(parEmpreinte.map((c) => c.id));
   if (!p.banque) return "";

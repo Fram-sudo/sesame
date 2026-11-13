@@ -2,7 +2,7 @@
   import { t } from "./i18n.svelte";
   // Remise à zéro : efface toutes les opérations (et l'historique des imports) des comptes choisis,
   // poches comprises, pour réimporter proprement. Les comptes peuvent être gardés ou supprimés.
-  import { classerEtLier, donnees, ecrire, supprimer, supprimerCompte, type Changement } from "./donnees.svelte";
+  import { classerEtLier, comptesImport, donnees, ecrire, supprimer, supprimerCompte, type Changement } from "./donnees.svelte";
   import { annoncer } from "./etat.svelte";
   import Feuille from "./Feuille.svelte";
 
@@ -27,7 +27,7 @@
       } else {
         const ch: Changement[] = [
           ...supprimer("operations", donnees.operations.filter((o) => touches.has(o.compteId))),
-          ...supprimer("imports", donnees.imports.filter((i) => touches.has(i.compteId))),
+          ...supprimer("imports", donnees.imports.filter((i) => comptesImport(i).every((id) => touches.has(id)))),
           // Solde de départ remis à 0 : le prochain import repart de zéro
           ...donnees.comptes.filter((c) => touches.has(c.id)).map((c) => ({ collection: "comptes", id: c.id, valeur: { ...c, soldeInitial: 0 } }) as Changement),
         ];

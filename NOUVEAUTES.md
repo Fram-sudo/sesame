@@ -10,14 +10,12 @@ Si ce texte n'a pas changé depuis la version précédente, la version dit simpl
 
 ## FR
 
-- Graphiques : le repère suit votre doigt ou votre souris sans à-coup, le long de la courbe ; sur les barres, la zone choisie glisse d'un mois à l'autre.
-- Toutes les devises du monde : vos devises d'abord dans les listes, recherche par nom ou par code. Une trentaine de taux officiels (BCE), les deux francs CFA à parité fixe, et un taux à saisir vous-même pour les autres.
-- Compte « Espèces » (porte-monnaie) : un retrait au distributeur l'alimente tout seul, sans être compté comme une dépense ; vos achats en espèces, saisis à la main, sont les vraies dépenses.
-- Une poche peut être une « Réserve » (par exemple pour payer une mensualité de prêt) : ni épargne, ni argent disponible, affichée à part dans « Argent réservé ».
+- Plusieurs relevés importés ensemble ne font plus qu'un seul import : un récapitulatif par compte (les opérations présentes dans deux relevés comptées une fois), une seule validation, une seule ligne dans l'historique, une seule annulation.
+- Deux relevés d'une même banque sans compte existant ne créent plus deux comptes.
+- Historique des imports : « Retirer de la liste » efface seulement la ligne, vos opérations restent. Supprimer les opérations d'un import raté reste possible, à part, avec une confirmation claire ; les saisies à la main qu'il avait remplacées reviennent alors.
 
 ## EN
 
-- Charts: the marker follows your finger or mouse smoothly along the curve; on bars, the highlight slides from one month to the next.
-- Every currency in the world: your currencies first in lists, search by name or code. About thirty official rates (ECB), both CFA francs at their fixed parity, and a rate you can enter yourself for the others.
-- “Cash” account (wallet): an ATM withdrawal tops it up automatically without counting as an expense; your cash purchases, entered by hand, are the real expenses.
-- A pocket can be a “Reserve” (for example to pay a loan instalment): neither savings nor available money, shown separately under “Reserved money”.
+- Several statements imported together now make a single import: one summary per account (transactions found in two statements counted once), one approval, one line in the history, one undo.
+- Two statements from the same bank with no existing account no longer create two accounts.
+- Import history: “Remove from list” only clears the line, your transactions stay. Deleting the transactions of a mistaken import is still possible, separately, with a clear confirmation; the manual entries it had replaced then come back.
