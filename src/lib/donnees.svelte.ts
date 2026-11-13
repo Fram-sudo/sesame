@@ -64,6 +64,8 @@ export interface Operation {
   note?: string;
   /** Pas encore définitive à la date du relevé : remplacée automatiquement quand elle le devient */
   enAttente?: boolean;
+  /** Était en attente, marquée effectuée à la main : la ligne définitive du prochain relevé la remplacera */
+  etaitEnAttente?: boolean;
 }
 
 export interface Import {

@@ -10,8 +10,12 @@ Si ce texte n'a pas changé depuis la version précédente, la version dit simpl
 
 ## FR
 
-- Alertes sur le téléphone (Android) : risque de découvert quelques jours avant, budget presque atteint, rappel d'importer vos relevés et rappel de sauvegarde. Sans montant sur l'écran verrouillé, sauf si vous le choisissez. Réglages dans Paramètres → Alertes.
+- Vos saisies à la main sont retrouvées dans les relevés importés ensuite (même montant, à quelques jours près) : la ligne de la banque les remplace, avec votre catégorie et votre note. Plus de doublon.
+- Les opérations en attente sont déduites tout de suite de l'argent disponible, comme chez votre banque, quel que soit le format du relevé. L'Accueil indique « … en attente déjà déduits ». Vous pouvez marquer une opération en attente comme effectuée ; au prochain import, la ligne définitive de la banque la remplace sans doublon.
+- Une fois un relevé importé, sa carte disparaît d'elle-même (les opérations restent). Elle ne reste que s'il y a un écart de solde à regarder.
 
 ## EN
 
-- Phone alerts (Android): overdraft risk a few days ahead, budget almost reached, reminder to import your statements and backup reminder. No amounts on the lock screen unless you choose so. Settings in Settings → Alerts.
+- Your manual entries are found in statements imported later (same amount, within a few days): the bank's line replaces them, keeping your category and note. No more duplicates.
+- Pending transactions are deducted right away from your available money, as your bank does, whatever the statement format. Home shows “… pending already deducted”. You can mark a pending transaction as completed; at the next import, the bank's final line replaces it without duplicates.
+- Once a statement is imported, its card goes away by itself (the transactions stay). It only stays if there is a balance gap to look at.

@@ -48,7 +48,7 @@ DATA:OFXSGML
     expect(r.ops[0].detail).toBe("Carte 1234");
   });
 
-  it("CAMT.053 (ISO 20022) : sens par CdtDbtInd, tiers, opérations en attente écartées", async () => {
+  it("CAMT.053 (ISO 20022) : sens par CdtDbtInd, tiers, opérations en attente gardées comme telles", async () => {
     const texte = `<?xml version="1.0" encoding="UTF-8"?>
 <Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.02"><BkToCstmrStmt><Stmt>
 <Acct><Id><IBAN>FR7600000000000000000000000</IBAN></Id><Ccy>EUR</Ccy><Svcr><FinInstnId><Nm>Boursobank</Nm></FinInstnId></Svcr></Acct>
@@ -59,8 +59,8 @@ DATA:OFXSGML
 <Ntry><Amt Ccy="EUR">9.99</Amt><CdtDbtInd>DBIT</CdtDbtInd><Sts>PDNG</Sts><BookgDt><Dt>2026-03-06</Dt></BookgDt><AddtlNtryInf>EN ATTENTE</AddtlNtryInf></Ntry>
 </Stmt></BkToCstmrStmt></Document>`;
     const { p, r, ops } = await lues(texte, "releve.xml");
-    expect(ops).toEqual(ATTENDU);
-    expect(r.nonAbouties).toBe(1);
+    expect(ops).toEqual([...ATTENDU, ["2026-03-06", -999, "EN ATTENTE"]]);
+    expect(r.ops[2].enAttente).toBe(true);
     expect(p.banque).toBe("Boursobank");
     expect(p.empreinte).toBe("camt|FR7600000000000000000000000");
   });

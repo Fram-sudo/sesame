@@ -25,6 +25,8 @@ export interface OpLue {
   detail?: string;
   categorieBanque?: string;
   solde?: number;
+  /** Pas encore définitive à la date du relevé (paiement par carte en cours…) */
+  enAttente?: boolean;
 }
 
 export interface Lecture {
@@ -173,7 +175,9 @@ export function lireMontant(s: string): number | null {
 }
 
 // États d'opérations pas définitives, en français et en anglais (Revolut, N26, Wise…)
-const NON_ABOUTI = ["pending", "en attente", "en cours", "reverted", "restaure", "restauree", "annule", "annulee", "cancelled", "canceled", "declined", "refuse", "refusee", "rejected", "rejete", "rejetee", "failed", "echoue", "echouee"];
+// En attente : comptées comme dans l'appli de la banque, puis remplacées par la version définitive
+const EN_ATTENTE = ["pending", "en attente", "en cours"];
+const NON_ABOUTI = ["reverted", "restaure", "restauree", "annule", "annulee", "cancelled", "canceled", "declined", "refuse", "refusee", "rejected", "rejete", "rejetee", "failed", "echoue", "echouee"];
 const DEVISES: Record<string, string> = { "€": "EUR", "$": "USD", "fcfa": "XOF", "cfa": "XOF" };
 
 export function lire(lignes: string[][], idxEntete: number, profil: Profil, devise: string): Lecture {
@@ -187,8 +191,11 @@ export function lire(lignes: string[][], idxEntete: number, profil: Profil, devi
     const ligne = idxEntete + 2 + k;
     // Lignes de pied de page (« Solde au… », totaux) : bien plus courtes que les opérations
     const courte = l.filter((x) => x.trim()).length < Math.min(3, entete.length);
-    if (NON_ABOUTI.includes(normaliser(val(l, c.etat)))) return void res.nonAbouties++;
-    const date = lireDate(val(l, c.date), profil.formatDate);
+    const etat = normaliser(val(l, c.etat));
+    if (NON_ABOUTI.includes(etat)) return void res.nonAbouties++;
+    const enAttente = EN_ATTENTE.includes(etat);
+    // Une opération en attente n'a souvent pas encore de date de fin : on prend l'autre date de la ligne
+    const date = lireDate(val(l, c.date), profil.formatDate) ?? (enAttente ? (l.map((x) => lireDate(x, profil.formatDate)).find(Boolean) ?? null) : null);
     if (!date) {
       if (!courte) res.erreurs.push({ ligne, raison: `date illisible « ${val(l, c.date)} »` });
       return;
@@ -219,6 +226,7 @@ export function lire(lignes: string[][], idxEntete: number, profil: Profil, devi
       ...(detail && val(l, c.libelle) ? { detail } : {}),
       ...(val(l, c.categorie) ? { categorieBanque: val(l, c.categorie) } : {}),
       ...(solde !== null ? { solde } : {}),
+      ...(enAttente ? { enAttente } : {}),
     });
   });
   return res;

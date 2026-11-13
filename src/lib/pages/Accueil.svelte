@@ -134,6 +134,8 @@
     for (const o of donnees.operations) if (o.enAttente) m.set(o.compteId, (m.get(o.compteId) ?? 0) + o.montant);
     return m;
   });
+  // Opérations en attente comprises dans l'argent disponible (comptes courants affichés, convertis)
+  const enAttenteTotal = $derived([...attente].reduce((s, [id, v]) => s + (p.courants.has(id) ? Math.round(v * (p.facteur.get(id) ?? 1)) : 0), 0));
   const recentes = $derived(
     donnees.operations
       .filter((o) => p.courants.has(o.compteId) && o.date >= b.de && o.date <= b.fin)
@@ -191,6 +193,7 @@
         </p>
         <p class="solde montant" style:font-size={tailleSolde}>{soldeAffiche.ent}<span class="cts">{soldeAffiche.dec}</span></p>
         {#each autresDevises as [d, v] (d)}<p class="sous montant">+ {argent(v, d)}</p>{/each}
+        {#if enAttenteTotal}<p class="sous">{t("{0} en attente déjà déduits", argent(Math.abs(enAttenteTotal), devise))}</p>{/if}
         {#if devisesConverties.length}<p class="sous">{t("comptes en")} {devisesConverties.map((d) => SYMBOLES[d] ?? d).join(", ")} {t("convertis en")} {devise === "EUR" ? "euros" : (SYMBOLES[devise] ?? devise)}{app.params.taux && [...devisesConverties, devise].some((d) => d === "USD" || d === "CAD") ? t(" (taux du {0})", dateCourte(app.params.taux.date)) : ""}</p>{/if}
         <button class="puce" onclick={() => (app.page = "epargne")}>
           {#if totalEpargne}+ <strong class="montant">{argent(totalEpargne, devise)}</strong> {t("de côté · poches et épargne")}{:else}{t("Mettre de l'argent de côté")}{/if}

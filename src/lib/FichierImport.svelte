@@ -5,10 +5,10 @@
   // doublons écartés. L'assistant de colonnes ne s'ouvre que si l'appli n'a pas su lire le fichier.
   import { attribuerPoches } from "./categories";
   import ControleSolde from "./ControleSolde.svelte";
-  import { classerEtLier, DEVISES, donnees, ecrire, nouvelId, type Changement, type Compte, type Devise, type Import, type Operation } from "./donnees.svelte";
+  import { classerEtLier, DEVISES, donnees, ecrire, nouvelId, soldes, type Changement, type Compte, type Devise, type Import, type Operation } from "./donnees.svelte";
   import { argent, dateCourte } from "./format";
   import { coherenceSoldes, lire, manques, type FormatDate, type Role } from "./import/analyse";
-  import { cleOp, separerDoublons } from "./import/doublons";
+  import { cleOp, rapprocherSaisies, separerDoublons } from "./import/doublons";
   import { choisirCompte, deviner, type Preparation } from "./import/fichier";
 
   let { prep, retirer }: { prep: Preparation; retirer: () => void } = $props();
@@ -35,7 +35,7 @@
   let assistant = $state(manques(prep.profil).length > 0);
   let profilModifie = false;
   let etat = $state<"pret" | "encours" | "fait">("pret");
-  let resultat = $state<{ nb: number; poches: number; nouvellesPoches: string[]; soldeBanque?: number; date?: string; compte?: Compte } | null>(null);
+  let resultat = $state<{ nb: number; reconnues: number; poches: number; nouvellesPoches: string[]; soldeBanque?: number; date?: string; compte?: Compte } | null>(null);
   let erreur = $state("");
 
   const compte = $derived(donnees.comptes.find((c) => c.id === compteId));
@@ -92,6 +92,11 @@
   });
   // Rien de lisible : l'assistant s'ouvre de lui-même
   const assistantOuvert = $derived(assistant || (!!lecture && !lecture.ops.length && lecture.erreurs.length > 0));
+  // Opérations déjà notées sur ce compte (saisies à la main, en attente ou marquées effectuées), retrouvées
+  // dans le relevé (même montant, à quelques jours près) : la ligne de la banque les remplace, sans doublon
+  const saisies = $derived(compteId ? donnees.operations.filter((o) => o.compteId === compteId && (o.manuelle || o.enAttente || o.etaitEnAttente)) : []);
+  const reconnues = $derived(tri ? rapprocherSaisies(tri.nouvelles.filter((o) => !o.enAttente), saisies) : new Map());
+  const nbAttente = $derived(tri ? tri.nouvelles.filter((o) => o.enAttente || prep.enAttente.includes(principal[o.ligne - 1]?.[iSection] ?? "")).length : 0);
   const pret = $derived(ok && !aValider && !!tri && (tri.nouvelles.length > 0 || nbPoches > 0));
 
   export async function importer() {
@@ -111,10 +116,15 @@
 
       const importId = nouvelId();
       const ops: Operation[] = tri.nouvelles.map((o) => {
-        const { ligne, solde: _s, ...op } = o;
-        const attente = prep.enAttente.includes(principal[ligne - 1]?.[iSection] ?? "");
-        return { ...op, id: nouvelId(), compteId: cid, importId, ...(attente ? { enAttente: true } : {}) };
+        const { ligne, solde: _s, enAttente: attenteLue, ...op } = o;
+        const attente = attenteLue || prep.enAttente.includes(principal[ligne - 1]?.[iSection] ?? "");
+        // Saisie à la main retrouvée : on garde sa catégorie et sa note, la banque donne la date et le libellé exacts
+        const s = reconnues.get(o);
+        const garde = s ? { ...(s.categorieId ? { categorieId: s.categorieId, categorieManuelle: true } : {}), ...(s.note ? { note: s.note } : {}) } : {};
+        return { ...op, ...garde, id: nouvelId(), compteId: cid, importId, ...(attente ? { enAttente: true } : {}) };
       });
+      for (const s of reconnues.values()) ch.push({ collection: "operations", id: s.id, valeur: null });
+      const nbReconnues = reconnues.size;
       // Poches : un sous-compte d'épargne par poche, créé au premier import ; reconnu ensuite par son nom
       // dans le relevé (même si vous l'avez renommé dans l'appli) ; une poche archivée qui bouge à nouveau réapparaît
       const nouvellesPoches: string[] = [];
@@ -144,7 +154,7 @@
       const ceJour = avecSolde.filter((o) => o.date === max);
       const ref = decroissant ? ceJour[0] : ceJour[ceJour.length - 1];
       compteId = cid;
-      resultat = { nb: nbPrincipal, poches: nbDansPoches, nouvellesPoches, soldeBanque: ref?.solde, date: ref?.date, compte: donnees.comptes.find((c) => c.id === cid) };
+      resultat = { nb: nbPrincipal, reconnues: nbReconnues, poches: nbDansPoches, nouvellesPoches, soldeBanque: ref?.solde, date: ref?.date, compte: donnees.comptes.find((c) => c.id === cid) };
       etat = "fait";
     } catch (e) {
       erreur = String(e);
@@ -153,6 +163,9 @@
   }
   export const estPret = () => pret && etat === "pret";
   export const attendValidation = () => aValider && etat === "pret";
+  // Import terminé et soldes d'accord avec la banque (ou pas de solde à comparer) : la carte peut se retirer
+  const ecartFinal = $derived(resultat?.compte && resultat.soldeBanque !== undefined && resultat.date ? resultat.soldeBanque - (soldes(resultat.date).get(resultat.compte.id) ?? 0) : 0);
+  export const fini = () => etat === "fait" && ecartFinal === 0;
 
   // Assistant de colonnes
   const ROLES: [Role, string][] = [
@@ -184,11 +197,12 @@
       <strong>{prep.nom}</strong>
       <span class="badge" class:inconnue={!prep.banque}>{prep.banque ?? t("Banque non reconnue")}</span>
     </div>
-    {#if etat === "pret"}<button class="lien" onclick={retirer}>{t("Retirer")}</button>{/if}
+    {#if etat === "pret"}<button class="lien" onclick={retirer}>{t("Retirer")}</button>{:else if etat === "fait"}<button class="lien" onclick={retirer}>{t("Fermer")}</button>{/if}
   </div>
 
   {#if etat === "fait" && resultat}
     <p class="ok" data-visite="importe">✓ {resultat.nb} {t("opération")}{resultat.nb > 1 ? "s" : ""} {t("dans «")} {resultat.compte?.nom} »{resultat.poches ? t(", {0} dans les poches", resultat.poches) : ""}.</p>
+    {#if resultat.reconnues}<p class="sous">{t("{0} opération(s) déjà notée(s) retrouvée(s) dans le relevé : remplacée(s) par la ligne de la banque, catégorie gardée.", resultat.reconnues)}</p>{/if}
     {#each resultat.nouvellesPoches as n (n)}<p class="info">{t("Nouvelle poche détectée : «")} {n} {t("». Renommez-la ou fixez-lui un objectif depuis sa fiche.")}</p>{/each}
     {#if resultat.compte && resultat.soldeBanque !== undefined}
       <ControleSolde compte={resultat.compte} soldeBanque={resultat.soldeBanque} date={resultat.date} />
@@ -293,7 +307,9 @@
           {#each [...poches.parPoche] as [nom, l] (nom)}<li><strong>{l.length}</strong> {t("dans la poche «")} {nom} »</li>{/each}
         {/if}
         {#if tri.doublons.length + (poches?.doublons ?? 0)}<li><strong>{tri.doublons.length + (poches?.doublons ?? 0)}</strong> {t("déjà importées (ignorées)")}</li>{/if}
-        {#if lecture.nonAbouties}<li><strong>{lecture.nonAbouties}</strong> {t("en attente ou annulées dans le fichier (ignorées)")}</li>{/if}
+        {#if nbAttente}<li><strong>{nbAttente}</strong> {t("en attente : déduites tout de suite comme chez votre banque, remplacées ensuite par la version définitive")}</li>{/if}
+        {#if reconnues.size}<li><strong>{reconnues.size}</strong> {t("opération(s) déjà notée(s) (à la main ou en attente) retrouvée(s) : la ligne de la banque la (les) remplacera, catégorie gardée")}</li>{/if}
+        {#if lecture.nonAbouties}<li><strong>{lecture.nonAbouties}</strong> {t("annulées ou refusées dans le fichier (ignorées)")}</li>{/if}
         {#if lecture.autreDevise}<li><strong>{lecture.autreDevise}</strong> {t("dans une autre devise que")} {devise} {t("(ignorées)")}</li>{/if}
       </ul>
       {#if suspects.length}

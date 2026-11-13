@@ -27,13 +27,13 @@ describe("import bilingue", () => {
     ]) expect(dateEnLettres(s), s).toBe(attendu);
   });
 
-  it("opérations pas définitives ignorées", () => {
+  it("annulées ignorées, en attente gardées (marquées)", () => {
     const profil: Profil = { id: "p", nom: "p", entete: [], colonnes: { date: "date", libelle: "libelle", montant: "montant", etat: "etat" }, formatDate: "JJ/MM/AAAA" };
-    const etats = ["EN ATTENTE", "PENDING", "ANNULÉ", "CANCELLED", "REJETÉ", "DECLINED", "RESTAURÉ", "REVERTED", "ÉCHOUÉ", "FAILED"];
-    const lignes = [["date", "libelle", "montant", "etat"], ...etats.map((e) => ["01/02/2026", "X", "-1,00", e]), ["01/02/2026", "X", "-1,00", "TERMINÉ"], ["01/02/2026", "X", "-1,00", "COMPLETED"]];
+    const etats = ["ANNULÉ", "CANCELLED", "REJETÉ", "DECLINED", "RESTAURÉ", "REVERTED", "ÉCHOUÉ", "FAILED"];
+    const lignes = [["date", "libelle", "montant", "etat"], ...etats.map((e) => ["01/02/2026", "X", "-1,00", e]), ["01/02/2026", "X", "-1,00", "TERMINÉ"], ["01/02/2026", "X", "-1,00", "COMPLETED"], ["01/02/2026", "X", "-1,00", "EN ATTENTE"], ["01/02/2026", "X", "-1,00", "PENDING"]];
     const r = lire(lignes, 0, profil, "EUR");
     expect(r.nonAbouties).toBe(etats.length);
-    expect(r.ops.length).toBe(2);
+    expect(r.ops.map((o) => !!o.enAttente)).toEqual([false, false, true, true]);
   });
 
   it("devise et tableaux du relevé", () => {

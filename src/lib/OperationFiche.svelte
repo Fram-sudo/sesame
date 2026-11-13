@@ -77,6 +77,14 @@
     fermer();
   }
 
+  // Plus « en attente » ; on garde la trace pour que la ligne définitive du prochain relevé la remplace
+  async function marquerEffectuee() {
+    const { enAttente: _, ...reste } = op;
+    await ecrire([{ collection: "operations", id: op.id, valeur: { ...reste, etaitEnAttente: true } }]);
+    annoncer(t("Opération marquée comme effectuée."));
+    fermer();
+  }
+
   async function supprimerOp() {
     const paire = [op, partenaire].filter((o): o is Operation => !!(o?.manuelle || o?.enAttente));
     await ecrire(paire.map((o) => ({ collection: "operations", id: o.id, valeur: null })));
@@ -136,7 +144,8 @@
   <button class="principal" onclick={enregistrer}>{t("Enregistrer")}</button>
 
   {#if op.enAttente}
-    <p class="info">{t("En attente à la date du relevé : elle sera remplacée automatiquement par l'opération définitive au prochain import. Si elle a été annulée par la banque, supprimez-la.")}</p>
+    <p class="info">{t("En attente : déjà déduite de votre argent disponible, comme chez votre banque. Elle sera remplacée par l'opération définitive au prochain import. Si elle a été annulée par la banque, supprimez-la.")}</p>
+    <button onclick={marquerEffectuee}>{t("Marquer comme effectuée")}</button>
   {/if}
   {#if op.manuelle || op.enAttente}
     {#if confirmer}

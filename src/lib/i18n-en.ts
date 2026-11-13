@@ -910,6 +910,14 @@ export const EN: Record<string, string> = {
   "Un de vos budgets est presque atteint ce mois-ci.": "One of your budgets is almost reached this month.",
   "Pensez à importer vos derniers relevés pour garder vos comptes à jour.": "Remember to import your latest statements to keep your accounts up to date.",
   "Pensez à exporter une sauvegarde de Sésame : c'est elle qui vous permet de tout retrouver si vous perdez cet appareil.": "Remember to export a Sesame backup: it's what lets you get everything back if you lose this device.",
+  "annulées ou refusées dans le fichier (ignorées)": "cancelled or declined in the file (ignored)",
+  "En attente : déjà déduite de votre argent disponible, comme chez votre banque. Elle sera remplacée par l'opération définitive au prochain import. Si elle a été annulée par la banque, supprimez-la.": "Pending: already deducted from your available money, as your bank does. It will be replaced by the final transaction at the next import. If the bank cancelled it, delete it.",
+  "Marquer comme effectuée": "Mark as completed",
+  "Opération marquée comme effectuée.": "Transaction marked as completed.",
+  "{0} opération(s) déjà notée(s) retrouvée(s) dans le relevé : remplacée(s) par la ligne de la banque, catégorie gardée.": "{0} already-recorded transaction(s) found in the statement: replaced by the bank's line, category kept.",
+  "opération(s) déjà notée(s) (à la main ou en attente) retrouvée(s) : la ligne de la banque la (les) remplacera, catégorie gardée": "already-recorded transaction(s) (manual or pending) found: the bank's line will replace it (them), category kept",
+  "en attente : déduites tout de suite comme chez votre banque, remplacées ensuite par la version définitive": "pending: deducted right away as your bank does, then replaced by the final version",
+  "{0} en attente déjà déduits": "{0} pending already deducted",
 };
 
 /** Textes volontairement identiques en anglais (codes, données de démonstration) */

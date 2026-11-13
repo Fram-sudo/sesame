@@ -61,6 +61,8 @@
     for (const c of cartes) if (c?.estPret()) await c.importer();
     enCours = false;
     annoncer(t("Import terminé."));
+    // Le fichier n'est jamais gardé : une fois importé (soldes d'accord), sa carte se retire d'elle-même
+    setTimeout(() => (fichiers = fichiers.filter((_, i) => !cartes[i]?.fini())), 4000);
   }
 
   async function annulerImport(imp: Import) {

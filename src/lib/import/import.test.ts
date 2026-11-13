@@ -67,10 +67,12 @@ describe("relevés d'exemple", () => {
   it("Revolut (en cours, autre devise et frais)", () => {
     const r = importer(fixture("revolut.csv"));
     expect(r.banque).toBe("Revolut");
-    expect(r.ops.map((o) => o.montant)).toEqual([-2340, 50000, -1049]);
-    expect(r.nonAbouties).toBe(1);
+    // La ligne PENDING (sans date de fin) est gardée, marquée en attente, à sa date de début
+    expect(r.ops.map((o) => o.montant)).toEqual([-2340, 50000, -1500, -1049]);
+    expect(r.ops[2]).toMatchObject({ date: "2026-01-31", enAttente: true });
+    expect(r.nonAbouties).toBe(0);
     expect(r.autreDevise).toBe(1);
-    expect(r.ops[2]).toMatchObject({ libelle: "Abonnement, Exemple", solde: 46611 });
+    expect(r.ops[3]).toMatchObject({ libelle: "Abonnement, Exemple", solde: 46611 });
   });
 
   it("Boursobank", () => {
