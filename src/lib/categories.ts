@@ -161,6 +161,20 @@ export function categoriser(o: Op, regles: Regle[], categories: Categorie[]): st
 }
 
 /**
+ * Virement saisi à la main dont un côté est déjà là (importé d'un relevé, par exemple) : le départ
+ * sur `de` ou l'arrivée sur `vers`, même montant, à 4 jours au plus, pas encore relié. Le plus proche en date.
+ */
+export function moitieDejaLa<T extends Op>(ops: T[], de: string, vers: string, montant: number, date: string): { op: T; cote: "depart" | "arrivee" } | undefined {
+  const jours = (x: string) => Math.abs(Date.parse(x) - Date.parse(date)) / 86_400_000;
+  const proche = (compte: string, m: number) =>
+    ops.filter((o) => o.compteId === compte && o.montant === m && !o.virementId && !o.pasVirement && jours(o.date) <= 4).sort((a, b) => jours(a.date) - jours(b.date))[0];
+  const d = proche(de, -montant);
+  if (d) return { op: d, cote: "depart" };
+  const a = proche(vers, montant);
+  return a ? { op: a, cote: "arrivee" } : undefined;
+}
+
+/**
  * Repère les virements entre vos comptes : une sortie et une entrée du même montant,
  * sur deux comptes de même devise, à 4 jours d'écart au plus.
  * shortcut: virements entre devises différentes (EUR → XOF) non détectés, à revoir avec les taux de change (jalon 7).

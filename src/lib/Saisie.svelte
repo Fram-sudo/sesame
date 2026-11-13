@@ -2,14 +2,15 @@
   import Choix from "./Choix.svelte";
   import { t } from "./i18n.svelte";
   // Saisie à la main : dépense, revenu ou virement entre deux de vos comptes.
-  import { categoriser, VIREMENT } from "./categories";
+  import { categoriser, moitieDejaLa, VIREMENT } from "./categories";
   import ChoixCategorie from "./ChoixCategorie.svelte";
   import CompteFormulaire from "./CompteFormulaire.svelte";
-  import { donnees, ecrire, nouvelId, reglesActives, type Operation } from "./donnees.svelte";
+  import { classerEtLier, donnees, ecrire, nouvelId, reglesActives, type Operation } from "./donnees.svelte";
   import { annoncer, app } from "./etat.svelte";
   import Feuille from "./Feuille.svelte";
   import { lireMontant, normaliser } from "./import/analyse";
   import { cleOp } from "./import/doublons";
+  import { dateCourte } from "./format";
 
   type Type = "depense" | "revenu" | "virement";
   let { type: initial, fermer }: { type: Type; fermer: () => void } = $props();
@@ -28,6 +29,8 @@
   const de = $derived(donnees.comptes.find((c) => c.id === compteId));
   const vers = $derived(donnees.comptes.find((c) => c.id === versId));
   const devisesDifferentes = $derived(type === "virement" && !!de && !!vers && de.devise !== vers.devise);
+  // Virement dont un côté est déjà là (relevé de l'autre compte importé) : seul le côté manquant sera ajouté
+  const dejaLa = $derived(type === "virement" && cts && de && vers && vers.id !== de.id ? moitieDejaLa(donnees.operations, de.id, vers.id, Math.abs(cts), date) : undefined);
   const valide = $derived(!!cts && !!de && (type !== "virement" || (!!vers && vers.id !== de.id && !devisesDifferentes)));
 
   // Catégorie proposée d'après le libellé, tant que vous ne l'avez pas choisie vous-même
@@ -67,15 +70,19 @@
     if (type === "virement") {
       const virementId = nouvelId();
       const lib = libelle.trim();
-      ops = [
-        op(de!.id, -v, lib || t("Virement vers {0}", vers!.nom), { virementId, categorieId: VIREMENT }),
-        op(vers!.id, v, lib || t("Virement depuis {0}", de!.nom), { virementId, categorieId: VIREMENT }),
-      ];
+      const depart = op(de!.id, -v, lib || t("Virement vers {0}", vers!.nom), { virementId, categorieId: VIREMENT });
+      const arrivee = op(vers!.id, v, lib || t("Virement depuis {0}", de!.nom), { virementId, categorieId: VIREMENT });
+      const x = dejaLa?.op;
+      // Le côté déjà présent est relié au nouveau (sa catégorie choisie à la main est gardée)
+      const relie = x && { ...x, virementId, ...(x.categorieManuelle ? {} : { categorieId: VIREMENT }) };
+      ops = !relie ? [depart, arrivee] : dejaLa!.cote === "depart" ? [relie, arrivee] : [depart, relie];
     } else {
       const m = type === "revenu" ? v : -v;
       ops = [op(de!.id, m, libelle.trim() || TITRES[type], { categorieId: categorieId || undefined, categorieManuelle: categorieTouchee })];
     }
     await ecrire(ops.map((o) => ({ collection: "operations", id: o.id, valeur: o })));
+    // Une dépense ou un revenu qui répond à un virement déjà importé est relié tout de suite
+    if (type !== "virement") await classerEtLier();
     app.dernierCompte = de!.id;
     annoncer(type === "depense" ? t("Dépense enregistrée.") : type === "revenu" ? t("Revenu enregistré.") : t("Virement enregistré."));
     fermer();
@@ -113,6 +120,7 @@
       {#if type === "virement"}
         <label>{t("Date")}<input type="date" bind:value={date} required /></label>
         {#if donnees.comptes.length < 2}<p class="info">{t("Il faut au moins deux comptes pour un virement.")}</p>{/if}
+        {#if dejaLa}<p class="info">{dejaLa.cote === "depart" ? t("Ce virement est déjà sur « {0} » (le {1}) : seule l'arrivée sur « {2} » sera ajoutée.", de!.nom, dateCourte(dejaLa.op.date), vers!.nom) : t("Ce virement est déjà arrivé sur « {0} » (le {1}) : seul le départ de « {2} » sera ajouté.", vers!.nom, dateCourte(dejaLa.op.date), de!.nom)}</p>{/if}
         {#if devisesDifferentes}<p class="info">{t("Les virements entre devises différentes ({0} → {1}) ne sont pas encore gérés : saisissez une dépense sur un compte et un revenu sur l'autre.", de?.devise ?? "", vers?.devise ?? "")}</p>{/if}
       {:else}
         <span class="sous">{t("Catégorie")}</span>

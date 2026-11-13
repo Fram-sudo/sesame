@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { libelleLisible, attentesRemplacees, attribuerPoches, mouvementPoche, router, CATEGORIES_DEFAUT, REGLES_DEFAUT, categoriser, detecterRecurrences, detecterVirements, motif, trierRegles, VIREMENT, type Op } from "./categories";
+import { libelleLisible, attentesRemplacees, attribuerPoches, mouvementPoche, router, CATEGORIES_DEFAUT, REGLES_DEFAUT, categoriser, detecterRecurrences, detecterVirements, moitieDejaLa, motif, trierRegles, VIREMENT, type Op } from "./categories";
 
 let n = 0;
 const op = (date: string, montant: number, libelle: string, extra: Partial<Op> = {}): Op => ({ id: `o${n++}`, compteId: "a", date, montant, libelle, ...extra });
@@ -171,5 +171,17 @@ describe("retraits d'espèces", () => {
   it("reconnus en français et en anglais, pas les retraits de poche", () => {
     for (const l of ["RETRAIT DAB 12/11 PARIS", "Retrait d'espèces", "CARTE X1234 RETRAIT DAB", "Cash withdrawal at Barclays", "ATM London"]) expect(estRetraitEspeces(l), l).toBe(true);
     for (const l of ["Retrait depuis une Pocket", "Pocket Withdrawal", "CARTE CARREFOUR", "Remboursement"]) expect(estRetraitEspeces(l), l).toBe(false);
+  });
+});
+
+describe("virement saisi à la main dont un côté est déjà importé", () => {
+  it("retrouve le départ déjà sur le compte d'origine, sinon l'arrivée", () => {
+    const depart = op("2026-11-10", -50000, "VIR VERS LIVRET", { compteId: "a" });
+    const loin = op("2026-11-01", -50000, "VIR ANCIEN", { compteId: "a" });
+    const lie = op("2026-11-11", -50000, "VIR DEJA LIE", { compteId: "a", virementId: "v1" });
+    expect(moitieDejaLa([loin, lie, depart], "a", "b", 50000, "2026-11-12")).toEqual({ op: depart, cote: "depart" });
+    const arrivee = op("2026-11-13", 50000, "VIR RECU", { compteId: "b" });
+    expect(moitieDejaLa([arrivee], "a", "b", 50000, "2026-11-12")).toEqual({ op: arrivee, cote: "arrivee" });
+    expect(moitieDejaLa([loin, lie], "a", "b", 50000, "2026-11-12")).toBeUndefined();
   });
 });

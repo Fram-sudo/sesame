@@ -147,7 +147,8 @@
         const attente = attenteLue || prep.enAttente.includes(principal[ligne - 1]?.[iSection] ?? "");
         // Saisie à la main retrouvée : on garde sa catégorie et sa note, la banque donne la date et le libellé exacts
         const s = reconnues.get(o);
-        const garde = s ? { ...(s.categorieId ? { categorieId: s.categorieId, categorieManuelle: true } : {}), ...(s.note ? { note: s.note } : {}) } : {};
+        // (et son virement : la ligne de la banque reste reliée à l'autre côté)
+        const garde = s ? { ...(s.categorieId ? { categorieId: s.categorieId, categorieManuelle: true } : {}), ...(s.note ? { note: s.note } : {}), ...(s.virementId ? { virementId: s.virementId } : {}) } : {};
         return { ...op, ...garde, id: nouvelId(), compteId: cid, importId, ...(attente ? { enAttente: true } : {}) };
       });
       const remplacees = [...reconnues.values()].filter((s) => !garder?.has(s.id)).map((s) => $state.snapshot(s) as Operation);
