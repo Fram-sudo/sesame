@@ -29,6 +29,9 @@ if (import.meta.env.MODE === "demo" || new URLSearchParams(location.search).has(
     if (page) app.page = page as never;
     const mode = new URLSearchParams(location.search).get("mode");
     if (mode) app.periode = { ...app.periode, mode: mode as never };
+    // Captures du site : seule la section voulue reste sous l'en-tête (repère data-visite)
+    const cible = new URLSearchParams(location.search).get("cible");
+    if (cible) document.head.append(Object.assign(document.createElement("style"), { textContent: `main section.carte:not([data-visite="${cible}"]), main .carte.resume:not([data-visite="${cible}"]) { display: none !important; }` }));
   }, 1500);
 }
 
@@ -42,7 +45,7 @@ mockIPC(async (cmd, a) => {
       return { existe, ouvert };
     case "creer_coffre":
       existe = ouvert = true;
-      return "ABCD EFGH IJKL MNOP QRST UVWX YZ23 4567 ABCD EFGH IJKL MNOP QRST";
+      return "ABCD-EFGH-IJKL-MNOP-QRST-UVWX-YZ23-4567-ABCD-EFGH-IJKL-MNOP-QRST";
     case "deverrouiller":
       if (args.mdp !== "test test test") throw "Mot de passe incorrect.";
       ouvert = true;
@@ -69,6 +72,11 @@ mockIPC(async (cmd, a) => {
       const latin = nom.includes("societe");
       return [{ nom, lignes: null, texte: new TextDecoder(latin ? "windows-1252" : "utf-8").decode(octets), pdf: null, erreur: null }];
     }
+    case "tout_effacer":
+      memoire.clear();
+      parametres = null;
+      existe = ouvert = false;
+      return;
     case "plugin:app|version":
       return "0.1.0";
     case "derniere_version": {

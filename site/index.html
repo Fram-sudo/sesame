@@ -3,89 +3,159 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sésame · vos finances, chez vous</title>
-<meta name="description" content="Sésame : suivi de budget 100 % local et chiffré. Importez les relevés de n'importe quelle banque, suivez budgets, épargne et prêts. Windows, Android et Linux.">
+<title>Sésame · vos finances, personne d'autre</title>
+<meta name="description" content="Sésame : suivi de budget gratuit, 100 % local et chiffré. Importez les relevés de n'importe quelle banque, suivez budgets, épargne et prêts. Windows, Android et Linux, en français et en anglais.">
 <link rel="icon" href="assets/icone.svg" type="image/svg+xml">
 <style>
 @font-face { font-family: Manrope; src: url(assets/manrope.woff2) format("woff2"); font-weight: 200 800; font-display: swap; }
 :root {
   --fond: #f4f3ef; --surface: #eae9e3; --surface-2: #dfded7; --texte: #16171b; --doux: #55575f; --bord: #dad8d0;
-  --accent: #3b5bfd; --accent-fond: #e3e8ff; --sur-accent: #fff; --nuit: #0b0d12;
+  --accent: #3b5bfd; --accent-fort: #2a44d4; --accent-fond: #e3e8ff; --sur-accent: #fff;
+  --nuit: #0b0d12; --nuit-2: #1a1e2a; --nuit-texte: #f3f4f7; --nuit-doux: #a6acba; --accent-nuit: #8196ff;
+  --ok: #12804c; --non: #b4232a;
+  --serrure: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='38' r='15'/%3E%3Cpath d='M42.5 46h15l6.5 36h-28z'/%3E%3C/svg%3E");
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
-body { font-family: Manrope, system-ui, sans-serif; background: var(--fond); color: var(--texte); line-height: 1.55; font-weight: 500; -webkit-font-smoothing: antialiased; }
+html { scroll-behavior: smooth; scrollbar-color: #b9b7ae var(--fond); }
+body { font-family: Manrope, system-ui, sans-serif; background: var(--fond); color: var(--texte); line-height: 1.55; font-weight: 500; -webkit-font-smoothing: antialiased; caret-color: var(--accent); }
 ::selection { background: var(--accent); color: #fff; }
-a { color: inherit; }
+a { color: inherit; text-underline-offset: 3px; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
 html[lang="fr"] [lang="en"], html[lang="en"] [lang="fr"] { display: none !important; }
 .cadre { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
 svg.i { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+img { display: block; max-width: 100%; height: auto; }
 
-/* En-tête */
-header { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--fond) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--bord); }
+/* En-tête : sombre sur la porte, clair ensuite */
+header { position: fixed; inset: 0 0 auto; z-index: 20; transition: background .3s, color .3s, border-color .3s; border-bottom: 1px solid transparent; }
+header { background: color-mix(in srgb, var(--fond) 90%, transparent); backdrop-filter: blur(10px); border-color: var(--bord); }
+header.nuit { background: transparent; backdrop-filter: none; border-color: transparent; color: var(--nuit-texte); }
 header .cadre { display: flex; align-items: center; gap: 24px; height: 64px; }
 .marque { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; text-decoration: none; }
 .marque img { width: 32px; height: 32px; border-radius: 9px; }
 nav.liens { display: flex; gap: 22px; margin-left: auto; font-weight: 600; font-size: 15px; }
-nav.liens a { text-decoration: none; color: var(--doux); }
-nav.liens a:hover { color: var(--texte); }
-.langues { display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--surface); }
-.langues button { border: 0; background: none; font: inherit; font-size: 13px; font-weight: 700; padding: 5px 10px; border-radius: 999px; cursor: pointer; color: var(--doux); }
-.langues button[aria-pressed="true"] { background: var(--fond); color: var(--texte); }
+nav.liens a { text-decoration: none; opacity: .72; }
+nav.liens a:hover { opacity: 1; }
+.langues { display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: color-mix(in srgb, currentColor 10%, transparent); }
+.langues button { border: 0; background: none; font: inherit; font-size: 13px; font-weight: 700; padding: 5px 10px; border-radius: 999px; cursor: pointer; color: inherit; opacity: .7; }
+.langues button[aria-pressed="true"] { opacity: 1; background: color-mix(in srgb, currentColor 16%, transparent); }
 
-/* Ouverture */
-.ouverture { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 56px; align-items: center; padding: 64px 0 72px; }
-h1 { font-size: clamp(40px, 6vw, 68px); line-height: 1.02; font-weight: 800; letter-spacing: -0.035em; }
-h1 em { font-style: normal; color: var(--accent); }
-.chapeau { font-size: 19px; color: var(--doux); margin: 22px 0 30px; max-width: 34em; }
-.boutons { display: flex; flex-wrap: wrap; gap: 12px; }
-.bouton { display: inline-flex; align-items: center; gap: 10px; padding: 14px 22px; border-radius: 999px; font-weight: 800; text-decoration: none; font-size: 16px; border: 0; cursor: pointer; transition: transform .12s; }
+.bouton { display: inline-flex; align-items: center; gap: 10px; padding: 15px 24px; border-radius: 999px; font-weight: 800; text-decoration: none; font-size: 16px; border: 0; cursor: pointer; transition: transform .12s, background .2s; }
 .bouton:active { transform: scale(.97); }
 .bouton.plein { background: var(--accent); color: var(--sur-accent); }
+.bouton.plein:hover { background: var(--accent-fort); }
 .bouton.doux { background: var(--surface-2); color: var(--texte); }
-.garanties { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 28px; color: var(--doux); font-size: 14px; font-weight: 600; }
-.garanties span { display: inline-flex; align-items: center; gap: 6px; }
-.garanties svg { width: 18px; height: 18px; color: var(--accent); }
-/* Démo : cadre de téléphone ou fenêtre d'ordinateur (l'appli s'adapte à la largeur, comme la vraie) */
+.bouton.nuit { background: var(--nuit-2); color: var(--nuit-texte); }
+
+/* ---------- La porte : la serrure de l'icône s'ouvre sur l'appli ---------- */
+/* L'icône de Sésame en grand : de la lumière passe par la serrure ; en défilant, on y entre et l'appli apparaît */
+.porte { height: 200vh; background: var(--nuit); color: var(--nuit-texte); --s: 1; --sv: 1; --t: 1; --e: 0; }
+.scene { position: sticky; top: 0; height: 100vh; overflow: hidden; --cx: 68vw; --cy: 50vh; --d: min(58vmin, 520px, 36vw); }
+/* Halo bleu derrière l'icône, comme une pièce éclairée derrière la porte */
+.scene::before { content: ""; position: absolute; width: calc(var(--d) * 2.2); height: calc(var(--d) * 2.2); left: calc(var(--cx) - var(--d) * 1.1); top: calc(var(--cy) - var(--d) * 1.1);
+  background: radial-gradient(closest-side, rgba(59, 91, 253, .32), transparent); opacity: var(--t); }
+.plaque { position: absolute; width: var(--d); height: var(--d); left: calc(var(--cx) - var(--d) / 2); top: calc(var(--cy) - var(--d) / 2);
+  background: url(assets/icone.svg) center / contain no-repeat; border-radius: 22.5%; box-shadow: 0 50px 90px -30px rgba(0, 0, 0, .8);
+  transform: scale(var(--s)); opacity: var(--o, 1); will-change: transform; }
+/* Le trou de la serrure : exactement celui de l'icône, qui grandit plus vite que l'icône */
+.vue { position: absolute; inset: 0; overflow: hidden;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'%3E%3Ccircle cx='512' cy='452' r='82'/%3E%3Cpath d='M466 500L440 662Q438 676 452 676L572 676Q586 676 584 662L558 500Z'/%3E%3C/svg%3E") no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'%3E%3Ccircle cx='512' cy='452' r='82'/%3E%3Cpath d='M466 500L440 662Q438 676 452 676L572 676Q586 676 584 662L558 500Z'/%3E%3C/svg%3E") no-repeat;
+  --w: calc(var(--d) * var(--sv));
+  -webkit-mask-size: var(--w) var(--w); mask-size: var(--w) var(--w);
+  -webkit-mask-position: calc(var(--cx) - var(--w) / 2) calc(var(--cy) - var(--w) / 2); mask-position: calc(var(--cx) - var(--w) / 2) calc(var(--cy) - var(--w) / 2); }
+/* Au repos : de la lumière ; en entrant : l'appli, d'abord floue et rapprochée, puis nette */
+.lumiere { position: absolute; inset: 0; background: radial-gradient(circle at var(--cx) var(--cy), #fff 0, #eef1ff calc(var(--d) * .12), #9eb0ff calc(var(--d) * .32), #3b5bfd calc(var(--d) * .6)); }
+.ecran { position: absolute; inset: 0; background-color: var(--fond); background-size: cover; background-position: center top; opacity: var(--e);
+  transform: scale(calc(1.18 - var(--e) * .18)); filter: blur(calc((1 - var(--e)) * 14px)); transform-origin: var(--cx) var(--cy); }
+html[lang="fr"] .ecran { background-image: url(assets/ecrans/pc-fr.webp); }
+html[lang="en"] .ecran { background-image: url(assets/ecrans/pc-en.webp); }
+.texte-porte { position: absolute; left: max(24px, calc((100vw - 1160px) / 2 + 24px)); bottom: 11vh; width: min(520px, 44vw); opacity: var(--t); transform: translateY(calc((1 - var(--t)) * -40px)); }
+h1 { font-size: clamp(44px, 6.4vw, 92px); line-height: .98; font-weight: 800; letter-spacing: -0.04em; text-wrap: balance; }
+h1 em { font-style: normal; color: var(--accent-nuit); }
+.chapeau { font-size: 19px; color: var(--nuit-doux); margin: 22px 0 28px; max-width: 30em; }
+.boutons { display: flex; flex-wrap: wrap; gap: 12px; }
+.plateformes { margin-top: 22px; color: var(--nuit-doux); font-size: 14px; font-weight: 600; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.plateformes svg { width: 18px; height: 18px; }
+.defiler { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); color: var(--nuit-doux); font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; opacity: var(--t); }
+.defiler svg { width: 16px; height: 16px; animation: descend 1.8s cubic-bezier(.16, 1, .3, 1) infinite; }
+@keyframes descend { 0%, 100% { transform: translateY(-2px); } 50% { transform: translateY(3px); } }
+
+/* ---------- Sections ---------- */
+section.bloc { padding: 112px 0; }
+[id] { scroll-margin-top: 72px; }
+h2 { font-size: clamp(32px, 4.4vw, 54px); line-height: 1.04; font-weight: 800; letter-spacing: -0.035em; text-wrap: balance; }
+.intro { color: var(--doux); font-size: 19px; margin-top: 16px; max-width: 38em; }
+
+/* Démo */
+.essai { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 64px; align-items: center; }
+.essai.pc { grid-template-columns: 1fr; }
 .demo { display: flex; flex-direction: column; align-items: center; gap: 16px; min-width: 0; }
-.consigne { font-weight: 700; text-align: center; max-width: 26em; }
-.bascule { display: flex; gap: 4px; padding: 5px; border-radius: 999px; background: var(--surface-2); }
+.bascule { display: flex; gap: 4px; padding: 5px; border-radius: 999px; background: var(--surface-2); margin-top: 28px; width: fit-content; }
 .bascule button { display: inline-flex; align-items: center; gap: 8px; border: 0; background: none; font: inherit; font-size: 16px; font-weight: 800; padding: 11px 22px; border-radius: 999px; cursor: pointer; color: var(--doux); }
 .bascule button:hover { color: var(--texte); }
 .bascule button[aria-pressed="true"] { background: var(--accent); color: var(--sur-accent); }
-.tourner { display: none; }
 .ecran-demo { background: var(--nuit); box-shadow: 0 30px 60px -20px rgba(11, 13, 18, .45); overflow: hidden; }
 .ecran-demo iframe { border: 0; background: #fff; display: block; }
 .demo[data-mode="tel"] .ecran-demo { width: 400px; height: 800px; border-radius: 52px; padding: 12px; }
 .demo[data-mode="tel"] .ecran-demo iframe { width: 100%; height: 100%; border-radius: 41px; }
-/* Ordinateur : une vraie fenêtre de 1280 × 800, réduite pour tenir dans la page */
 .demo[data-mode="pc"] { width: 100%; }
 .demo[data-mode="pc"] .ecran-demo { width: 100%; aspect-ratio: 1280 / 830; border-radius: 14px; padding: 30px 0 0; position: relative; }
 .demo[data-mode="pc"] .ecran-demo::before { content: ""; position: absolute; top: 11px; left: 14px; width: 9px; height: 9px; border-radius: 50%; background: #ff5f57; box-shadow: 15px 0 #febc2e, 30px 0 #28c840; }
 .demo[data-mode="pc"] .ecran-demo iframe { width: 1280px; height: 800px; transform: scale(var(--echelle, .5)); transform-origin: 0 0; }
-.ouverture.pc { grid-template-columns: 1fr; }
-.demo .note { font-size: 13px; color: var(--doux); font-weight: 600; text-align: center; }
-.plein-ecran { display: none; }
-.demo-mobile { display: none; }
+.note { font-size: 14px; color: var(--doux); font-weight: 600; }
+.plein-ecran, .tourner { display: none; }
 
-/* Historique des versions */
-.versions { list-style: none; margin-top: 32px; display: grid; gap: 12px; max-width: 760px; }
-.versions > li { background: var(--surface); border-radius: 18px; padding: 18px 22px; }
-.versions .titre { font-weight: 800; }
-.versions .titre span { color: var(--doux); font-weight: 600; }
-.versions ul { margin: 8px 0 0 20px; color: var(--doux); display: grid; gap: 4px; }
+/* Les questions */
+.question { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 72px; align-items: center; padding: 72px 0; }
+.question + .question { border-top: 1px solid var(--bord); }
+.question:nth-child(even) { grid-template-columns: 320px minmax(0, 1fr); }
+.question:nth-child(even) .tel { order: -1; }
+.question h2 { font-size: clamp(36px, 5.4vw, 72px); }
+.question h2 em { font-style: normal; color: var(--accent); }
+.question p { font-size: 19px; color: var(--doux); margin-top: 18px; max-width: 30em; }
+.tel { border-radius: 46px; background: var(--nuit); padding: 10px; box-shadow: 0 34px 60px -26px rgba(11, 13, 18, .5); }
+.tel img { border-radius: 37px; width: 100%; aspect-ratio: 1 / 2; object-fit: cover; object-position: top; }
+.points { list-style: none; margin-top: 28px; display: grid; gap: 14px; max-width: 34em; }
+.points li { display: grid; grid-template-columns: 22px 1fr; gap: 12px; color: var(--doux); }
+.points li svg { color: var(--accent); margin-top: 2px; }
+.points b { color: var(--texte); }
 
-/* Sections */
-section.bloc { padding: 80px 0; }
-section.bloc + section.bloc { border-top: 1px solid var(--bord); }
-h2 { font-size: clamp(30px, 4vw, 42px); line-height: 1.1; font-weight: 800; letter-spacing: -0.025em; max-width: 20em; }
-.intro { color: var(--doux); font-size: 18px; margin-top: 14px; max-width: 40em; }
+/* Sur ordinateur */
+.ordinateur { background: var(--nuit); color: var(--nuit-texte); }
+.ordinateur .intro { color: var(--nuit-doux); }
+.fenetre { margin-top: 48px; border-radius: 16px; overflow: hidden; background: var(--nuit-2); padding-top: 30px; position: relative; box-shadow: 0 40px 80px -30px rgba(0, 0, 0, .8); }
+.fenetre::before { content: ""; position: absolute; top: 11px; left: 14px; width: 9px; height: 9px; border-radius: 50%; background: #ff5f57; box-shadow: 15px 0 #febc2e, 30px 0 #28c840; }
 
-.fonctions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 36px 40px; margin-top: 48px; }
-.fonction .pastille { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; color: #fff; margin-bottom: 16px; }
-.fonction h3 { font-size: 19px; font-weight: 800; margin-bottom: 6px; }
-.fonction p { color: var(--doux); }
+/* Comparaison */
+.comparer { margin-top: 44px; overflow-x: auto; border-radius: 20px; background: var(--surface); }
+table { width: 100%; border-collapse: collapse; min-width: 640px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 16px 20px; vertical-align: top; }
+thead th { font-size: 15px; font-weight: 800; color: var(--doux); }
+thead th.nous { color: var(--accent); }
+tbody th { font-weight: 700; width: 30%; }
+tbody tr { border-top: 1px solid var(--bord); }
+td { color: var(--doux); }
+td.nous { color: var(--texte); font-weight: 700; background: color-mix(in srgb, var(--accent) 7%, transparent); }
+td svg { width: 18px; height: 18px; vertical-align: -3px; margin-right: 6px; }
+.oui svg { color: var(--ok); }
+.non svg { color: var(--non); }
+
+/* Histoire */
+.histoire { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; }
+.histoire p { font-size: 19px; color: var(--doux); }
+.histoire p + p { margin-top: 18px; }
+.histoire p b { color: var(--texte); }
+
+/* Questions fréquentes */
+.faq { margin-top: 40px; max-width: 820px; }
+.faq details { border-top: 1px solid var(--bord); }
+.faq details:last-child { border-bottom: 1px solid var(--bord); }
+.faq summary { list-style: none; cursor: pointer; padding: 20px 0; font-size: 18px; font-weight: 800; display: flex; justify-content: space-between; gap: 16px; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary svg { transition: transform .25s cubic-bezier(.16, 1, .3, 1); color: var(--doux); }
+.faq details[open] summary svg { transform: rotate(45deg); }
+.faq details p { padding: 0 0 22px; color: var(--doux); max-width: 44em; }
 
 /* Installer */
 .onglets { display: flex; gap: 6px; padding: 5px; border-radius: 999px; background: var(--surface); width: fit-content; margin: 36px 0 24px; flex-wrap: wrap; }
@@ -102,34 +172,48 @@ code { font-family: ui-monospace, Consolas, monospace; font-size: .92em; backgro
 pre { background: var(--nuit); color: #e7e9f0; padding: 14px 16px; border-radius: 14px; overflow-x: auto; font-size: 14px; margin-top: 10px; }
 pre code { background: none; padding: 0; color: inherit; }
 
-/* Sécurité */
-.securite { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 40px; }
-.securite div { background: var(--surface); border-radius: 20px; padding: 22px 24px; }
-.securite h3 { font-size: 17px; font-weight: 800; margin-bottom: 6px; display: flex; gap: 10px; align-items: center; }
-.securite h3 svg { color: var(--accent); }
-.securite p { color: var(--doux); }
+/* Versions */
+.versions { list-style: none; margin-top: 32px; display: grid; gap: 12px; max-width: 760px; }
+.versions > li { background: var(--surface); border-radius: 18px; padding: 18px 22px; }
+.versions .titre { font-weight: 800; }
+.versions .titre span { color: var(--doux); font-weight: 600; }
+.versions ul { margin: 8px 0 0 20px; color: var(--doux); display: grid; gap: 4px; }
 
-footer { padding: 40px 0 56px; color: var(--doux); font-size: 14px; border-top: 1px solid var(--bord); }
+.fin { background: var(--nuit); color: var(--nuit-texte); text-align: center; }
+.fin h2 { margin: 0 auto; max-width: 14em; }
+.fin .boutons { justify-content: center; margin-top: 32px; }
+footer { padding: 32px 0 48px; color: var(--nuit-doux); font-size: 14px; background: var(--nuit); border-top: 1px solid var(--nuit-2); }
 footer .cadre { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
 
 @media (max-width: 980px) {
-  .ouverture { grid-template-columns: 1fr; padding-top: 40px; }
-  .demo-mobile { display: inline-flex; }
-  /* Petit écran : la démo téléphone s'ouvre en plein écran ; l'aperçu ordinateur reste ici, réduit */
+  nav.liens { display: none; }
+  .langues { margin-left: auto; }
+  .scene { --cx: 50vw; --cy: 27vh; --d: min(58vw, 30vh); }
+  .texte-porte { left: 16px; right: 16px; width: auto; bottom: 8vh; }
+  .chapeau { font-size: 17px; margin: 16px 0 22px; }
+  html[lang="fr"] .ecran { background-image: url(assets/ecrans/accueil-fr.webp); }
+  html[lang="en"] .ecran { background-image: url(assets/ecrans/accueil-en.webp); }
+  .defiler { display: none; }
+  .essai, .question, .question:nth-child(even), .histoire { grid-template-columns: 1fr; gap: 36px; }
+  .question:nth-child(even) .tel { order: 0; }
+  .tel { width: min(300px, 80vw); margin: 0 auto; }
   .demo[data-mode="tel"] .ecran-demo { display: none; }
   .demo[data-mode="tel"] .plein-ecran { display: inline-flex; }
   .demo[data-mode="pc"] .tourner { display: block; }
-  .fonctions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .plateforme { grid-template-columns: 1fr; padding: 24px; }
-  nav.liens { display: none; }
-  .langues { margin-left: auto; }
 }
 @media (max-width: 620px) {
   .cadre { padding: 0 16px; }
-  .fonctions, .securite { grid-template-columns: 1fr; }
-  section.bloc { padding: 56px 0; }
+  section.bloc { padding: 72px 0; }
+  .question { padding: 52px 0; }
+  .plateformes { font-size: 13px; }
 }
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+@media (max-height: 640px) and (max-width: 980px) { .chapeau { display: none; } }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .porte { height: 100vh; }
+  .defiler svg { animation: none; }
+}
 </style>
 </head>
 <body>
@@ -137,34 +221,30 @@ footer .cadre { display: flex; flex-wrap: wrap; justify-content: space-between; 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="cadenas" viewBox="0 0 24 24"><path d="M5 13a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2zM8 11V7a4 4 0 1 1 8 0v4"/></symbol>
   <symbol id="nuage" viewBox="0 0 24 24"><path d="M6.6 19a4.6 4.6 0 0 1-.6-9.2 6 6 0 0 1 11.6 1.6 4 4 0 0 1 .4 7.6M3 3l18 18"/></symbol>
-  <symbol id="import" viewBox="0 0 24 24"><path d="M14 3v4a1 1 0 0 0 1 1h4M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2zM12 17v-6M9.5 13.5L12 11l2.5 2.5"/></symbol>
-  <symbol id="cible" viewBox="0 0 24 24"><path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0M12 12m-5 0a5 5 0 1 0 10 0a5 5 0 1 0-10 0M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0-18 0"/></symbol>
-  <symbol id="tirelire" viewBox="0 0 24 24"><path d="M15 11v.01M16 4v3.8a6 6 0 0 1 2.7 3.2H20a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-1.3a6 6 0 0 1-1.7 2.5V20a1.5 1.5 0 0 1-3 0v-.6a6 6 0 0 1-1 .1h-4a6 6 0 0 1-1-.1v.6a1.5 1.5 0 0 1-3 0v-2a6 6 0 0 1 4-10.5h2.5z"/></symbol>
-  <symbol id="banque" viewBox="0 0 24 24"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/></symbol>
-  <symbol id="synchro" viewBox="0 0 24 24"><path d="M20 11A8.1 8.1 0 0 0 4.5 9M4 5v4h4M4 13a8.1 8.1 0 0 0 15.5 2M20 19v-4h-4"/></symbol>
-  <symbol id="courbe" viewBox="0 0 24 24"><path d="M4 19h16M4 15l4-6 4 2 4-5 4 4"/></symbol>
-  <symbol id="globe" viewBox="0 0 24 24"><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0-18 0M3.6 9h16.8M3.6 15h16.8M11.5 3a17 17 0 0 0 0 18M12.5 3a17 17 0 0 1 0 18"/></symbol>
   <symbol id="empreinte" viewBox="0 0 24 24"><path d="M18.9 7a8 8 0 0 1 1.1 5v1a6 6 0 0 0 .8 3M8 11a4 4 0 0 1 8 0v1a10 10 0 0 0 2 6M12 11v2a14 14 0 0 0 2.5 8M8 15a18 18 0 0 0 1.8 6M4.9 19a22 22 0 0 1-.9-7v-1a8 8 0 0 1 12-6.95"/></symbol>
   <symbol id="cle" viewBox="0 0 24 24"><path d="M16.6 3c2.1 0 3.4 1.3 3.4 3.4v.2c0 2.1-1.3 3.4-3.4 3.4h-.2l-2.4 2.4-1 1H11v2H9v2H6v-3l5.6-5.6-.6-.6v-.2C11 4.3 12.3 3 14.4 3zM16 7h.01"/></symbol>
   <symbol id="telecharger" viewBox="0 0 24 24"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 11l5 5 5-5M12 4v12"/></symbol>
   <symbol id="mobile" viewBox="0 0 24 24"><path d="M6 5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2zM11 4h2M12 17v.01"/></symbol>
   <symbol id="ordinateur" viewBox="0 0 24 24"><path d="M3 19h18M5 6a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v10H5z"/></symbol>
   <symbol id="jouer" viewBox="0 0 24 24"><path d="M7 4v16l13-8z"/></symbol>
+  <symbol id="bas" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="oui" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></symbol>
+  <symbol id="non" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
   <symbol id="windows" viewBox="0 0 24 24"><path d="M4 6l7-1v6H4zM13 4.7L20 4v7h-7zM4 13h7v6l-7-1zM13 13h7v7l-7-.7z"/></symbol>
   <symbol id="android" viewBox="0 0 24 24"><path d="M4 10v6M20 10v6M7 9h10v8a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1zM8 3l1 2M16 3l-1 2M9 18v3M15 18v3M7 9a5 5 0 0 1 10 0"/></symbol>
   <symbol id="linux" viewBox="0 0 24 24"><path d="M9 7a3 3 0 1 1 6 0v3c0 2 2 3 3 6s-1 5-6 5-7-2-6-5 3-4 3-6zM10 7h.01M14 7h.01M10.5 10h3"/></symbol>
-  <symbol id="github" viewBox="0 0 24 24"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></symbol>
 </svg>
 
-<header>
+<header class="nuit">
   <div class="cadre">
     <a class="marque" href="#"><img src="assets/icone.svg" alt="">Sésame</a>
     <nav class="liens" aria-label="Sections">
-      <a href="#fonctions"><span lang="fr">Fonctionnalités</span><span lang="en">Features</span></a>
-      <a href="#installer"><span lang="fr">Installer</span><span lang="en">Install</span></a>
+      <a href="#essayer"><span lang="fr">Démo</span><span lang="en">Demo</span></a>
+      <a href="#comparer"><span lang="fr">Comparer</span><span lang="en">Compare</span></a>
       <a href="#securite"><span lang="fr">Sécurité</span><span lang="en">Security</span></a>
-      <a href="#versions"><span lang="fr">Nouveautés</span><span lang="en">What's new</span></a>
-      <a href="https://github.com/Fram-sudo/sesame">GitHub</a>
+      <a href="#faq"><span lang="fr">Questions</span><span lang="en">FAQ</span></a>
+      <a href="#installer"><span lang="fr">Installer</span><span lang="en">Install</span></a>
     </nav>
     <div class="langues" role="group" aria-label="Langue / Language">
       <button data-langue="fr" aria-pressed="true">FR</button>
@@ -174,64 +254,183 @@ footer .cadre { display: flex; flex-wrap: wrap; justify-content: space-between; 
 </header>
 
 <main>
-  <div class="cadre ouverture">
-    <div>
-      <h1><span lang="fr">Vos finances,<br><em>chez vous.</em></span><span lang="en">Your finances,<br><em>at home.</em></span></h1>
-      <p class="chapeau">
-        <span lang="fr">Sésame réunit tous vos comptes, vos budgets, votre épargne et vos prêts, sans serveur, sans compte en ligne, sans connexion à votre banque. Importez simplement vos relevés : tout se range tout seul, et tout reste chiffré sur vos appareils.</span>
-        <span lang="en">Sesame brings together all your accounts, budgets, savings and loans, with no server, no online account and no bank connection. Just import your statements: everything files itself, and everything stays encrypted on your devices.</span>
-      </p>
-      <div class="boutons">
-        <a class="bouton plein" href="#installer"><svg class="i"><use href="#telecharger"/></svg><span lang="fr">Télécharger</span><span lang="en">Download</span></a>
-        <a class="bouton doux demo-mobile" href="#essayer"><svg class="i"><use href="#jouer"/></svg><span lang="fr">Essayer la démo</span><span lang="en">Try the demo</span></a>
+  <!-- La porte : en faisant défiler, la serrure s'ouvre sur l'appli -->
+  <section class="porte" aria-label="Sésame">
+    <div class="scene">
+      <div class="plaque" aria-hidden="true"></div>
+      <div class="vue" role="img" aria-label="Sésame sur ordinateur, données fictives"><div class="lumiere"></div><div class="ecran"></div></div>
+      <div class="texte-porte">
+        <h1><span lang="fr">Vos finances.<br><em>Personne d'autre.</em></span><span lang="en">Your finances.<br><em>Nobody else's.</em></span></h1>
+        <p class="chapeau">
+          <span lang="fr">Tous vos comptes, budgets, épargne et prêts, dans une appli qui ne parle à aucun serveur. Importez vos relevés : Sésame range tout, et tout reste chiffré chez vous.</span>
+          <span lang="en">All your accounts, budgets, savings and loans, in an app that talks to no server. Import your statements: Sesame files everything, and everything stays encrypted at home.</span>
+        </p>
+        <div class="boutons">
+          <a class="bouton plein" href="#installer"><svg class="i"><use href="#telecharger"/></svg><span lang="fr">Télécharger gratuitement</span><span lang="en">Download for free</span></a>
+          <a class="bouton nuit" href="#essayer"><svg class="i"><use href="#jouer"/></svg><span lang="fr">Essayer la démo</span><span lang="en">Try the demo</span></a>
+        </div>
+        <p class="plateformes"><svg class="i"><use href="#windows"/></svg>Windows <svg class="i"><use href="#android"/></svg>Android <svg class="i"><use href="#linux"/></svg>Linux · <span lang="fr">français et anglais</span><span lang="en">French and English</span></p>
       </div>
-      <div class="garanties">
-        <span><svg class="i"><use href="#cadenas"/></svg><span lang="fr">Chiffré sur l'appareil</span><span lang="en">Encrypted on device</span></span>
-        <span><svg class="i"><use href="#nuage"/></svg><span lang="fr">Aucun cloud, aucun pistage</span><span lang="en">No cloud, no tracking</span></span>
-        <span><svg class="i"><use href="#globe"/></svg><span lang="fr">Français et anglais</span><span lang="en">French and English</span></span>
-      </div>
+      <p class="defiler" aria-hidden="true"><span lang="fr">Faites défiler : la serrure s'ouvre</span><span lang="en">Scroll: the lock opens</span><svg class="i"><use href="#bas"/></svg></p>
     </div>
-    <div class="demo" id="essayer" data-mode="tel">
-      <p class="consigne"><span lang="fr">Sésame existe sur téléphone et sur ordinateur. Choisissez la version à essayer :</span><span lang="en">Sesame runs on phones and computers. Pick the version to try:</span></p>
-      <div class="bascule" role="group" aria-label="Version">
-        <button data-mode="tel" aria-pressed="true"><svg class="i"><use href="#mobile"/></svg><span lang="fr">Téléphone</span><span lang="en">Phone</span></button>
-        <button data-mode="pc" aria-pressed="false"><svg class="i"><use href="#ordinateur"/></svg><span lang="fr">Ordinateur</span><span lang="en">Computer</span></button>
-      </div>
-      <div class="ecran-demo"><iframe data-src="demo/" title="Démo interactive de Sésame" loading="lazy"></iframe></div>
-      <a class="bouton plein plein-ecran" href="demo/"><svg class="i"><use href="#jouer"/></svg><span lang="fr">Ouvrir la démo téléphone</span><span lang="en">Open the phone demo</span></a>
-      <p class="note"><span lang="fr">Une visite guidée vous montre l'essentiel en une minute · données fictives, rien n'est enregistré</span><span lang="en">A guided tour shows you the essentials in one minute · fictional data, nothing is saved</span></p>
-      <p class="note tourner"><span lang="fr">Astuce : tournez votre téléphone pour voir la version ordinateur en plus grand.</span><span lang="en">Tip: turn your phone sideways to see the computer version larger.</span></p>
-    </div>
-  </div>
+  </section>
 
-  <section class="bloc" id="fonctions">
-    <div class="cadre">
-      <h2><span lang="fr">Savoir où vous en êtes, sans effort.</span><span lang="en">Know where you stand, without effort.</span></h2>
-      <p class="intro"><span lang="fr">L'argent vraiment disponible d'abord, puis où il part, ce qu'il vous reste à dépenser et ce qui arrive.</span><span lang="en">Your truly available money first, then where it goes, what you have left to spend and what's coming.</span></p>
-      <div class="fonctions">
-        <div class="fonction"><span class="pastille" style="background:#3b5bfd"><svg class="i"><use href="#import"/></svg></span>
-          <h3><span lang="fr">Tous vos relevés, toutes vos banques</span><span lang="en">Every statement, every bank</span></h3>
-          <p><span lang="fr">PDF, CSV ou Excel : la banque, le compte, les poches et les catégories sont reconnus automatiquement. Les doublons sont ignorés.</span><span lang="en">PDF, CSV or Excel: the bank, account, pockets and categories are recognised automatically. Duplicates are skipped.</span></p></div>
-        <div class="fonction"><span class="pastille" style="background:#ec4899"><svg class="i"><use href="#cible"/></svg></span>
-          <h3><span lang="fr">Des budgets qui préviennent</span><span lang="en">Budgets that warn you</span></h3>
-          <p><span lang="fr">Proposés d'après vos habitudes, mensuels ou annuels, avec ce qu'il reste par jour et une alerte quand le rythme dérape.</span><span lang="en">Suggested from your habits, monthly or yearly, with what's left per day and an alert when spending drifts.</span></p></div>
-        <div class="fonction"><span class="pastille" style="background:#f59e0b"><svg class="i"><use href="#tirelire"/></svg></span>
-          <h3><span lang="fr">Épargne et poches</span><span lang="en">Savings and pockets</span></h3>
-          <p><span lang="fr">Livrets, poches Revolut, tirelire en espèces : votre épargne est suivie à part, avec des objectifs.</span><span lang="en">Savings accounts, Revolut pockets, a cash piggy bank: your savings are tracked separately, with goals.</span></p></div>
-        <div class="fonction"><span class="pastille" style="background:#6366f1"><svg class="i"><use href="#banque"/></svg></span>
-          <h3><span lang="fr">Prêts</span><span lang="en">Loans</span></h3>
-          <p><span lang="fr">Échéancier, capital restant dû et simulation d'un remboursement anticipé avant de vous décider.</span><span lang="en">Schedule, outstanding principal and an early-repayment simulation before you decide.</span></p></div>
-        <div class="fonction"><span class="pastille" style="background:#14b8a6"><svg class="i"><use href="#courbe"/></svg></span>
-          <h3><span lang="fr">Prévision sur 3 mois</span><span lang="en">3-month forecast</span></h3>
-          <p><span lang="fr">Salaire, loyer et abonnements à leur date : Sésame vous prévient si votre compte risque de passer à découvert.</span><span lang="en">Salary, rent and subscriptions on their dates: Sesame warns you if your account may go overdrawn.</span></p></div>
-        <div class="fonction"><span class="pastille" style="background:#84cc16"><svg class="i"><use href="#synchro"/></svg></span>
-          <h3><span lang="fr">PC et téléphone, sans cloud</span><span lang="en">PC and phone, no cloud</span></h3>
-          <p><span lang="fr">Vos appareils s'échangent leurs changements par un simple fichier (Quick Share, Bluetooth, e-mail). Plusieurs devises, dont le franc CFA.</span><span lang="en">Your devices swap their changes through a simple file (Quick Share, Bluetooth, email). Several currencies, including the CFA franc.</span></p></div>
+  <!-- La démo guidée -->
+  <section class="bloc" id="essayer">
+    <div class="cadre essai">
+      <div>
+        <h2><span lang="fr">Essayez-le ici, tout de suite.</span><span lang="en">Try it here, right now.</span></h2>
+        <p class="intro"><span lang="fr">Une visite guidée vous montre l'essentiel en une minute : importer un relevé, classer, suivre ses budgets. Les données sont fictives, rien n'est enregistré.</span><span lang="en">A guided tour shows you the essentials in one minute: importing a statement, sorting, following your budgets. The data is fictional, nothing is saved.</span></p>
+        <p class="intro"><span lang="fr">Sésame existe sur téléphone et sur ordinateur. Choisissez la version à essayer :</span><span lang="en">Sesame runs on phones and computers. Pick the version to try:</span></p>
+        <div class="bascule" role="group" aria-label="Version">
+          <button data-mode="tel" aria-pressed="true"><svg class="i"><use href="#mobile"/></svg><span lang="fr">Téléphone</span><span lang="en">Phone</span></button>
+          <button data-mode="pc" aria-pressed="false"><svg class="i"><use href="#ordinateur"/></svg><span lang="fr">Ordinateur</span><span lang="en">Computer</span></button>
+        </div>
+      </div>
+      <div class="demo" data-mode="tel">
+        <div class="ecran-demo"><iframe data-src="demo/" title="Démo interactive de Sésame" loading="lazy"></iframe></div>
+        <a class="bouton plein plein-ecran" href="demo/"><svg class="i"><use href="#jouer"/></svg><span lang="fr">Ouvrir la démo téléphone</span><span lang="en">Open the phone demo</span></a>
+        <p class="note tourner"><span lang="fr">Astuce : tournez votre téléphone pour voir la version ordinateur en plus grand.</span><span lang="en">Tip: turn your phone sideways to see the computer version larger.</span></p>
       </div>
     </div>
   </section>
 
-  <section class="bloc" id="installer">
+  <!-- Les questions qu'on se pose -->
+  <section class="cadre" aria-label="Ce que Sésame vous dit">
+    <div class="question">
+      <div>
+        <h2><span lang="fr">Combien il me reste, <em>vraiment</em> ?</span><span lang="en">How much do I <em>really</em> have left?</span></h2>
+        <p><span lang="fr">L'argent que vous pouvez dépenser, tous comptes réunis, en euros, en francs CFA ou en dollars. L'épargne et les poches sont mises à part : elles ont un but.</span><span lang="en">The money you can spend, all accounts together, in euros, CFA francs or dollars. Savings and pockets are kept aside: they have a purpose.</span></p>
+      </div>
+      <div class="tel"><img lang="fr" src="assets/ecrans/accueil-fr.webp" width="720" height="1440" loading="lazy" alt="Accueil de Sésame : argent disponible, comptes et dépenses du mois"><img lang="en" src="assets/ecrans/accueil-en.webp" width="720" height="1440" loading="lazy" alt="Sesame home: available money, accounts and spending this month"></div>
+    </div>
+    <div class="question">
+      <div>
+        <h2><span lang="fr">Où part <em>mon argent</em> ?</span><span lang="en">Where does <em>my money</em> go?</span></h2>
+        <p><span lang="fr">Chaque opération se range toute seule dans sa catégorie. Vous voyez ce qui pèse le plus, et ce qui change par rapport à d'habitude.</span><span lang="en">Every transaction files itself into its category. You see what weighs most, and what changes compared to usual.</span></p>
+      </div>
+      <div class="tel"><img lang="fr" src="assets/ecrans/categories-fr.webp" width="720" height="1440" loading="lazy" alt="Dépenses par catégorie"><img lang="en" src="assets/ecrans/categories-en.webp" width="720" height="1440" loading="lazy" alt="Spending by category"></div>
+    </div>
+    <div class="question">
+      <div>
+        <h2><span lang="fr">Est-ce que je tiens <em>mes budgets</em> ?</span><span lang="en">Am I keeping to <em>my budgets</em>?</span></h2>
+        <p><span lang="fr">Sésame propose des budgets d'après vos habitudes et vous dit ce qu'il reste par jour. Il prévient avant que ça dérape, pas après.</span><span lang="en">Sesame suggests budgets from your habits and tells you what's left per day. It warns you before things drift, not after.</span></p>
+      </div>
+      <div class="tel"><img lang="fr" src="assets/ecrans/budgets-fr.webp" width="720" height="1440" loading="lazy" alt="Budgets du mois et reste à dépenser"><img lang="en" src="assets/ecrans/budgets-en.webp" width="720" height="1440" loading="lazy" alt="Monthly budgets and money left to spend"></div>
+    </div>
+    <div class="question">
+      <div>
+        <h2><span lang="fr">Vais-je finir <em>à découvert</em> ?</span><span lang="en">Will I end up <em>overdrawn</em>?</span></h2>
+        <p><span lang="fr">Salaire, loyer et abonnements à leur date : la prévision montre votre argent sur les 3 prochains mois et repère le jour où ça coince.</span><span lang="en">Salary, rent and subscriptions on their dates: the forecast shows your money over the next 3 months and spots the day things get tight.</span></p>
+      </div>
+      <div class="tel"><img lang="fr" src="assets/ecrans/prevision-fr.webp" width="720" height="1440" loading="lazy" alt="Prévision sur 3 mois"><img lang="en" src="assets/ecrans/prevision-en.webp" width="720" height="1440" loading="lazy" alt="3-month forecast"></div>
+    </div>
+    <div class="question" id="securite">
+      <div>
+        <h2><span lang="fr">Et qui voit <em>mes données</em> ?</span><span lang="en">And who sees <em>my data</em>?</span></h2>
+        <p><span lang="fr">Personne. Sésame ne se connecte ni à votre banque, ni à un serveur. Vos données ne quittent vos appareils que si vous les envoyez vous-même.</span><span lang="en">Nobody. Sesame connects neither to your bank nor to a server. Your data only leaves your devices if you send it yourself.</span></p>
+        <ul class="points">
+          <li><svg class="i"><use href="#cadenas"/></svg><span lang="fr"><b>Tout est chiffré</b> avec votre mot de passe (AES-256 et Argon2id, comme les gestionnaires de mots de passe).</span><span lang="en"><b>Everything is encrypted</b> with your password (AES-256 and Argon2id, like password managers).</span></li>
+          <li><svg class="i"><use href="#nuage"/></svg><span lang="fr"><b>Rien en ligne</b> : ni compte, ni pistage, ni sauvegarde cloud cachée.</span><span lang="en"><b>Nothing online</b>: no account, no tracking, no hidden cloud backup.</span></li>
+          <li><svg class="i"><use href="#cle"/></svg><span lang="fr"><b>Une clé de récupération</b>, remise à la création, si vous oubliez le mot de passe.</span><span lang="en"><b>A recovery key</b>, given at setup, in case you forget the password.</span></li>
+          <li><svg class="i"><use href="#empreinte"/></svg><span lang="fr"><b>L'empreinte sur Android</b> : la clé reste dans le coffre-fort matériel du téléphone.</span><span lang="en"><b>Fingerprint on Android</b>: the key stays in the phone's hardware vault.</span></li>
+        </ul>
+      </div>
+      <div class="tel"><img lang="fr" src="assets/ecrans/verrou-fr.webp" width="720" height="1440" loading="lazy" alt="Sésame verrouillé"><img lang="en" src="assets/ecrans/verrou-en.webp" width="720" height="1440" loading="lazy" alt="Sesame locked"></div>
+    </div>
+  </section>
+
+  <!-- Sur ordinateur aussi -->
+  <section class="bloc ordinateur">
+    <div class="cadre">
+      <h2><span lang="fr">Toutes vos banques, sur téléphone et sur ordinateur.</span><span lang="en">All your banks, on phone and computer.</span></h2>
+      <p class="intro"><span lang="fr">Importez les relevés de n'importe quelle banque, en PDF, CSV ou Excel, en français ou en anglais. Vos appareils s'échangent leurs changements par un simple fichier : Quick Share, câble, clé USB ou e-mail. Toujours sans cloud.</span><span lang="en">Import statements from any bank, as PDF, CSV or Excel, in French or English. Your devices swap their changes through a simple file: Quick Share, cable, USB stick or email. Always without the cloud.</span></p>
+      <div class="fenetre"><img lang="fr" src="assets/ecrans/pc-fr.webp" width="2000" height="1250" loading="lazy" alt="Sésame sur ordinateur, données fictives"><img lang="en" src="assets/ecrans/pc-en.webp" width="2000" height="1250" loading="lazy" alt="Sesame on a computer, fictional data"></div>
+    </div>
+  </section>
+
+  <!-- Comparaison -->
+  <section class="bloc" id="comparer">
+    <div class="cadre">
+      <h2><span lang="fr">Ce qui change avec Sésame.</span><span lang="en">What Sesame does differently.</span></h2>
+      <p class="intro"><span lang="fr">La plupart des applis de budget se connectent à votre banque à travers leurs serveurs. Sésame fait l'inverse.</span><span lang="en">Most budgeting apps connect to your bank through their servers. Sesame does the opposite.</span></p>
+      <div class="comparer">
+        <table>
+          <thead><tr><th></th><th class="nous">Sésame</th><th><span lang="fr">Applis connectées à la banque</span><span lang="en">Bank-connected apps</span></th><th><span lang="fr">Tableur</span><span lang="en">Spreadsheet</span></th></tr></thead>
+          <tbody>
+            <tr><th><span lang="fr">Vos identifiants bancaires</span><span lang="en">Your bank login</span></th>
+              <td class="nous oui"><svg class="i"><use href="#oui"/></svg><span lang="fr">Restent à vous</span><span lang="en">Stay yours</span></td>
+              <td class="non"><svg class="i"><use href="#non"/></svg><span lang="fr">Confiés à un service tiers</span><span lang="en">Handed to a third party</span></td>
+              <td class="oui"><svg class="i"><use href="#oui"/></svg><span lang="fr">Restent à vous</span><span lang="en">Stay yours</span></td></tr>
+            <tr><th><span lang="fr">Où sont vos données</span><span lang="en">Where your data lives</span></th>
+              <td class="nous oui"><svg class="i"><use href="#oui"/></svg><span lang="fr">Sur vos appareils, chiffrées</span><span lang="en">On your devices, encrypted</span></td>
+              <td class="non"><svg class="i"><use href="#non"/></svg><span lang="fr">Sur les serveurs de l'éditeur</span><span lang="en">On the provider's servers</span></td>
+              <td><span lang="fr">Sur votre ordinateur, souvent en clair</span><span lang="en">On your computer, often unencrypted</span></td></tr>
+            <tr><th><span lang="fr">Catégories automatiques</span><span lang="en">Automatic categories</span></th>
+              <td class="nous oui"><svg class="i"><use href="#oui"/></svg><span lang="fr">Oui, et elles apprennent</span><span lang="en">Yes, and they learn</span></td>
+              <td class="oui"><svg class="i"><use href="#oui"/></svg><span lang="fr">Oui</span><span lang="en">Yes</span></td>
+              <td class="non"><svg class="i"><use href="#non"/></svg><span lang="fr">À la main</span><span lang="en">By hand</span></td></tr>
+            <tr><th><span lang="fr">Budgets et prévision</span><span lang="en">Budgets and forecast</span></th>
+              <td class="nous oui"><svg class="i"><use href="#oui"/></svg><span lang="fr">Inclus</span><span lang="en">Included</span></td>
+              <td><span lang="fr">Selon l'appli</span><span lang="en">Depends on the app</span></td>
+              <td class="non"><svg class="i"><use href="#non"/></svg><span lang="fr">À construire soi-même</span><span lang="en">Build it yourself</span></td></tr>
+            <tr><th><span lang="fr">Plusieurs banques et devises</span><span lang="en">Several banks and currencies</span></th>
+              <td class="nous oui"><svg class="i"><use href="#oui"/></svg><span lang="fr">Toutes, dont le franc CFA</span><span lang="en">All, including the CFA franc</span></td>
+              <td><span lang="fr">Celles que l'appli gère</span><span lang="en">The ones the app supports</span></td>
+              <td><span lang="fr">À la main</span><span lang="en">By hand</span></td></tr>
+            <tr><th><span lang="fr">Sans connexion internet</span><span lang="en">Works offline</span></th>
+              <td class="nous oui"><svg class="i"><use href="#oui"/></svg><span lang="fr">Oui</span><span lang="en">Yes</span></td>
+              <td class="non"><svg class="i"><use href="#non"/></svg><span lang="fr">Non</span><span lang="en">No</span></td>
+              <td class="oui"><svg class="i"><use href="#oui"/></svg><span lang="fr">Oui</span><span lang="en">Yes</span></td></tr>
+            <tr><th><span lang="fr">Prix</span><span lang="en">Price</span></th>
+              <td class="nous oui"><svg class="i"><use href="#oui"/></svg><span lang="fr">Gratuit et libre</span><span lang="en">Free and open source</span></td>
+              <td><span lang="fr">Gratuit ou abonnement</span><span lang="en">Free or subscription</span></td>
+              <td><span lang="fr">Selon le logiciel</span><span lang="en">Depends on the software</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Histoire -->
+  <section class="bloc" id="histoire" style="padding-top:0">
+    <div class="cadre histoire">
+      <h2><span lang="fr">Pourquoi Sésame existe.</span><span lang="en">Why Sesame exists.</span></h2>
+      <div>
+        <p><span lang="fr">Tout est parti d'un besoin simple : suivre plusieurs banques (une banque traditionnelle, une néobanque, une banque en ligne) et deux monnaies, l'euro et le franc CFA, <b>sans confier ses identifiants bancaires à une entreprise</b>.</span><span lang="en">It all started with a simple need: following several banks (a traditional bank, a neobank, an online bank) and two currencies, the euro and the CFA franc, <b>without handing one's bank login to a company</b>.</span></p>
+        <p><span lang="fr">Les applis existantes demandaient toutes de se connecter à la banque à travers leurs serveurs. Sésame a pris le chemin inverse : <b>tout se passe sur vos appareils, rien n'en sort</b>. Vos relevés suffisent.</span><span lang="en">Existing apps all asked to connect to the bank through their servers. Sesame took the opposite path: <b>everything happens on your devices, nothing leaves them</b>. Your statements are enough.</span></p>
+        <p><span lang="fr">C'est un logiciel libre : son code est public, chacun peut vérifier ce qu'il fait, et il le restera.</span><span lang="en">It is free software: its code is public, anyone can check what it does, and it will stay that way.</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Questions fréquentes -->
+  <section class="bloc" id="faq" style="padding-top:0">
+    <div class="cadre">
+      <h2><span lang="fr">Questions fréquentes</span><span lang="en">Frequently asked questions</span></h2>
+      <div class="faq">
+        <details><summary><span lang="fr">Est-ce vraiment gratuit ?</span><span lang="en">Is it really free?</span><svg class="i"><use href="#plus"/></svg></summary>
+          <p><span lang="fr">Oui. Sésame est un logiciel libre (licence MIT) : pas de publicité, pas d'abonnement, pas de version payante.</span><span lang="en">Yes. Sesame is free software (MIT licence): no ads, no subscription, no paid tier.</span></p></details>
+        <details><summary><span lang="fr">Quelles banques sont prises en charge ?</span><span lang="en">Which banks are supported?</span><svg class="i"><use href="#plus"/></svg></summary>
+          <p><span lang="fr">Toutes celles qui vous donnent un relevé en PDF, CSV ou Excel, en français ou en anglais. Sésame reconnaît les colonnes d'après leur contenu. La première fois qu'il voit un format, il vous montre un aperçu à valider ; ensuite, c'est automatique.</span><span lang="en">Any bank that gives you a statement as PDF, CSV or Excel, in French or English. Sesame recognises columns from their content. The first time it sees a format, it shows you a preview to confirm; after that, it is automatic.</span></p></details>
+        <details><summary><span lang="fr">Et si j'oublie mon mot de passe ?</span><span lang="en">What if I forget my password?</span><svg class="i"><use href="#plus"/></svg></summary>
+          <p><span lang="fr">La clé de récupération, remise à la création du coffre, rouvre vos données et vous laisse choisir un nouveau mot de passe. Sans elle, personne ne peut les récupérer : c'est le prix d'un vrai chiffrement.</span><span lang="en">The recovery key, given when you create your vault, reopens your data and lets you choose a new password. Without it, nobody can recover them: that is the price of real encryption.</span></p></details>
+        <details><summary><span lang="fr">Et si je perds mon téléphone ?</span><span lang="en">What if I lose my phone?</span><svg class="i"><use href="#plus"/></svg></summary>
+          <p><span lang="fr">Vos données y sont chiffrées : illisibles sans votre mot de passe. Pour tout retrouver sur un nouvel appareil, exportez de temps en temps une sauvegarde chiffrée (Paramètres → Sauvegarde) et gardez-la sur un autre appareil.</span><span lang="en">Your data is encrypted on it: unreadable without your password. To get everything back on a new device, export an encrypted backup from time to time (Settings → Backup) and keep it on another device.</span></p></details>
+        <details><summary><span lang="fr">Comment synchroniser mon PC et mon téléphone ?</span><span lang="en">How do I sync my PC and phone?</span><svg class="i"><use href="#plus"/></svg></summary>
+          <p><span lang="fr">Sésame prépare un petit fichier chiffré avec vos derniers changements. Envoyez-le par Quick Share, Bluetooth, câble ou e-mail : l'autre appareil l'ouvre et fusionne tout. Aucun cloud au milieu.</span><span lang="en">Sesame prepares a small encrypted file with your latest changes. Send it by Quick Share, Bluetooth, cable or email: the other device opens it and merges everything. No cloud in between.</span></p></details>
+        <details><summary><span lang="fr">Pourquoi Windows ou Android affichent un avertissement ?</span><span lang="en">Why do Windows or Android show a warning?</span><svg class="i"><use href="#plus"/></svg></summary>
+          <p><span lang="fr">Parce que Sésame n'est pas signé par un certificat payant et ne passe pas par le Play Store. Son code est public sur GitHub, et chaque version est construite automatiquement à partir de ce code.</span><span lang="en">Because Sesame is not signed with a paid certificate and does not go through the Play Store. Its code is public on GitHub, and every version is built automatically from that code.</span></p></details>
+        <details><summary><span lang="fr">Comment se font les mises à jour ?</span><span lang="en">How do updates work?</span><svg class="i"><use href="#plus"/></svg></summary>
+          <p><span lang="fr">Au démarrage, Sésame vous prévient quand une nouvelle version sort et vous montre ce qui change ; le bouton « Mettre à jour » ouvre le bon fichier. Vous l'installez par-dessus : vos données sont gardées.</span><span lang="en">At startup, Sesame tells you when a new version is out and shows you what changed; the “Update” button opens the right file. You install it on top: your data is kept.</span></p></details>
+        <details><summary><span lang="fr">Et sur iPhone ou Mac ?</span><span lang="en">What about iPhone or Mac?</span><svg class="i"><use href="#plus"/></svg></summary>
+          <p><span lang="fr">Pas pour l'instant : Sésame existe sur Windows, Android et Linux.</span><span lang="en">Not for now: Sesame runs on Windows, Android and Linux.</span></p></details>
+      </div>
+    </div>
+  </section>
+
+  <!-- Installer -->
+  <section class="bloc" id="installer" style="padding-top:0">
     <div class="cadre">
       <h2><span lang="fr">Installer Sésame</span><span lang="en">Install Sesame</span></h2>
       <p class="intro"><span lang="fr">Gratuit et libre. Choisissez votre appareil : chaque version lit les mêmes données.</span><span lang="en">Free and open source. Pick your device: every version reads the same data.</span></p>
@@ -277,11 +476,11 @@ footer .cadre { display: flex; flex-wrap: wrap; justify-content: space-between; 
             <li>Tap <b>Install</b>, then open Sesame.</li>
             <li>In Settings → Security, you can turn on fingerprint unlock.</li>
           </ol>
-          <p class="astuce"><span lang="fr">Les mises à jour s'installent de la même façon, par-dessus : vos données sont gardées.</span><span lang="en">Updates install the same way, on top: your data is kept.</span></p>
+          <p class="astuce"><span lang="fr">Les mises à jour s'installent de la même façon, par-dessus : vos données sont gardées. Pour qu'elles arrivent encore plus simplement, l'appli gratuite <b>Obtainium</b> peut suivre Sésame : ajoutez-y l'adresse <code>github.com/Fram-sudo/sesame</code>.</span><span lang="en">Updates install the same way, on top: your data is kept. For even simpler updates, the free <b>Obtainium</b> app can follow Sesame: add the address <code>github.com/Fram-sudo/sesame</code>.</span></p>
         </div>
         <div class="telecharger">
           <a class="bouton plein" href="https://github.com/Fram-sudo/sesame/releases/latest/download/Sesame-Android.apk"><svg class="i"><use href="#telecharger"/></svg><span lang="fr">Télécharger pour Android</span><span lang="en">Download for Android</span></a>
-          <span class="fichier">Sesame-Android.apk · Android 7+, 64 bits</span>
+          <span class="fichier">Sesame-Android.apk · Android 7+</span>
         </div>
       </div>
 
@@ -329,27 +528,21 @@ footer .cadre { display: flex; flex-wrap: wrap; justify-content: space-between; 
     </div>
   </section>
 
-  <section class="bloc" id="securite">
-    <div class="cadre">
-      <h2><span lang="fr">Personne d'autre que vous.</span><span lang="en">Nobody but you.</span></h2>
-      <p class="intro"><span lang="fr">Sésame ne se connecte ni à votre banque, ni à un serveur. Vos données ne quittent vos appareils que si vous les envoyez vous-même.</span><span lang="en">Sesame connects neither to your bank nor to a server. Your data only leaves your devices if you send it yourself.</span></p>
-      <div class="securite">
-        <div><h3><svg class="i"><use href="#cadenas"/></svg><span lang="fr">Tout est chiffré</span><span lang="en">Everything is encrypted</span></h3>
-          <p><span lang="fr">AES-256 et Argon2id, comme les gestionnaires de mots de passe. Chaque essai de mot de passe est volontairement lent.</span><span lang="en">AES-256 and Argon2id, like password managers. Every password attempt is deliberately slow.</span></p></div>
-        <div><h3><svg class="i"><use href="#nuage"/></svg><span lang="fr">Rien en ligne</span><span lang="en">Nothing online</span></h3>
-          <p><span lang="fr">Pas de compte, pas de pistage, pas de sauvegarde cloud cachée. L'appli lit seulement des fichiers publics : la fiche de la dernière version et, si vous le décidez, les taux de change.</span><span lang="en">No account, no tracking, no hidden cloud backup. The app only reads public files: the latest-version page and, if you choose, exchange rates.</span></p></div>
-        <div><h3><svg class="i"><use href="#cle"/></svg><span lang="fr">Une clé de récupération</span><span lang="en">A recovery key</span></h3>
-          <p><span lang="fr">Si vous oubliez votre mot de passe, la clé remise à la création rouvre vos données. Personne d'autre ne peut le faire.</span><span lang="en">If you forget your password, the key you get at setup reopens your data. Nobody else can.</span></p></div>
-        <div><h3><svg class="i"><use href="#empreinte"/></svg><span lang="fr">L'empreinte sur Android</span><span lang="en">Fingerprint on Android</span></h3>
-          <p><span lang="fr">Posez le doigt au lieu de taper le mot de passe : la clé reste dans le coffre-fort matériel du téléphone.</span><span lang="en">Touch the sensor instead of typing your password: the key stays in the phone's hardware vault.</span></p></div>
-      </div>
-    </div>
-  </section>
-  <section class="bloc" id="versions" hidden>
+  <section class="bloc" id="versions" hidden style="padding-top:0">
     <div class="cadre">
       <h2><span lang="fr">Historique des versions</span><span lang="en">Version history</span></h2>
       <p class="intro"><span lang="fr">Sésame vous prévient quand une nouvelle version sort. Voici ce qui a changé à chaque fois.</span><span lang="en">Sesame tells you when a new version is out. Here is what changed each time.</span></p>
       <ol class="versions"></ol>
+    </div>
+  </section>
+
+  <section class="bloc fin">
+    <div class="cadre">
+      <h2><span lang="fr">Vos finances. Personne d'autre.</span><span lang="en">Your finances. Nobody else's.</span></h2>
+      <div class="boutons">
+        <a class="bouton plein" href="#installer"><svg class="i"><use href="#telecharger"/></svg><span lang="fr">Télécharger gratuitement</span><span lang="en">Download for free</span></a>
+        <a class="bouton nuit" href="#essayer"><svg class="i"><use href="#jouer"/></svg><span lang="fr">Essayer la démo</span><span lang="en">Try the demo</span></a>
+      </div>
     </div>
   </section>
 </main>
@@ -372,15 +565,53 @@ footer .cadre { display: flex; flex-wrap: wrap; justify-content: space-between; 
     let avant = null;
     try { avant = localStorage.getItem("sesame-langue"); localStorage.setItem("sesame-langue", l); } catch {}
     const cadre = document.querySelector(".ecran-demo iframe");
-    if (cadre && avant && avant !== l && cadre.contentWindow) cadre.contentWindow.location.reload();
+    if (cadre && cadre.src && avant && avant !== l && cadre.contentWindow) cadre.contentWindow.location.reload();
   }
   let depart = "fr";
   try { depart = localStorage.getItem("sesame-site-langue") || (navigator.language.startsWith("fr") ? "fr" : "en"); } catch {}
   langue(depart);
-  // Chargée après le choix de la langue, pour s'ouvrir directement dans la bonne
-  const cadreDemo = document.querySelector(".ecran-demo iframe");
-  cadreDemo.src = cadreDemo.dataset.src;
   document.querySelectorAll("[data-langue]").forEach((b) => b.addEventListener("click", () => langue(b.dataset.langue)));
+
+  // La porte : la serrure grandit avec le défilement jusqu'à révéler l'appli
+  const porte = document.querySelector(".porte");
+  const entete = document.querySelector("header");
+  const calme = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let attente = false;
+  function ouvrir() {
+    attente = false;
+    const course = porte.offsetHeight - innerHeight;
+    const p = calme || course <= 0 ? 0 : Math.min(1, Math.max(0, (scrollY - porte.offsetTop) / course));
+    // On s'approche de l'icône, puis le trou de la serrure grandit bien plus vite : on passe la porte
+    const lisse = (a, b) => { const x = Math.min(1, Math.max(0, (p - a) / (b - a))); return x * x * (3 - 2 * x); };
+    porte.style.setProperty("--s", String(1 + 5 * p * p));
+    // Sur la fin, le trou s'emballe pour couvrir tout l'écran (le bas de la serrure est étroit)
+    porte.style.setProperty("--sv", String(1 + 34 * Math.pow(p, 2.4) + 260 * lisse(0.6, 0.95)));
+    porte.style.setProperty("--o", String(1 - lisse(0.7, 0.9)));
+    porte.style.setProperty("--t", String(1 - lisse(0, 0.3)));
+    porte.style.setProperty("--e", String(lisse(0.22, 0.72)));
+    // En-tête clair quand l'appli (claire) occupe l'écran
+    entete.classList.toggle("nuit", !(p > 0.5 || scrollY > porte.offsetTop + porte.offsetHeight - 64));
+  }
+  addEventListener("scroll", () => { if (!attente) { attente = true; requestAnimationFrame(ouvrir); } }, { passive: true });
+  addEventListener("resize", ouvrir);
+  ouvrir();
+
+  // Démo chargée quand on approche, après le choix de la langue
+  const cadreDemo = document.querySelector(".ecran-demo iframe");
+  new IntersectionObserver((e, o) => { if (e.some((x) => x.isIntersecting)) { cadreDemo.src = cadreDemo.dataset.src; o.disconnect(); } }, { rootMargin: "600px" }).observe(document.getElementById("essayer"));
+
+  // Démo : téléphone ou ordinateur
+  const demo = document.querySelector(".demo");
+  const ecran = demo.querySelector(".ecran-demo");
+  const boutonsMode = document.querySelectorAll(".bascule button");
+  function modeDemo(m) {
+    demo.dataset.mode = m;
+    document.querySelector(".essai").classList.toggle("pc", m === "pc");
+    boutonsMode.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === m)));
+    if (m === "pc" && innerWidth > 980) document.getElementById("essayer").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  boutonsMode.forEach((b) => b.addEventListener("click", () => modeDemo(b.dataset.mode)));
+  new ResizeObserver(() => ecran.style.setProperty("--echelle", String(ecran.clientWidth / 1280))).observe(ecran);
 
   // Historique des versions : latest.json, déposé à côté du site à chaque publication
   let versions = [];
@@ -412,18 +643,6 @@ footer .cadre { display: flex; flex-wrap: wrap; justify-content: space-between; 
     document.getElementById("versions").hidden = false;
   }).catch(() => {});
   document.querySelectorAll("[data-langue]").forEach((b) => b.addEventListener("click", afficherVersions));
-
-  // Démo : téléphone ou ordinateur
-  const demo = document.querySelector(".demo");
-  const ecran = demo.querySelector(".ecran-demo");
-  function modeDemo(m) {
-    demo.dataset.mode = m;
-    document.querySelector(".ouverture").classList.toggle("pc", m === "pc");
-    demo.querySelectorAll(".bascule button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === m)));
-    if (m === "pc" && innerWidth > 980) demo.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-  demo.querySelectorAll(".bascule button").forEach((b) => b.addEventListener("click", () => modeDemo(b.dataset.mode)));
-  new ResizeObserver(() => ecran.style.setProperty("--echelle", String(ecran.clientWidth / 1280))).observe(ecran);
 
   // Onglets d'installation : celui de l'appareil du visiteur d'abord
   function plateforme(p) {

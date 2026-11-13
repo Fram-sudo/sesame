@@ -107,7 +107,7 @@
     <BarresMois donnees={barres} {devise} />
   </section>
 
-  <section class="carte pile">
+  <section class="carte pile" data-visite="categories">
     <h2>{t("Dépenses par catégorie")}<Aide texte={t("Barre pleine : moyenne mensuelle sur la période. Trait : le mois choisi. La flèche compare le mois choisi à la moyenne.")} /></h2>
     {#each parCategorie as x (x.id)}
       {@const v = variation(x.ceMois, x.moyenne)}

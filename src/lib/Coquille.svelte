@@ -19,7 +19,7 @@
   import Bienvenue from "./Bienvenue.svelte";
   import CarteMaj from "./CarteMaj.svelte";
   import VisiteDemo from "./VisiteDemo.svelte";
-  const visite = import.meta.env.MODE === "demo" || new URLSearchParams(location.search).has("visite");
+  const visite = (import.meta.env.MODE === "demo" || new URLSearchParams(location.search).has("visite")) && !new URLSearchParams(location.search).has("capture");
   import { maj } from "./maj.svelte";
   import Saisie from "./Saisie.svelte";
   import Synchro from "./Synchro.svelte";

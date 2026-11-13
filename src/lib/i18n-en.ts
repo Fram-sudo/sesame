@@ -764,7 +764,7 @@ export const EN: Record<string, string> = {
   "restantes)": "remaining)",
   "reste": "left",
   "sans activité": "no activity",
-  "seul": "alone",
+  "seul": "only",
   "sur": "of",
   "sur cette période": "for this period",
   "sur la période ({0})": "over the period ({0})",
