@@ -4,7 +4,7 @@
   // Plus de 24 mois : un point par trimestre (moyenne par mois), seules les années sont écrites sous le graphique.
   import { argent } from "./format";
   import { locale, t } from "./i18n.svelte";
-  import { lisse } from "./lissage";
+  import { hauteurSurChemin, lisse } from "./lissage";
 
   type Mois = { a: number; m: number; revenus: number; depenses: number };
   let { mois, devise = "EUR", hauteur = 170 }: { mois: Mois[]; devise?: string; hauteur?: number } = $props();
@@ -46,11 +46,21 @@
   const montrer = (i: number) => (trimestres ? points[i].annee || i === 0 : (points.length - 1 - i) % saut === 0);
   const id = Math.random().toString(36).slice(2, 8);
 
+  // Le repère suit le doigt sans à-coup, le long des deux courbes ; les chiffres sont ceux de la période la plus proche
   let survol = $state(-1);
+  let fx = $state(0);
+  let yRev = $state(0);
+  let yDep = $state(0);
+  let cheminRev = $state<SVGPathElement>();
+  let cheminDep = $state<SVGPathElement>();
   function bouger(e: PointerEvent) {
+    if (!points.length) return;
     const r = (e.currentTarget as SVGElement).getBoundingClientRect();
     const px = ((e.clientX - r.left) / r.width) * L;
     survol = Math.max(0, Math.min(points.length - 1, Math.round(((px - 10) / (L - 20)) * (points.length - 1))));
+    fx = Math.max(x(0), Math.min(x(points.length - 1), px));
+    yRev = hauteurSurChemin(cheminRev, fx, y(points[survol].revenus));
+    yDep = hauteurSurChemin(cheminDep, fx, y(points[survol].depenses));
   }
 </script>
 
@@ -63,13 +73,12 @@
     <line x1="0" x2={L} y1={H - BAS} y2={H - BAS} class="base" />
     <path d={dessus(dep)} clip-path="url(#sousRev{id})" class="zone positif" />
     <path d={dessus(rev)} clip-path="url(#sousDep{id})" class="zone negatif" />
-    <path d={dep} class="courbe" stroke="var(--serie-depenses)" />
-    <path d={rev} class="courbe" stroke="var(--serie-revenus)" />
+    <path d={dep} class="courbe" stroke="var(--serie-depenses)" bind:this={cheminDep} />
+    <path d={rev} class="courbe" stroke="var(--serie-revenus)" bind:this={cheminRev} />
     {#if survol >= 0}
-      {@const p = points[survol]}
-      <line x1={x(survol)} x2={x(survol)} y1={HAUT} y2={H - BAS} class="curseur" />
-      <circle cx={x(survol)} cy={y(p.revenus)} r="4.5" fill="var(--serie-revenus)" class="point" />
-      <circle cx={x(survol)} cy={y(p.depenses)} r="4.5" fill="var(--serie-depenses)" class="point" />
+      <line x1={fx} x2={fx} y1={HAUT} y2={H - BAS} class="curseur" />
+      <circle cx={fx} cy={yRev} r="4.5" fill="var(--serie-revenus)" class="point" />
+      <circle cx={fx} cy={yDep} r="4.5" fill="var(--serie-depenses)" class="point" />
     {:else if points.length}
       <circle cx={x(points.length - 1)} cy={y(points.at(-1)!.revenus)} r="4.5" fill="var(--serie-revenus)" class="point" />
       <circle cx={x(points.length - 1)} cy={y(points.at(-1)!.depenses)} r="4.5" fill="var(--serie-depenses)" class="point" />

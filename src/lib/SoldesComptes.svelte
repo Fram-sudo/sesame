@@ -3,7 +3,7 @@
   // Toucher un compte dans la légende le masque ou l'affiche ; toucher le graphique donne les valeurs du mois.
   import { argent } from "./format";
   import { locale, t } from "./i18n.svelte";
-  import { lisse } from "./lissage";
+  import { hauteurSurChemin, lisse } from "./lissage";
 
   let {
     mois,
@@ -52,10 +52,19 @@
       return v < 0 ? [{ s, i: s.valeurs.indexOf(v), v }] : [];
     }),
   );
+  // Le repère suit le doigt sans à-coup, un point sur chaque courbe ; les montants sont ceux du mois le plus proche
   let survol = $state(-1);
+  let fx = $state(0);
+  let hauteurs = $state<Record<string, number>>({});
+  const chemins: Record<string, SVGPathElement> = {};
   function bouger(e: PointerEvent) {
     const r = (e.currentTarget as SVGElement).getBoundingClientRect();
-    survol = Math.max(0, Math.min(n - 1, Math.floor(((e.clientX - r.left) / r.width) * n)));
+    const px = ((e.clientX - r.left) / r.width) * L;
+    fx = Math.max(x(0), Math.min(x(n - 1), px));
+    survol = Math.max(0, Math.min(n - 1, Math.round((fx - pas / 2) / pas)));
+    const h: Record<string, number> = {};
+    for (const s of visibles) h[s.id] = hauteurSurChemin(chemins[s.id], fx, y(s.valeurs[survol]));
+    hauteurs = h;
   }
   const basculer = (id: string) => (caches = caches.includes(id) ? caches.filter((c) => c !== id) : [...caches, id]);
   const court = (v: number) => new Intl.NumberFormat(locale(), { style: "currency", currency: devise, maximumFractionDigits: 0 }).format(v / 100);
@@ -78,9 +87,12 @@
     {:else}
       <line x1="0" x2={L} y1={H - BAS} y2={H - BAS} class="base" />
     {/if}
-    {#if survol >= 0}<rect x={pas * survol} y="0" width={pas} height={H - BAS} rx="8" class="surligne" />{/if}
+    {#if survol >= 0}<line x1={fx} x2={fx} y1={HAUT} y2={H - BAS} class="curseur" />{/if}
     {#if total && series.length > 1}<path d={ligne(total)} class="courbe-total" />{/if}
-    {#each visibles as s (s.id)}<path d={ligne(s.valeurs)} stroke={s.couleur} class="courbe" />{/each}
+    {#each visibles as s (s.id)}<path d={ligne(s.valeurs)} stroke={s.couleur} class="courbe" bind:this={chemins[s.id]} />{/each}
+    {#if survol >= 0}
+      {#each visibles as s (s.id)}{#if hauteurs[s.id] !== undefined}<circle cx={fx} cy={hauteurs[s.id]} r="4.5" fill={s.couleur} class="point" />{/if}{/each}
+    {/if}
     {#each plusBas as b (b.s.id)}
       <circle cx={x(b.i)} cy={y(b.v)} r="5" class="point-rouge" />
     {/each}
@@ -187,8 +199,13 @@
     stroke: var(--fond);
     stroke-width: 2;
   }
-  .surligne {
-    fill: var(--surface);
+  .curseur {
+    stroke: var(--doux);
+    stroke-dasharray: 3 3;
+  }
+  .point {
+    stroke: var(--fond);
+    stroke-width: 2;
   }
   .axe {
     font-size: 12px;

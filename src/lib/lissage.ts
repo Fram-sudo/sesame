@@ -23,3 +23,15 @@ export function lisse(pts: [number, number][]) {
   }
   return d;
 }
+
+/** Hauteur d'une courbe dessinée à l'abscisse donnée (elle avance toujours vers la droite : recherche par dichotomie) */
+export function hauteurSurChemin(p: SVGPathElement | undefined | null, px: number, defaut: number): number {
+  if (!p) return defaut;
+  let a = 0, b = p.getTotalLength();
+  for (let k = 0; k < 22; k++) {
+    const m = (a + b) / 2;
+    if (p.getPointAtLength(m).x < px) a = m;
+    else b = m;
+  }
+  return p.getPointAtLength((a + b) / 2).y;
+}
