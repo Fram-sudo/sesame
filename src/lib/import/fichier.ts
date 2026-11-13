@@ -2,7 +2,7 @@ import { t } from "../i18n.svelte";
 // Préparation d'un relevé avant import : lecture (PDF, tableur, CSV), colonnes devinées,
 // banque reconnue et compte de destination choisi automatiquement.
 import type { Releve } from "../api";
-import { completerParContenu, detecterEntete, detecterFormatDate, devinerColonnes, enteteDe, formatNonGere, lire, normaliser, reconnaitreBanque, sensInverse, type Profil } from "./analyse";
+import { completerParContenu, detecterEntete, lireMontant, detecterFormatDate, devinerColonnes, enteteDe, formatNonGere, lire, normaliser, reconnaitreBanque, sensInverse, type Profil } from "./analyse";
 import { lireCsv } from "./csv";
 import { lireStructure, type Structure } from "./formats";
 
@@ -23,6 +23,8 @@ export interface Preparation {
   empreinte: string;
   banque?: string;
   devise?: string;
+  /** Solde en début de relevé, quand le document l'écrit (« SOLDE PRÉCÉDENT AU 02/12/2025 903,97 ») */
+  soldeDebut?: { date: string; montant: number };
 }
 
 // Nom de la banque cherché dans l'en-tête du document ; la mention la plus haute l'emporte
@@ -60,6 +62,14 @@ export function banqueDansTexte(texte: string): string | undefined {
     if (i >= 0 && (!meilleur || i < meilleur[1])) meilleur = [nom, i];
   }
   return meilleur?.[0];
+}
+
+/** « Solde précédent au JJ/MM/AAAA 1 234,56 » (débiteur : négatif), en centimes, ou undefined. */
+export function soldeDebutDansTexte(texte: string): { date: string; montant: number } | undefined {
+  const m = /(?:solde pr[ée]c[ée]dent|ancien solde)\s+au\s+(\d{2})\/(\d{2})\/(\d{4})\s+(-?\s*[\d  .]+,\d{2})\s*(d[ée]biteur|cr[ée]diteur)?/i.exec(texte);
+  const v = m ? lireMontant(m[4]) : null;
+  if (!m || v === null) return undefined;
+  return { date: `${m[3]}-${m[2]}-${m[1]}`, montant: /^d/i.test(m[5] ?? "") ? -Math.abs(v) : v };
 }
 
 export function deviseDansTexte(texte: string): string | undefined {
@@ -132,7 +142,7 @@ export async function preparer(r: Releve, profils: Profil[]): Promise<Preparatio
   const banque = (estPdf ? banqueTexte : (reconnaitreBanque(entete) ?? banqueTexte)) ?? connu?.nom;
   // Copie simple (JSON) : le profil retenu vient des données de l'appli, que structuredClone ne sait pas copier
   const profil = connu ? (JSON.parse(JSON.stringify(connu)) as Profil) : deviner(lignes, idx, { id: crypto.randomUUID(), nom: banque ?? "", entete: [], colonnes: {}, formatDate: "JJ/MM/AAAA", cle });
-  return { nom: r.nom, lignes, idx, profil, profilNouveau: !connu, estPdf, sections, choisies, enAttente, poches, empreinte, banque, devise: structure?.devise ?? deviseDansTexte(texte) };
+  return { nom: r.nom, lignes, idx, profil, profilNouveau: !connu, estPdf, sections, choisies, enAttente, poches, empreinte, banque, devise: structure?.devise ?? deviseDansTexte(texte), soldeDebut: soldeDebutDansTexte(texte) };
 }
 
 interface CompteRef {

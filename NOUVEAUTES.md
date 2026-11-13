@@ -10,8 +10,10 @@ Si ce texte n'a pas changé depuis la version précédente, la version dit simpl
 
 ## FR
 
-- Ouverture bien plus rapide après le mot de passe ou l'empreinte, même avec des milliers d'opérations : l'accueil s'affiche tout de suite, le classement se fait juste après. Toute l'appli est aussi plus fluide avec beaucoup d'opérations.
+- Relevés PDF qui indiquent un « solde précédent » (Société Générale…) : un compte créé à l'import démarre avec ce solde, au lieu de 0 €. Son solde colle ainsi à celui de la banque.
+- Après un import, le solde de la banque est comparé à celui de l'appli même quand les opérations du relevé n'ont pas de colonne de solde ; en cas d'écart, « Corriger le solde de départ » règle tout.
 
 ## EN
 
-- Much faster opening after your password or fingerprint, even with thousands of transactions: Home shows right away, sorting happens just after. The whole app is also smoother with many transactions.
+- PDF statements that show a “previous balance” (Société Générale…): an account created at import now starts from that balance instead of €0, so it matches the bank.
+- After an import, the bank's balance is compared with the app's even when the statement's lines have no balance column; if they differ, “Correct the starting balance” fixes it.

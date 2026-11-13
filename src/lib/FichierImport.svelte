@@ -120,6 +120,8 @@
     doublons: number;
     dates: string[];
     remplacees: Operation[];
+    /** Solde écrit en début de relevé (voir Import : calage du solde de départ d'un compte créé) */
+    depart?: { date: string; montant: number };
   }
 
   // Lot : identifiant commun, et comptes créés par les relevés précédents du même lot (pas de compte en double)
@@ -170,11 +172,12 @@
         }
       }
       const dates = ops.map((o) => o.date).sort();
-      const bilan: Bilan = { compteId: cid, fichier: prep.nom, banque: prep.banque ?? profil.nom, nb: ops.length, doublons: tri.doublons.length + (poches?.doublons ?? 0), dates, remplacees };
+      const bilan: Bilan = { compteId: cid, fichier: prep.nom, banque: prep.banque ?? profil.nom, nb: ops.length, doublons: tri.doublons.length + (poches?.doublons ?? 0), dates, remplacees, depart: prep.soldeDebut };
       ch.push(...ops.map((o) => ({ collection: "operations", id: o.id, valeur: o }) as Changement));
       if (prep.profilNouveau || profilModifie) ch.push({ collection: "profils", id: profil.id, valeur: $state.snapshot(profil) });
       await ecrire(ch);
       await classerEtLier();
+      const depart = prep.soldeDebut;
 
       // Dernier solde donné par le relevé, pour le contrôle
       const avecSolde = lecture.ops.filter((o) => o.solde !== undefined);
@@ -183,7 +186,7 @@
       const ceJour = avecSolde.filter((o) => o.date === max);
       const ref = decroissant ? ceJour[0] : ceJour[ceJour.length - 1];
       compteId = cid;
-      resultat = { nb: nbPrincipal, reconnues: nbReconnues, poches: nbDansPoches, nouvellesPoches, soldeBanque: ref?.solde, date: ref?.date, compte: donnees.comptes.find((c) => c.id === cid) };
+      resultat = { nb: nbPrincipal, reconnues: nbReconnues, poches: nbDansPoches, nouvellesPoches, soldeBanque: ref?.solde ?? depart?.montant, date: ref ? ref.date : depart?.date, compte: donnees.comptes.find((c) => c.id === cid) };
       etat = "fait";
       return bilan;
     } catch (e) {

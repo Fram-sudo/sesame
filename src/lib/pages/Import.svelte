@@ -4,7 +4,7 @@
   // banque et compte reconnus automatiquement, vérification fichier par fichier, puis un seul bouton.
   import { onMount } from "svelte";
   import { api, estAndroid, type Releve } from "../api";
-  import { classerEtLier, comptesImport, donnees, ecrire, nouvelId, supprimer, type Changement, type Import } from "../donnees.svelte";
+  import { classerEtLier, comptesImport, donnees, ecrire, nouvelId, soldes, supprimer, type Changement, type Import } from "../donnees.svelte";
   import { separerDoublons } from "../import/doublons";
   import { SvelteSet } from "svelte/reactivity";
   import Choix from "../Choix.svelte";
@@ -71,6 +71,13 @@
     for (const c of cartes) {
       const b = c?.estPret() ? await c.importer(lot) : undefined;
       if (b) bilans.push(b);
+    }
+    // Compte créé par ce lot : son solde de départ vient du « solde précédent » du plus ancien relevé
+    for (const id of new Set(lot.crees.values())) {
+      const depart = bilans.filter((b) => b.compteId === id && b.depart).map((b) => b.depart!).sort((a, b) => a.date.localeCompare(b.date))[0];
+      const c = donnees.comptes.find((x) => x.id === id);
+      const ecart = depart && c ? depart.montant - (soldes(depart.date).get(id) ?? 0) : 0;
+      if (ecart) await ecrire([{ collection: "comptes", id, valeur: { ...c!, soldeInitial: c!.soldeInitial + ecart } }]);
     }
     if (bilans.length) {
       const dates = bilans.flatMap((b) => b.dates).sort();

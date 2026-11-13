@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { completerParContenu, lireDate, lireMontant } from "./analyse";
-import { banqueDansTexte, choisirCompte, deviseDansTexte, preparer, type Preparation } from "./fichier";
+import { soldeDebutDansTexte, banqueDansTexte, choisirCompte, deviseDansTexte, preparer, type Preparation } from "./fichier";
 
 const releve = (texte: string, nom = "r.csv") => ({ nom, lignes: null, texte, pdf: null, erreur: null });
 
@@ -55,5 +55,13 @@ describe("colonnes devinées sur un petit relevé", () => {
   it("une case qui commence par une date chiffrée garde cette date", () => {
     expect(lireDate("08/11/2021 08/11/2021 CARTE X1234 06/11 BOUTIQUE 12 DEC 1927", "JJ/MM/AAAA")).toBe("2021-11-08");
     expect(lireDate("12 décembre 2025", "JJ/MM/AAAA")).toBe("2025-12-12");
+  });
+});
+
+describe("solde de début écrit sur le relevé", () => {
+  it("lit le solde précédent (créditeur ou débiteur)", () => {
+    expect(soldeDebutDansTexte("RELEVÉ DE COMPTE\nSOLDE PRÉCÉDENT AU 02/12/2025 1.903,97\n")).toEqual({ date: "2025-12-02", montant: 190397 });
+    expect(soldeDebutDansTexte("SOLDE PRÉCÉDENT AU 02/01/2026 41,70 DÉBITEUR")).toEqual({ date: "2026-01-02", montant: -4170 });
+    expect(soldeDebutDansTexte("Relevé sans solde")).toBeUndefined();
   });
 });
