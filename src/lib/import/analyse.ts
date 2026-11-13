@@ -342,8 +342,8 @@ export function manques(p: Profil): string[] {
 /** Formats pas encore pris en charge : message clair plutôt qu'un import raté. */
 export function formatNonGere(texte: string): string | null {
   const debut = texte.trimStart().slice(0, 400);
-  if (/^OFXHEADER|<OFX>/i.test(debut) || /^!Type:/i.test(debut)) return "Les fichiers OFX/QFX/QIF arrivent au jalon 5. En attendant, exportez le relevé en CSV ou Excel.";
-  if (/^<\?xml/i.test(debut)) return "Les fichiers XML (CAMT.053) arrivent au jalon 5. En attendant, exportez le relevé en CSV ou Excel.";
-  if (/^:20:/m.test(debut)) return "Les fichiers MT940 arrivent au jalon 5. En attendant, exportez le relevé en CSV ou Excel.";
+  // OFX, QIF et CAMT sont lus avant d'arriver ici : un XML qui reste n'est pas un relevé connu
+  if (/^<\?xml/i.test(debut)) return "Ce fichier XML n'est pas un relevé reconnu. Exportez plutôt le relevé en CSV, Excel, PDF, OFX ou CAMT.";
+  if (/^:20:/m.test(debut)) return "Les fichiers MT940 ne sont pas encore pris en charge. Exportez plutôt le relevé en CSV, Excel, PDF, OFX ou CAMT.";
   return null;
 }

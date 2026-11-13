@@ -24,6 +24,11 @@ if (import.meta.env.MODE === "demo" || new URLSearchParams(location.search).has(
       { collection: "budgets", id: "global", valeur: { id: "global", montant: 140000 } },
       { collection: "prets", id: "pret-demo", valeur: { id: "pret-demo", nom: "Prêt étudiant (démo)", organisme: "Banque fictive", capital: 800000, taux: 1.2, duree: 72, premiere: "2025-06-05", assurance: 350 } },
     ]);
+    if (new URLSearchParams(location.search).has("rappel")) {
+      await ecrire([{ collection: "operations", id: "op-rappel", valeur: { id: "op-rappel", compteId: "x", date: "2026-01-01", montant: -100, libelle: "Test", cle: "t" } as never }]);
+      const { app } = await import("./etat.svelte");
+      app.params.derniereSauvegarde = Date.now() - 45 * 86_400_000;
+    }
     const page = new URLSearchParams(location.search).get("page");
     const { app } = await import("./etat.svelte");
     if (page) app.page = page as never;

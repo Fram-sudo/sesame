@@ -16,7 +16,7 @@
     {
       icone: "importer" as const,
       titre: t("Importez vos relevés"),
-      texte: t("Téléchargez un relevé PDF, CSV ou Excel depuis le site de votre banque, puis importez-le : la banque, le compte, les poches et les catégories sont reconnus tout seuls."),
+      texte: t("Téléchargez un relevé (PDF, CSV, Excel, OFX…) depuis le site de votre banque, puis importez-le : la banque, le compte, les poches et les catégories sont reconnus tout seuls."),
       action: [t("Importer maintenant"), "import"] as [string, Page],
     },
     {

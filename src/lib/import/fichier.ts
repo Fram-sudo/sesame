@@ -4,6 +4,7 @@ import { t } from "../i18n.svelte";
 import type { Releve } from "../api";
 import { completerParContenu, detecterEntete, detecterFormatDate, devinerColonnes, enteteDe, formatNonGere, lire, normaliser, reconnaitreBanque, sensInverse, type Profil } from "./analyse";
 import { lireCsv } from "./csv";
+import { lireStructure, type Structure } from "./formats";
 
 export interface Preparation {
   nom: string;
@@ -88,6 +89,7 @@ export async function preparer(r: Releve, profils: Profil[]): Promise<Preparatio
   let choisies: string[] = [];
   let enAttente: string[] = [];
   let poches: string[] = [];
+  let structure: Structure | null = null;
   if (r.pdf) {
     const pdf = await import("./pdf");
     ({ lignes, texte } = await pdf.lirePdf(Uint8Array.from(atob(r.pdf), (c) => c.charCodeAt(0))));
@@ -106,9 +108,12 @@ export async function preparer(r: Releve, profils: Profil[]): Promise<Preparatio
   } else if (r.lignes) {
     lignes = r.lignes.map((x) => x.map((c) => c.trim())).filter((x) => x.some((c) => c));
     texte = "";
+  } else if ((structure = lireStructure(r.texte ?? ""))) {
+    // OFX, QIF, CAMT : déjà ramenés à un tableau Date / Libellé / Détail / Montant / État
+    ({ lignes, texte } = structure);
   } else {
     const pb = formatNonGere(r.texte ?? "");
-    if (pb) throw pb;
+    if (pb) throw t(pb);
     lignes = lireCsv(r.texte ?? "");
     texte = "";
   }
@@ -117,15 +122,15 @@ export async function preparer(r: Releve, profils: Profil[]): Promise<Preparatio
   const idx = detecterEntete(lignes);
   const entete = enteteDe(lignes, idx);
   // CSV et tableurs : seules les lignes avant les titres décrivent le relevé (le reste, ce sont des libellés)
-  if (!estPdf) texte = lignes.slice(0, Math.max(idx, 0)).map((l) => l.join(" ")).join("\n");
-  const empreinte = estPdf ? (texte.split("\n").find((l) => l.trim().length >= 4 && !/\d/.test(l))?.trim() ?? "") : entete.join("|");
+  if (!estPdf && !structure) texte = lignes.slice(0, Math.max(idx, 0)).map((l) => l.join(" ")).join("\n");
+  const empreinte = structure?.empreinte ?? (estPdf ? (texte.split("\n").find((l) => l.trim().length >= 4 && !/\d/.test(l))?.trim() ?? "") : entete.join("|"));
   const banqueTexte = banqueDansTexte(texte);
   // Format déjà vu et validé : CSV/tableur par ses titres, PDF par sa banque, son en-tête et ses colonnes
-  const cle = estPdf ? `pdf|${banqueTexte ?? ""}|${empreinte}|${entete.join("|")}` : entete.join("|");
+  const cle = structure ? structure.format : estPdf ? `pdf|${banqueTexte ?? ""}|${empreinte}|${entete.join("|")}` : entete.join("|");
   const connu = profils.find((p) => (p.cle ?? p.entete.join("|")) === cle);
   const banque = (estPdf ? banqueTexte : (reconnaitreBanque(entete) ?? banqueTexte)) ?? connu?.nom;
   const profil = connu ? structuredClone(connu) : deviner(lignes, idx, { id: crypto.randomUUID(), nom: banque ?? "", entete: [], colonnes: {}, formatDate: "JJ/MM/AAAA", cle });
-  return { nom: r.nom, lignes, idx, profil, profilNouveau: !connu, estPdf, sections, choisies, enAttente, poches, empreinte, banque, devise: deviseDansTexte(texte) };
+  return { nom: r.nom, lignes, idx, profil, profilNouveau: !connu, estPdf, sections, choisies, enAttente, poches, empreinte, banque, devise: structure?.devise ?? deviseDansTexte(texte) };
 }
 
 interface CompteRef {

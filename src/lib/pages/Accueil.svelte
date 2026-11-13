@@ -17,6 +17,7 @@
   import { argent, dateCourte } from "../format";
   import Icone from "../Icone.svelte";
   import IconeCategorie from "../IconeCategorie.svelte";
+  import RappelSauvegarde from "../RappelSauvegarde.svelte";
   import Periode from "../Periode.svelte";
   import { resume } from "../prets";
   import { prevoir } from "../prevision";
@@ -243,6 +244,8 @@
         <Courbe points={courbe} {devise} couleur="var(--serie-depenses)" hauteur={150} reference={moyenneCourbe ? { valeur: moyenneCourbe, libelle: t("moyenne de ces mois") } : undefined} />
       </section>
     </div>
+
+    <RappelSauvegarde />
 
     {#if conseil}
       <div class="conseil">

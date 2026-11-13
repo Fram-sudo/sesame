@@ -113,7 +113,7 @@
       {#if type === "virement"}
         <label>{t("Date")}<input type="date" bind:value={date} required /></label>
         {#if donnees.comptes.length < 2}<p class="info">{t("Il faut au moins deux comptes pour un virement.")}</p>{/if}
-        {#if devisesDifferentes}<p class="info">{t("Les virements entre devises différentes (")}{de?.devise} → {vers?.devise}{t(") arriveront avec les taux de change (jalon 7). En attendant, saisissez une dépense et un revenu.")}</p>{/if}
+        {#if devisesDifferentes}<p class="info">{t("Les virements entre devises différentes ({0} → {1}) ne sont pas encore gérés : saisissez une dépense sur un compte et un revenu sur l'autre.", de?.devise ?? "", vers?.devise ?? "")}</p>{/if}
       {:else}
         <span class="sous">{t("Catégorie")}</span>
         <ChoixCategorie bind:valeur={() => categorieId, (v) => ((categorieId = v), (categorieTouchee = true))} sens={type} avecVirement={false} />

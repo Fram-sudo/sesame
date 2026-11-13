@@ -4,7 +4,7 @@
   import { api, estAndroid } from "../api";
   import ChampMotDePasse from "../ChampMotDePasse.svelte";
   import CleRecuperation from "../CleRecuperation.svelte";
-  import { annoncer, app, mettreAJourTaux, sauverParametres } from "../etat.svelte";
+  import { annoncer, app, exporterSauvegarde, mettreAJourTaux, sauverParametres } from "../etat.svelte";
   import { maj, verifierMaj } from "../maj.svelte";
   import { aDesDonneesDemo, chargerDemo, retirerDemo } from "../demo";
   import { charger, vider } from "../donnees.svelte";
@@ -57,7 +57,7 @@
 
   const exporter = () =>
     agir(async () => {
-      if (await api.exporter()) annoncer(t("Sauvegarde chiffrée enregistrée."));
+      if (await exporterSauvegarde()) annoncer(t("Sauvegarde chiffrée enregistrée."));
     });
 
   const restaurer = () =>
@@ -179,6 +179,7 @@
   <section class="carte pile">
     <h2>{t("Sauvegarde")}</h2>
     <p class="sous">{t("Le fichier de sauvegarde est chiffré comme le coffre : il ne s'ouvre qu'avec votre mot de passe.")}</p>
+    <p class="sous">{app.params.derniereSauvegarde ? t("Dernière sauvegarde depuis cet appareil : le {0}.", new Date(app.params.derniereSauvegarde).toLocaleDateString(locale(), { day: "numeric", month: "long", year: "numeric" })) : t("Aucune sauvegarde exportée depuis cet appareil pour l'instant.")}</p>
     <button onclick={exporter} disabled={enCours}><Icone nom="telecharger" taille={18} />{t("Exporter une sauvegarde chiffrée")}</button>
     <button onclick={() => basculer("restaurer")}><Icone nom="envoyer" taille={18} />{t("Restaurer une sauvegarde")}</button>
     {#if ouvert === "restaurer"}

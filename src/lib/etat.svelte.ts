@@ -124,6 +124,14 @@ export async function mettreAJourTaux(forcer = false) {
   return true;
 }
 
+/** Exporte une sauvegarde chiffrée et retient la date (pour le rappel). false si annulé. */
+export async function exporterSauvegarde() {
+  if (!(await api.exporter())) return false;
+  app.params.derniereSauvegarde = Date.now();
+  await sauverParametres();
+  return true;
+}
+
 export async function sauverParametres() {
   appliquerTheme();
   await api.ecrireParametres($state.snapshot(app.params));

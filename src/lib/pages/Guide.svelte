@@ -12,7 +12,7 @@
   const QUESTIONS: Question[] = $derived([
     {
       q: t("Comment importer un relevé ?"),
-      r: t("Téléchargez le relevé depuis le site ou l'appli de votre banque (PDF, CSV ou Excel), puis touchez Importer. Sésame reconnaît la banque et le compte, ignore les opérations déjà présentes et range tout dans les bonnes catégories. Vous pouvez importer plusieurs fichiers d'un coup ; sur PC, glissez-les simplement sur la fenêtre."),
+      r: t("Téléchargez le relevé depuis le site ou l'appli de votre banque (PDF, CSV, Excel, OFX, QIF ou CAMT), puis touchez Importer. Sésame reconnaît la banque et le compte, ignore les opérations déjà présentes et range tout dans les bonnes catégories. Vous pouvez importer plusieurs fichiers d'un coup ; sur PC, glissez-les simplement sur la fenêtre."),
       aller: [t("Importer un relevé"), "import"],
     },
     {

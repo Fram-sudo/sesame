@@ -10,12 +10,10 @@ Si ce texte n'a pas changé depuis la version précédente, la version dit simpl
 
 ## FR
 
-- Import de n'importe quelle banque, en français, en anglais ou dans une autre langue : Sésame reconnaît les colonnes d'après leur contenu (dates, montants, solde), même sans titres.
-- La première fois qu'il voit un format, Sésame montre un aperçu à valider d'un geste ; ensuite, ce format est reconnu tout seul (PDF compris).
-- Contrôle automatique avec le solde du relevé : dépenses et entrées inversées corrigées, colonnes douteuses signalées avant l'import.
+- Nouveaux formats de relevés : OFX et QFX (Money, Quicken), QIF et CAMT (le format européen des banques). La banque et le compte sont reconnus automatiquement.
+- Rappel de sauvegarde sur l'Accueil : Sésame vous propose d'exporter une sauvegarde chiffrée si vous n'en avez pas, ou si la dernière date de plus d'un mois. La date de la dernière sauvegarde est visible dans Paramètres.
 
 ## EN
 
-- Import from any bank, in French, English or another language: Sesame recognises columns from their content (dates, amounts, balance), even without titles.
-- The first time it sees a format, Sesame shows a preview you confirm in one tap; after that, the format is recognised automatically (PDFs included).
-- Automatic check against the statement balance: swapped expenses and income are fixed, doubtful columns are flagged before import.
+- New statement formats: OFX and QFX (Money, Quicken), QIF and CAMT (the European bank format). The bank and account are recognised automatically.
+- Backup reminder on Home: Sesame suggests exporting an encrypted backup if you don't have one, or if the last one is over a month old. The date of the last backup is shown in Settings.

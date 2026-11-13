@@ -99,7 +99,7 @@
   <section class="carte depot pile" class:survol>
     <Icone nom="importer" taille={28} />
     <p><strong>{estAndroid ? t("Choisissez vos relevés") : t("Déposez vos relevés ici")}</strong></p>
-    <p class="sous">{t("PDF, CSV, Excel, de n'importe quelle banque, un ou plusieurs à la fois. La banque et le compte sont reconnus automatiquement.")}</p>
+    <p class="sous">{t("PDF, CSV, Excel, OFX, QIF ou CAMT, de n'importe quelle banque, un ou plusieurs à la fois. La banque et le compte sont reconnus automatiquement.")}</p>
     <button class="principal" data-visite="import" onclick={choisir} disabled={enCours}>{enCours ? t("Lecture…") : t("Choisir des fichiers")}</button>
   </section>
 

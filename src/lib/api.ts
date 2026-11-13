@@ -27,6 +27,9 @@ export interface Parametres {
   majAuto?: boolean;
   /** Version dont la carte « Nouvelle version » a été fermée (« Plus tard ») */
   majIgnoree?: string;
+  /** Dernière sauvegarde exportée depuis cet appareil (ms), et rappel repoussé jusqu'à (ms) */
+  derniereSauvegarde?: number;
+  rappelSauvegardeApres?: number;
 }
 
 export interface Recus {

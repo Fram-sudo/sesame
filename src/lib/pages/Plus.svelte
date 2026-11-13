@@ -20,7 +20,7 @@
     ["epargne", "epargne", t("Épargne"), epargne.length ? t("{0} dans {1} poche{2} et livret{3}", argent(totalEpargne, "EUR"), epargne.length, epargne.length > 1 ? "s" : "", epargne.length > 1 ? "s" : "") : t("Livrets, poches, tirelire")],
     ["prets", "pret", t("Prêts"), restantDu ? t("{0} restant dû", argent(restantDu, "EUR")) : t("Suivre un prêt et son échéancier")],
     ["analyse", "analyse", t("Analyse"), t("Tendances et prévision sur 3 mois")],
-    ["import", "importer", t("Importer des relevés"), dernierImport ? t("Dernier import le {0}", new Date(dernierImport).toLocaleDateString(locale())) : t("PDF, CSV ou Excel, toutes banques")],
+    ["import", "importer", t("Importer des relevés"), dernierImport ? t("Dernier import le {0}", new Date(dernierImport).toLocaleDateString(locale())) : t("PDF, CSV, Excel, OFX… toutes banques")],
     ["synchro", "synchro", t("Synchroniser mes appareils"), app.params.aEnvoyer ? t("Changements à envoyer") : t("À jour")],
     ["regles", "operations", t("Règles de classement"), t("Comment vos opérations sont rangées")],
     ["banques", "portefeuille", t("Banques et imports"), t("Ce que l'appli a retenu de chaque banque")],
