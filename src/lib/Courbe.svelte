@@ -3,6 +3,7 @@
   // Évolution d'un montant dans le temps : une ligne (aire légère), une moyenne en pointillés si fournie,
   // réticule et valeur au survol (maquette validée v6).
   import { argent } from "./format";
+  import { lisse } from "./lissage";
 
   let {
     points,
@@ -31,31 +32,6 @@
   const max = $derived(Math.max(1, ...valeurs) * 1.05);
   const x = (i: number) => (points.length < 2 ? L / 2 : (i * (L - 16)) / (points.length - 1) + 8);
   const y = (v: number) => HAUT + (H - BAS - HAUT) * (1 - (v - min) / (max - min || 1));
-  // Courbe arrondie (cubique monotone) : douce, sans bosse au-delà des vraies valeurs
-  function lisse(pts: [number, number][]) {
-    const n = pts.length;
-    if (n < 3) return pts.map(([px, py], i) => `${i ? "L" : "M"}${px},${py}`).join(" ");
-    const m = pts.slice(0, -1).map(([x0, y0], i) => (pts[i + 1][1] - y0) / (pts[i + 1][0] - x0));
-    const t = pts.map((_, i) => (i === 0 ? m[0] : i === n - 1 ? m[n - 2] : m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2));
-    for (let i = 0; i < n - 1; i++) {
-      if (m[i] === 0) {
-        t[i] = t[i + 1] = 0;
-        continue;
-      }
-      const a = t[i] / m[i];
-      const b = t[i + 1] / m[i];
-      const s = a * a + b * b;
-      if (s > 9) (t[i] = (3 / Math.sqrt(s)) * a * m[i]), (t[i + 1] = (3 / Math.sqrt(s)) * b * m[i]);
-    }
-    let d = `M${pts[0][0]},${pts[0][1]}`;
-    for (let i = 0; i < n - 1; i++) {
-      const [x0, y0] = pts[i];
-      const [x1, y1] = pts[i + 1];
-      const h = (x1 - x0) / 3;
-      d += ` C${x0 + h},${y0 + t[i] * h} ${x1 - h},${y1 - t[i + 1] * h} ${x1},${y1}`;
-    }
-    return d;
-  }
   const trace = $derived(lisse(points.map((p, i) => [x(i), y(p.valeur)])));
   const aire = $derived(points.length ? `${trace} L${x(points.length - 1)},${y(min)} L${x(0)},${y(min)} Z` : "");
   let survol = $state(-1);
@@ -157,6 +133,9 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
+    /* La largeur vient de la page, jamais du dessin : sinon mesure → dessin → largeur → mesure tourne en boucle */
+    contain: inline-size;
+    width: 100%;
   }
   svg {
     width: 100%;

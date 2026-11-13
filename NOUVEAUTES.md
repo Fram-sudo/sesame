@@ -10,12 +10,12 @@ Si ce texte n'a pas changé depuis la version précédente, la version dit simpl
 
 ## FR
 
-- Accueil : revenus (en vert) et dépenses (en orange) côte à côte, avec ce qui reste du mois, en rouge s'il est négatif. Le graphique des 6 derniers mois compare revenus et dépenses et affiche le reste de chaque mois.
-- Chaque compte a sa couleur, à choisir dans sa fiche ; la même partout (carte, menu, graphiques).
-- Analyse : le solde de chaque compte mois par mois, dans sa couleur, avec le total ; la zone sous 0 € est en rouge. Touchez un compte pour le masquer.
+- Nouveaux graphiques, lisibles sur n'importe quelle période : revenus (vert) et dépenses (orange) en courbes douces, l'écart entre les deux en vert quand il reste de l'argent, en rouge sinon. Glissez dessus pour lire les chiffres ; sur plusieurs années, un point par trimestre.
+- « Mes comptes » sur l'accueil et l'Analyse : le solde de chaque compte dans sa couleur, le total en pointillés, les passages sous 0 € en rouge.
+- Épargne : votre épargne sur 12 mois. Prêts : le capital restant dû mois par mois jusqu'à la fin.
 
 ## EN
 
-- Home: income (green) and spending (orange) side by side, with what's left for the month, in red when negative. The last 6 months chart compares income and spending and shows each month's leftover.
-- Each account has its own colour, chosen in its sheet; the same everywhere (card, menu, charts).
-- Insights: each account's balance month by month, in its colour, with the total; the area below €0 is red. Tap an account to hide it.
+- New charts, readable over any period: income (green) and spending (orange) as smooth curves, the gap between them green when money is left, red otherwise. Slide over them to read the figures; over several years, one point per quarter.
+- “My accounts” on Home and Insights: each account's balance in its colour, the total dotted, dips below €0 in red.
+- Savings: your savings over 12 months. Loans: the remaining balance month by month until the end.

@@ -1080,6 +1080,19 @@ export const EN: Record<string, string> = {
   "Touchez un mois pour le détail, ou un compte pour le masquer.": "Tap a month for details, or an account to hide it.",
   "Revenus moins dépenses de la période. En rouge : vous avez dépensé plus que ce qui est rentré.": "Income minus spending for the period. In red: you spent more than came in.",
   "Sorties d'argent de la période, classées par catégorie de dépense. Un remboursement rangé dans la même catégorie les diminue. Les virements entre vos comptes et l'argent mis de côté ne sont pas des dépenses. « D'habitude » : moyenne des 3 périodes précédentes (l'année précédente pour une année).": "Money going out during the period, sorted by spending category. A refund in the same category reduces it. Transfers between your accounts and money set aside aren't spending. “Usually”: average of the 3 previous periods (the previous year for a year).",
+  "T{0} {1}": "Q{0} {1}",
+  "Revenus et dépenses : l'écart est vert quand il reste de l'argent, rouge sinon": "Income and spending: the gap is green when money is left, red otherwise",
+  "(moyenne par mois)": "(monthly average)",
+  "revenus": "income",
+  "Un point par trimestre (moyenne par mois). ": "One point per quarter (monthly average). ",
+  "Glissez sur le graphique pour lire chaque période. Vert : il reste de l'argent ; rouge : plus dépensé que gagné.": "Slide over the chart to read each period. Green: money left; red: spent more than earned.",
+  "Revenus et dépenses": "Income and spending",
+  "Revenus en vert, dépenses en orange. L'écart entre les deux est vert quand il vous reste de l'argent, rouge quand vous avez dépensé plus que gagné. Sur plus de 2 ans, un point par trimestre (moyenne par mois).": "Income in green, spending in orange. The gap between them is green when you have money left, red when you spent more than you earned. Over more than 2 years, one point per quarter (monthly average).",
+  "Solde de chaque compte en fin de mois, épargne et poches comprises, dans sa couleur. Le total est en pointillés. Sous 0 €, la zone est rouge. Touchez un compte pour le masquer.": "Each account's balance at month end, savings and pockets included, in its colour. The total is dotted. Below €0, the area is red. Tap an account to hide it.",
+  "Mon épargne sur 12 mois": "My savings over 12 months",
+  "Total mis de côté à la fin de chaque mois : poches, livrets et tirelires (hors argent réservé).": "Total set aside at the end of each month: pockets, savings accounts and piggy banks (reserved money excluded).",
+  "Capital restant dû, mois par mois": "Remaining balance, month by month",
+  "Ce qu'il reste à rembourser, tous prêts additionnés, d'après leur échéancier (remboursements anticipés compris), jusqu'à la dernière échéance.": "What's left to repay, all loans added up, from their schedules (early repayments included), until the last instalment.",
 };
 
 /** Textes volontairement identiques en anglais (codes, données de démonstration) */

@@ -9,12 +9,27 @@
   import Icone from "../Icone.svelte";
   import { lireMontant } from "../import/analyse";
   import PretFormulaire from "../PretFormulaire.svelte";
-  import { echeancier, resume, simulerAnticipe, type Anticipe, type Pret } from "../prets";
+  import { ajouterMois, echeancier, resume, simulerAnticipe, type Anticipe, type Pret } from "../prets";
+  import Courbe from "../Courbe.svelte";
 
   const auj = new Date().toISOString().slice(0, 10);
   const parCompte = $derived(soldes());
   const lignes = $derived(donnees.prets.map((p) => ({ p, r: resume(p, auj) })));
   const totalDu = $derived(lignes.reduce((s, l) => s + l.r.restantDu, 0));
+  // Capital restant dû, tous prêts additionnés, mois après mois jusqu'à la fin du dernier prêt
+  const courbeDu = $derived.by(() => {
+    if (!donnees.prets.length) return [];
+    const plans = donnees.prets.map((p) => ({ p, e: echeancier(p) }));
+    const debut = plans.map(({ p }) => p.premiere).sort()[0];
+    const fin = plans.map(({ e }) => e.at(-1)?.date ?? "").sort().at(-1) ?? debut;
+    const pts: { libelle: string; valeur: number }[] = [];
+    for (let d = debut; d <= fin && pts.length < 600; d = ajouterMois(d, 1)) {
+      const jour = d;
+      const du = plans.reduce((s, { p, e }) => s + (jour < p.premiere ? p.capital : (e.filter((x) => x.date <= jour).at(-1)?.restant ?? p.capital)), 0);
+      pts.push({ libelle: new Date(d + "T12:00:00").toLocaleDateString(locale(), { month: "short", year: "numeric" }).replace(".", ""), valeur: du });
+    }
+    return pts;
+  });
   const totalMensuel = $derived(lignes.filter((l) => l.r.nbRestantes).reduce((s, l) => s + l.r.aPayer, 0));
 
   let formulaire = $state<Pret | "nouveau" | null>(null);
@@ -56,6 +71,13 @@
     </div>
     <button class="principal" onclick={() => (formulaire = "nouveau")}><Icone nom="plus" taille={18} />{t("Nouveau prêt")}</button>
   </div>
+
+  {#if courbeDu.length > 1}
+    <section class="carte pile">
+      <h2>{t("Capital restant dû, mois par mois")}<Aide texte={t("Ce qu'il reste à rembourser, tous prêts additionnés, d'après leur échéancier (remboursements anticipés compris), jusqu'à la dernière échéance.")} /></h2>
+      <Courbe points={courbeDu} devise="EUR" couleur="var(--accent)" hauteur={150} />
+    </section>
+  {/if}
 
   {#each lignes as { p, r } (p.id)}
     {@const poche = p.pocheId ? donnees.comptes.find((c) => c.id === p.pocheId) : undefined}

@@ -3,15 +3,17 @@
   // Toucher un compte dans la légende le masque ou l'affiche ; toucher le graphique donne les valeurs du mois.
   import { argent } from "./format";
   import { locale, t } from "./i18n.svelte";
+  import { lisse } from "./lissage";
 
   let {
-    libelles,
-    series,
-    total,
+    mois,
+    series: toutes,
+    total: totalBrut,
     devise = "EUR",
     hauteur = 190,
   }: {
-    libelles: string[];
+    /** Fin de chaque mois affiché */
+    mois: { a: number; m: number }[];
     series: { id: string; nom: string; couleur: string; valeurs: number[] }[];
     /** Total de tous les comptes (absent quand un seul compte est affiché) */
     total?: number[];
@@ -19,6 +21,14 @@
     hauteur?: number;
   } = $props();
 
+  // Plus de 24 mois : le solde en fin de trimestre (un point sur trois, le dernier mois toujours gardé)
+  const garde = $derived(mois.map((_, i) => mois.length <= 24 || (mois.length - 1 - i) % 3 === 0));
+  const trimestres = $derived(mois.length > 24);
+  const choisir = <T,>(v: T[]) => v.filter((_, i) => garde[i]);
+  const moisVus = $derived(choisir(mois));
+  const libelles = $derived(moisVus.map((m) => new Date(m.a, m.m, 1).toLocaleDateString(locale(), { month: "short", year: "2-digit" }).replace(".", "")));
+  const series = $derived(toutes.map((s) => ({ ...s, valeurs: choisir(s.valeurs) })));
+  const total = $derived(totalBrut ? choisir(totalBrut) : undefined);
   let L = $state(600);
   const H = $derived(L < 520 ? hauteur + 30 : hauteur);
   const BAS = 22;
@@ -34,7 +44,7 @@
   // Mois de l'axe : un sur deux (ou trois) quand ils n'ont pas la place, le dernier toujours affiché
   const saut = $derived(Math.max(1, Math.ceil(48 / pas)));
   const y = (v: number) => HAUT + (H - BAS - HAUT) * (1 - (v - min) / (max - min || 1));
-  const ligne = (v: number[]) => v.map((val, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(val).toFixed(1)}`).join(" ");
+  const ligne = (v: number[]) => lisse(v.map((val, i) => [x(i), y(val)]));
   // Point le plus bas sous 0 € de chaque compte visible : signalé en rouge
   const plusBas = $derived(
     visibles.flatMap((s) => {
@@ -74,7 +84,11 @@
     {#each plusBas as b (b.s.id)}
       <circle cx={x(b.i)} cy={y(b.v)} r="5" class="point-rouge" />
     {/each}
-    {#each libelles as l, i (i)}{#if (n - 1 - i) % saut === 0}<text x={x(i)} y={H - 6} class="axe" text-anchor="middle">{l}</text>{/if}{/each}
+    {#each libelles as l, i (i)}
+      {#if trimestres ? i === 0 || moisVus[i].a !== moisVus[i - 1].a : (n - 1 - i) % saut === 0}
+        <text x={x(i)} y={H - 6} class="axe" text-anchor="middle">{trimestres ? moisVus[i].a : l.split(" ")[0]}</text>
+      {/if}
+    {/each}
     <text x="2" y={HAUT + 4} class="axe">{court(max)}</text>
   </svg>
   {#if survol >= 0}
@@ -97,6 +111,9 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
+    /* La largeur vient de la page, jamais du dessin : sinon mesure → dessin → largeur → mesure tourne en boucle */
+    contain: inline-size;
+    width: 100%;
     min-width: 0;
   }
   /* Bloc de largeur imposée : la largeur mesurée ne dépend pas du dessin (pas de boucle de mesure) */

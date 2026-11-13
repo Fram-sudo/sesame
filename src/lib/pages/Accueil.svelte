@@ -10,7 +10,8 @@
   import { detecterRecurrences, libelleLisible } from "../categories";
   import ChoixDevise from "../ChoixDevise.svelte";
   import CompteFormulaire from "../CompteFormulaire.svelte";
-  import BarresMois from "../BarresMois.svelte";
+  import FluxCourbes from "../FluxCourbes.svelte";
+  import SoldesComptes from "../SoldesComptes.svelte";
   import { couleurCompte } from "../couleurs";
   import { chargerDemo } from "../demo";
   import { donnees, soldes, type Compte } from "../donnees.svelte";
@@ -24,7 +25,7 @@
   import Periode from "../Periode.svelte";
   import { resume } from "../prets";
   import { prevoir } from "../prevision";
-  import { bornes, cleMois, derniersMois, estEnCours, etatBudgets, flux, moisPasses, moyennePeriode, objectifPoche, perimetre, solde, variation, type Contexte } from "../stats";
+  import { bornes, cleMois, derniersMois, estEnCours, etatBudgets, finDeMois, flux, moisPasses, moyennePeriode, objectifPoche, perimetre, solde, variation, type Contexte } from "../stats";
   import { premiereDate } from "../donnees.svelte";
 
   let fiche = $state<Compte | "nouveau" | null>(null);
@@ -75,16 +76,19 @@
   const ecartDepenses = $derived(moy ? variation(f.depenses, moy.depenses) : undefined);
   // Courbe des dépenses par mois : les mois de la période, ou les 6 derniers pour un seul mois
   const moisCourbe = $derived(b.mois.length > 1 ? moisPasses(b.mois) : derniersMois(b.mois[0], 6));
-  const barresMois = $derived(
+  const fluxMois = $derived(
     moisCourbe.map((m) => {
       const fm = flux(ctx, filtre, [cleMois(m)]);
-      return {
-        libelle: new Date(m.a, m.m, 1).toLocaleDateString(locale(), moisCourbe.length > 12 ? { month: "short", year: "2-digit" } : { month: "short" }).replace(".", ""),
-        revenus: Math.max(0, fm.revenus),
-        depenses: Math.max(0, fm.depenses),
-      };
+      return { a: m.a, m: m.m, revenus: Math.max(0, fm.revenus), depenses: Math.max(0, fm.depenses) };
     }),
   );
+  // Mes comptes : solde de chaque compte (poches comprises) en fin de mois, sur les mêmes mois
+  const comptesGraphe = $derived.by(() => {
+    const ids = new Set([...p.courants, ...p.epargne, ...p.reserves]);
+    return donnees.comptes.filter((c) => ids.has(c.id) && !c.parentId && !c.archive);
+  });
+  const seriesComptes = $derived(comptesGraphe.map((c) => ({ id: c.id, nom: c.nom, couleur: couleurCompte(c), valeurs: moisCourbe.map((m) => solde(ctx, c.id, finDeMois(m))) })));
+  const totalSoldes = $derived(moisCourbe.map((m) => solde(ctx, filtre, finDeMois(m))));
 
   // Répartition des dépenses du mois : 5 plus grosses catégories, le reste regroupé
   const categories = $derived(new Map(donnees.categories.map((c) => [c.id, c])));
@@ -242,8 +246,17 @@
             {#if f.misDeCote - f.pioche}<p class="sous">{t("Épargne")} <span class="montant">{argent(f.misDeCote - f.pioche, devise, true)}</span></p>{/if}
           </div>
         </div>
-        <BarresMois donnees={barresMois} {devise} hauteur={150} reste />
+        <FluxCourbes mois={fluxMois} {devise} hauteur={160} />
       </section>
+      {#if comptesGraphe.length}
+        <section class="carte pile">
+          <div class="titre">
+            <h2>{t("Mes comptes")}<Aide texte={t("Solde de chaque compte en fin de mois, épargne et poches comprises, dans sa couleur. Le total est en pointillés. Sous 0 €, la zone est rouge. Touchez un compte pour le masquer.")} /></h2>
+            <button class="lien" onclick={() => (app.page = "analyse")}>{t("Analyse")}</button>
+          </div>
+          <SoldesComptes mois={moisCourbe} series={seriesComptes} total={comptesGraphe.length > 1 ? totalSoldes : undefined} {devise} hauteur={150} />
+        </section>
+      {/if}
     </div>
 
     <RappelSauvegarde />
@@ -701,14 +714,15 @@
   }
   .trois {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+    gap: 10px 14px;
   }
   .trois p {
     margin: 0;
   }
   .trois .chiffre {
-    font-size: clamp(17px, 4.6vw, 26px);
+    font-size: 22px;
+    white-space: nowrap;
   }
   .chiffre.positif {
     color: var(--ok);

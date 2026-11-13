@@ -3,7 +3,7 @@
   import { tauxConnus } from "../taux";
   // Analyse : tendances sur plusieurs mois (solde, revenus et dépenses, moyennes par catégorie).
   import Aide from "../Aide.svelte";
-  import BarresMois from "../BarresMois.svelte";
+  import FluxCourbes from "../FluxCourbes.svelte";
   import { libelleLisible } from "../categories";
   import Courbe from "../Courbe.svelte";
   import SoldesComptes from "../SoldesComptes.svelte";
@@ -33,7 +33,6 @@
   });
   const seriesComptes = $derived(comptesGraphe.map((c) => ({ id: c.id, nom: c.nom, couleur: couleurCompte(c), valeurs: mois.map((m) => solde(ctx, c.id, finDeMois(m))) })));
   const totalSoldes = $derived(mois.map((m) => solde(ctx, filtre, finDeMois(m))));
-  const barres = $derived(parMois.map(({ m, f }) => ({ libelle: court(m), revenus: Math.max(0, f.revenus), depenses: Math.max(0, f.depenses) })));
 
   // Moyennes mensuelles sur la période (mois sans aucune opération exclus, pour ne pas fausser un historique récent)
   const actifs = $derived(parMois.filter(({ f }) => f.revenus || f.depenses || f.misDeCote));
@@ -91,28 +90,14 @@
   </div>
 
   <section class="carte pile">
-    <h2>{t("Mes comptes, mois par mois")}<Aide texte={t("Solde de chaque compte à la fin de chaque mois, épargne et poches comprises, dans sa couleur. Le total est en pointillés. Sous 0 €, la zone est rouge.")} /></h2>
-    <SoldesComptes libelles={mois.map((m) => `${court(m)} ${String(m.a).slice(2)}`)} series={seriesComptes} total={comptesGraphe.length > 1 ? totalSoldes : undefined} {devise} />
+    <h2>{t("Revenus et dépenses")}<Aide texte={t("Revenus en vert, dépenses en orange. L'écart entre les deux est vert quand il vous reste de l'argent, rouge quand vous avez dépensé plus que gagné. Sur plus de 2 ans, un point par trimestre (moyenne par mois).")} /></h2>
+    <FluxCourbes mois={parMois.map(({ m, f }) => ({ a: m.a, m: m.m, revenus: Math.max(0, f.revenus), depenses: Math.max(0, f.depenses) }))} {devise} hauteur={190} />
   </section>
 
-  {#if prevision}
-    <section class="carte pile" data-visite="prevision">
-      <h2>{t("Prévision sur 3 mois")}<Aide texte={t("Argent disponible (sans l'épargne) semaine par semaine : les opérations qui reviennent (salaire, loyer, abonnements…) à leur date, plus vos autres dépenses habituelles des 3 derniers mois. C'est une estimation, pas une certitude.")} /></h2>
-      <p>
-        {#if prevision.sousSeuil}
-          {t("Attention : à ce rythme, votre argent disponible passerait sous 0 € vers le")} <strong>{dateCourte(prevision.sousSeuil)}</strong>.
-        {:else}
-          {t("À ce rythme, vous resterez au-dessus de 0 €. Au plus bas :")} <strong class="montant">{argent(prevision.plusBas.solde, devise)}</strong> {t("vers le")} {dateCourte(prevision.plusBas.date)}.
-        {/if}
-        {t("Dans 3 mois : environ")} <strong class="montant">{argent(prevision.points.at(-1)!.solde, devise)}</strong>.
-      </p>
-      <Courbe points={pointsPrevision} {devise} couleur={prevision.sousSeuil ? "var(--serie-depenses)" : "var(--serie-revenus)"} reference={prevision.plusBas.solde < 0 ? { valeur: 0, libelle: "0 €" } : undefined} />
-    </section>
-  {/if}
-
+  <div class="duo">
   <section class="carte pile">
-    <h2>{t("Revenus et dépenses par mois")}</h2>
-    <BarresMois donnees={barres} {devise} />
+    <h2>{t("Mes comptes, mois par mois")}<Aide texte={t("Solde de chaque compte à la fin de chaque mois, épargne et poches comprises, dans sa couleur. Le total est en pointillés. Sous 0 €, la zone est rouge.")} /></h2>
+    <SoldesComptes {mois} series={seriesComptes} total={comptesGraphe.length > 1 ? totalSoldes : undefined} {devise} />
   </section>
 
   <section class="carte pile" data-visite="categories">
@@ -137,6 +122,22 @@
       <p class="sous">{t("Pas encore de dépenses sur cette période.")}</p>
     {/each}
   </section>
+  </div>
+
+  {#if prevision}
+    <section class="carte pile" data-visite="prevision">
+      <h2>{t("Prévision sur 3 mois")}<Aide texte={t("Argent disponible (sans l'épargne) semaine par semaine : les opérations qui reviennent (salaire, loyer, abonnements…) à leur date, plus vos autres dépenses habituelles des 3 derniers mois. C'est une estimation, pas une certitude.")} /></h2>
+      <p>
+        {#if prevision.sousSeuil}
+          {t("Attention : à ce rythme, votre argent disponible passerait sous 0 € vers le")} <strong>{dateCourte(prevision.sousSeuil)}</strong>.
+        {:else}
+          {t("À ce rythme, vous resterez au-dessus de 0 €. Au plus bas :")} <strong class="montant">{argent(prevision.plusBas.solde, devise)}</strong> {t("vers le")} {dateCourte(prevision.plusBas.date)}.
+        {/if}
+        {t("Dans 3 mois : environ")} <strong class="montant">{argent(prevision.points.at(-1)!.solde, devise)}</strong>.
+      </p>
+      <Courbe points={pointsPrevision} {devise} couleur={prevision.sousSeuil ? "var(--serie-depenses)" : "var(--serie-revenus)"} reference={prevision.plusBas.solde < 0 ? { valeur: 0, libelle: "0 €" } : undefined} />
+    </section>
+  {/if}
 
   <section class="carte pile">
     <h2>{t("Plus grosses dépenses ·")} {b.libelle}</h2>
@@ -264,6 +265,17 @@
       font-size: 15px;
       font-weight: 800;
       margin: 4px 0 2px;
+    }
+  }
+  /* Grand écran : les comptes et les catégories côte à côte */
+  .duo {
+    display: grid;
+    gap: 14px;
+    align-items: start;
+  }
+  @media (min-width: 1100px) {
+    .duo {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     }
   }
 </style>

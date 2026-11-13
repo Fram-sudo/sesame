@@ -25,6 +25,7 @@
   --rayon: 20px;
   /* Graphiques : couleurs vérifiées pour les daltoniens, clair et sombre */
   --serie-revenus: #1d9e75;
+  --serie-epargne: #11735c;
   --serie-depenses: #d85a30;
   color-scheme: light;
 }
@@ -47,6 +48,7 @@
     --alerte-fond: #3a2610;
     --danger: #ff6369;
     --danger-fond: #3a1b1f;
+    --serie-epargne: #2fae8e;
     --serie-revenus: #34c48c;
     --serie-depenses: #e8703f;
     color-scheme: dark;
@@ -70,6 +72,7 @@
   --alerte-fond: #3a2610;
   --danger: #ff6369;
   --danger-fond: #3a1b1f;
+  --serie-epargne: #2fae8e;
   --serie-revenus: #34c48c;
   --serie-depenses: #e8703f;
   color-scheme: dark;

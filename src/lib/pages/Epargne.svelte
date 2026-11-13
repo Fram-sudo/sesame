@@ -1,6 +1,6 @@
 <script lang="ts">
   import Choix from "../Choix.svelte";
-  import { t } from "../i18n.svelte";
+  import { locale, t } from "../i18n.svelte";
   import { app, deviseAffichee } from "../etat.svelte";
   import { tauxConnus } from "../taux";
   // Épargne : tout l'argent mis de côté (poches de banque, livrets, tirelire et espèces, autres projets).
@@ -15,7 +15,8 @@
   import IconeCategorie from "../IconeCategorie.svelte";
   import { lireMontant } from "../import/analyse";
   import { cleOp } from "../import/doublons";
-  import { cleMois, flux, moisCourant, objectifPoche, type Contexte } from "../stats";
+  import { cleMois, derniersMois, finDeMois, flux, moisCourant, objectifPoche, type Contexte } from "../stats";
+  import Courbe from "../Courbe.svelte";
 
   const parCompte = $derived(soldes());
   const epargnes = $derived(donnees.comptes.filter((c) => c.parentId || c.type === "epargne"));
@@ -25,6 +26,16 @@
   const total = $derived(visibles.filter((c) => c.devise === "EUR" && !c.reserve).reduce((a, c) => a + (parCompte.get(c.id) ?? 0), 0));
   const ctx: Contexte = $derived({ ops: donnees.operations, comptes: donnees.comptes, categories: donnees.categories, taux: tauxConnus(app.params.taux, app.params.tauxManuels), devise: deviseAffichee() });
   const ceMois = $derived(flux(ctx, "", [cleMois(moisCourant())]));
+  // Total mis de côté à la fin de chacun des 12 derniers mois (mêmes comptes que le total ci-dessus)
+  const evolution = $derived(
+    derniersMois(moisCourant(), 12).map((m) => {
+      const s = soldes(finDeMois(m));
+      return {
+        libelle: new Date(m.a, m.m, 1).toLocaleDateString(locale(), { month: "short", year: "2-digit" }).replace(".", ""),
+        valeur: visibles.filter((c) => c.devise === "EUR" && !c.reserve).reduce((a, c) => a + (s.get(c.id) ?? 0), 0),
+      };
+    }),
+  );
 
   const GROUPES = [
     { cle: "poches", titre: t("Poches de vos banques"), aide: t("Créées et mises à jour automatiquement à chaque import de relevé."), garde: (c: Compte) => !!c.parentId && !c.reserve },
@@ -116,6 +127,13 @@
     <button class="principal" onclick={() => (creation = true)}>{t("+ Nouvelle épargne")}</button>
   </div>
 
+
+  {#if visibles.length && evolution.some((p) => p.valeur)}
+    <section class="carte pile">
+      <h2>{t("Mon épargne sur 12 mois")}<Aide texte={t("Total mis de côté à la fin de chaque mois : poches, livrets et tirelires (hors argent réservé).")} /></h2>
+      <Courbe points={evolution} devise="EUR" couleur="var(--serie-epargne)" hauteur={150} />
+    </section>
+  {/if}
   {#each GROUPES as g (g.cle)}
     {@const liste = visibles.filter(g.garde)}
     {#if liste.length}
