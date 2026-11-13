@@ -224,6 +224,8 @@
       </div>
 
       </div>
+      <!-- Grand écran : la carte du mois et « Mes comptes » l'une sous l'autre, à droite (pas de vide sous le mois) -->
+      <div class="droite">
       <section class="carte pile mois" data-visite="mois">
         <div class="titre">
           <h2>{b.libelle.charAt(0).toUpperCase() + b.libelle.slice(1)}</h2>
@@ -257,6 +259,7 @@
           <SoldesComptes mois={moisCourbe} series={seriesComptes} total={comptesGraphe.length > 1 ? totalSoldes : undefined} {devise} hauteur={150} />
         </section>
       {/if}
+      </div>
     </div>
 
     <RappelSauvegarde />
@@ -547,6 +550,12 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 16px;
+  }
+  .droite {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
   }
   .haut-gauche {
     display: flex;
