@@ -76,6 +76,12 @@
   const ecartDepenses = $derived(moy ? variation(f.depenses, moy.depenses) : undefined);
   // Courbe des dépenses par mois : les mois de la période, ou les 6 derniers pour un seul mois
   const moisCourbe = $derived(b.mois.length > 1 ? moisPasses(b.mois) : derniersMois(b.mois[0], 6));
+  // Grand écran : le graphique du mois prend la hauteur laissée par la carte de gauche (rangée alignée, sans vide)
+  let largeur = $state(typeof innerWidth === "number" ? innerWidth : 0);
+  let hGauche = $state(0);
+  let hTitre = $state(0);
+  let hTrois = $state(0);
+  const hauteurFlux = $derived(largeur >= 1100 && hGauche ? Math.max(160, Math.min(420, hGauche - hTitre - hTrois - 32 - 24 - 40)) : 160);
   const fluxMois = $derived(
     moisCourbe.map((m) => {
       const fm = flux(ctx, filtre, [cleMois(m)]);
@@ -191,7 +197,7 @@
 
     <!-- Grand écran : ce que j'ai à gauche, comment se passe le mois à droite -->
     <div class="haut">
-      <div class="haut-gauche">
+      <div class="haut-gauche" bind:clientHeight={hGauche}>
       <section class="tete-solde" data-visite="solde">
         <p class="sous">
           {estActuel ? t("Argent disponible") : t("Disponible au {0}", dateCourte(jusquAu))} <ChoixDevise />
@@ -224,14 +230,12 @@
       </div>
 
       </div>
-      <!-- Grand écran : la carte du mois et « Mes comptes » l'une sous l'autre, à droite (pas de vide sous le mois) -->
-      <div class="droite">
       <section class="carte pile mois" data-visite="mois">
-        <div class="titre">
+        <div class="titre" bind:clientHeight={hTitre}>
           <h2>{b.libelle.charAt(0).toUpperCase() + b.libelle.slice(1)}</h2>
           <button class="lien" onclick={() => (app.page = "operations")}>{t("Détails")}</button>
         </div>
-        <div class="trois">
+        <div class="trois" bind:clientHeight={hTrois}>
           <div>
             <p class="sous"><i class="carre" style:background="var(--serie-revenus)"></i>{t("Revenus")}</p>
             <p class="montant chiffre">{argent(f.revenus, devise, true)}</p>
@@ -248,18 +252,8 @@
             {#if f.misDeCote - f.pioche}<p class="sous">{t("Épargne")} <span class="montant">{argent(f.misDeCote - f.pioche, devise, true)}</span></p>{/if}
           </div>
         </div>
-        <FluxCourbes mois={fluxMois} {devise} hauteur={160} />
+        <FluxCourbes mois={fluxMois} {devise} hauteur={hauteurFlux} />
       </section>
-      {#if comptesGraphe.length}
-        <section class="carte pile">
-          <div class="titre">
-            <h2>{t("Mes comptes")}<Aide texte={t("Solde de chaque compte en fin de mois, épargne et poches comprises, dans sa couleur. Le total est en pointillés. Sous 0 €, la zone est rouge. Touchez un compte pour le masquer.")} /></h2>
-            <button class="lien" onclick={() => (app.page = "analyse")}>{t("Analyse")}</button>
-          </div>
-          <SoldesComptes mois={moisCourbe} series={seriesComptes} total={comptesGraphe.length > 1 ? totalSoldes : undefined} {devise} hauteur={150} />
-        </section>
-      {/if}
-      </div>
     </div>
 
     <RappelSauvegarde />
@@ -272,114 +266,118 @@
       </div>
     {/if}
 
-    <div class="grille">
-      <div class="colonne">
-
-
-      <section class="carte pile">
+    <!-- Rangées : les cartes d'une même rangée ont la même hauteur (pas de trou). Grand écran : 3 colonnes -->
+    <div class="tableau">
+    {#if comptesGraphe.length}
+      <section class="carte pile large">
         <div class="titre">
-          <h2>{t("Budgets")}</h2>
-          <button class="lien" onclick={() => (app.page = "budgets")}>{budgets.length ? t("Tout voir") : t("Créer")}</button>
-        </div>
-        {#each budgets.slice(0, 4) as x (x.id + x.frequence)}
-          {@const taux = x.depense / x.budget}
-          <button class="budget" onclick={() => (budgetOuvert = x.id)}>
-            <IconeCategorie id={x.id === "global" ? undefined : x.id} icone={x.id === "global" ? "target" : undefined} teinte={x.id === "global" ? "#378ADD" : undefined} />
-            <span class="corps">
-              <span class="ligne-haut"><span class="nom">{nomBudget(x)}{x.frequence === "annee" ? ` (${x.de.slice(0, 4)})` : ""}</span><span><span class="montant">{argent(x.depense, devise)}</span> <span class="sous">/ <span class="montant">{argent(x.budget, devise)}</span></span></span></span>
-              <span class="jauge"><span class={taux > 1 ? "trop" : x.depassera || taux > 0.85 ? "presque" : ""} style:width="{Math.min(100, taux * 100)}%" style:background={taux > 0.85 || x.depassera ? undefined : (x.c?.couleur ?? "var(--serie-revenus)")}></span></span>
-              <span class="ligne-bas">
-                {#if taux > 1}<span class="alerte-pastille">{t("dépassé de")} <span class="montant">{argent(x.depense - x.budget, devise)}</span></span>
-                {:else if x.depassera}<span class="rythme-pastille">{t("à ce rythme : +")}<span class="montant">{argent(x.projection! - x.budget, devise)}</span></span>
-                {:else}<span class="sous">{t("reste")} <span class="montant">{argent(x.budget - x.depense, devise)}</span></span>{/if}
-              </span>
-            </span>
-          </button>
-        {:else}
-          <p class="sous">{t("Fixez un plafond par catégorie pour suivre vos dépenses du mois.")}</p>
-        {/each}
-      </section>
-      <section class="carte pile">
-        <div class="titre">
-          <h2>{t("Opérations")}</h2>
-          <button class="lien" onclick={() => (app.page = "operations")}>{t("Tout voir")}</button>
-        </div>
-        {#each recentes as o (o.id)}
-          <div class="op">
-            <IconeCategorie id={o.categorieId} />
-            <div class="corps"><span class="libelle">{libelleLisible(o.libelle)}</span><span class="sous">{dateCourte(o.date)} · {categories.get(o.categorieId ?? "")?.nom ?? t("Sans catégorie")}</span></div>
-            <span class="montant fort" class:positif={o.montant > 0}>{argent(o.montant, devise, true)}</span>
-          </div>
-        {:else}
-          <p class="sous">{t("Aucune opération ce mois-ci.")}</p>
-        {/each}
-      </section>
-      </div>
-      <div class="colonne">
-      <section class="carte pile">
-        <div class="titre">
-          <h2>{t("Où part mon argent")}<Aide texte={t("Dépenses du mois choisi, par catégorie. Changez une catégorie depuis la fiche d'une opération ou dans Paramètres → Règles de classement.")} /></h2>
+          <h2>{t("Mes comptes")}<Aide texte={t("Solde de chaque compte en fin de mois, épargne et poches comprises, dans sa couleur. Le total est en pointillés. Sous 0 €, la zone est rouge. Touchez un compte pour le masquer.")} /></h2>
           <button class="lien" onclick={() => (app.page = "analyse")}>{t("Analyse")}</button>
         </div>
-        {#if parts.length}
-          <Anneau {parts} {devise} choisir={(id) => (budgetOuvert = id)} />
-        {:else}
-          <p class="sous">{t("Aucune dépense ce mois-ci.")}</p>
-        {/if}
+        <SoldesComptes mois={moisCourbe} series={seriesComptes} total={comptesGraphe.length > 1 ? totalSoldes : undefined} {devise} hauteur={largeur >= 1100 ? 210 : 150} />
       </section>
-      {#if poches.length}
-        <section class="carte pile">
-          <div class="titre">
-            <h2>{t("Épargne et poches")}<Aide texte={t("Solde de chaque poche ou compte d'épargne. L'objectif est lu dans le nom de la poche (« Objectif : 5000€ ») ou saisi dans sa fiche.")} /></h2>
-            <button class="lien" onclick={() => (app.page = "epargne")}>{t("Gérer")}</button>
-          </div>
-          {#each poches as c (c.id)}
-            {@const s = parCompte.get(c.id) ?? 0}
-            {@const obj = objectifPoche(c)}
-            <button class="poche" onclick={() => (fiche = c)}>
-              <IconeCategorie icone={c.parentId ? "pig-money" : c.forme === "especes" ? "cash" : c.forme === "projet" ? "target" : "building-bank"} teinte={c.parentId ? "#7F77DD" : c.forme === "especes" ? "#639922" : c.forme === "projet" ? "#D85A30" : "#378ADD"} taille={34} />
-              <span class="corps">
-                <span class="ligne-haut"><span class="nom">{c.nom}</span><span class="montant fort">{argent(s, c.devise)}</span></span>
-                {#if obj}
-                  <span class="jauge"><span style:width="{Math.min(100, Math.max(0, (s / obj) * 100))}%" style:background="var(--serie-revenus)"></span></span>
-                  <span class="sous">{Math.round((s / obj) * 100)} {t("% de")} <span class="montant">{argent(obj, c.devise)}</span> {t("· reste")} <span class="montant">{argent(Math.max(0, obj - s), c.devise)}</span></span>
-                {/if}
-              </span>
-            </button>
-          {/each}
-        </section>
-      {/if}
-      {#if pretsEnCours.length}
-        <section class="carte pile">
-          <div class="titre">
-            <h2>{t("Prêts")}<Aide texte={t("Capital restant dû d'après l'échéancier de chaque prêt, et prochaine échéance à payer.")} /></h2>
-            <button class="lien" onclick={() => (app.page = "prets")}>{t("Gérer")}</button>
-          </div>
-          {#each pretsEnCours as { p: x, r } (x.id)}
-            <button class="poche" onclick={() => (app.page = "prets")}>
-              <IconeCategorie icone="building-bank" teinte="#534AB7" taille={34} />
-              <span class="corps">
-                <span class="ligne-haut"><span class="nom">{x.nom}</span><span class="montant fort">{argent(r.restantDu, "EUR")}</span></span>
-                <span class="jauge"><span style:width="{Math.min(100, r.avancement * 100)}%" style:background="var(--serie-revenus)"></span></span>
-                {#if r.prochaine}<span class="sous">{t("prochaine échéance")} <span class="montant">{argent(r.aPayer, "EUR")}</span> {t("le")} {dateCourte(r.prochaine.date)} {t("· fin")} {dateCourte(r.fin)}</span>{/if}
-              </span>
-            </button>
-          {/each}
-        </section>
-      {/if}
-      <section class="carte pile">
-        <h2>{t("À venir")}<Aide texte={t("Opérations qui reviennent régulièrement (abonnements, loyer, salaire…), attendues dans les 30 prochains jours.")} /></h2>
-        {#each aVenir as r (r.compteId + r.motif)}
-          <div class="op">
-            <IconeCategorie id={r.categorieId} />
-            <div class="corps"><span class="libelle">{libelleLisible(r.libelle)}</span><span class="sous">{dateCourte(r.prochaine)}</span></div>
-            <span class="montant fort" class:positif={r.montant > 0}>{r.variable ? "≈ " : ""}{argent(r.montant, devise, true)}</span>
-          </div>
-        {:else}
-          <p class="sous">{estActuel ? t("Rien d'attendu dans les 30 prochains jours.") : t("Visible sur le mois en cours.")}</p>
-        {/each}
-      </section>
+    {/if}
+    <section class="carte pile">
+    <div class="titre">
+      <h2>{t("Budgets")}</h2>
+      <button class="lien" onclick={() => (app.page = "budgets")}>{budgets.length ? t("Tout voir") : t("Créer")}</button>
+    </div>
+    {#each budgets.slice(0, 4) as x (x.id + x.frequence)}
+      {@const taux = x.depense / x.budget}
+      <button class="budget" onclick={() => (budgetOuvert = x.id)}>
+        <IconeCategorie id={x.id === "global" ? undefined : x.id} icone={x.id === "global" ? "target" : undefined} teinte={x.id === "global" ? "#378ADD" : undefined} />
+        <span class="corps">
+          <span class="ligne-haut"><span class="nom">{nomBudget(x)}{x.frequence === "annee" ? ` (${x.de.slice(0, 4)})` : ""}</span><span><span class="montant">{argent(x.depense, devise)}</span> <span class="sous">/ <span class="montant">{argent(x.budget, devise)}</span></span></span></span>
+          <span class="jauge"><span class={taux > 1 ? "trop" : x.depassera || taux > 0.85 ? "presque" : ""} style:width="{Math.min(100, taux * 100)}%" style:background={taux > 0.85 || x.depassera ? undefined : (x.c?.couleur ?? "var(--serie-revenus)")}></span></span>
+          <span class="ligne-bas">
+            {#if taux > 1}<span class="alerte-pastille">{t("dépassé de")} <span class="montant">{argent(x.depense - x.budget, devise)}</span></span>
+            {:else if x.depassera}<span class="rythme-pastille">{t("à ce rythme : +")}<span class="montant">{argent(x.projection! - x.budget, devise)}</span></span>
+            {:else}<span class="sous">{t("reste")} <span class="montant">{argent(x.budget - x.depense, devise)}</span></span>{/if}
+          </span>
+        </span>
+      </button>
+    {:else}
+      <p class="sous">{t("Fixez un plafond par catégorie pour suivre vos dépenses du mois.")}</p>
+    {/each}
+  </section>
+    <section class="carte pile">
+    <div class="titre">
+      <h2>{t("Où part mon argent")}<Aide texte={t("Dépenses du mois choisi, par catégorie. Changez une catégorie depuis la fiche d'une opération ou dans Paramètres → Règles de classement.")} /></h2>
+      <button class="lien" onclick={() => (app.page = "analyse")}>{t("Analyse")}</button>
+    </div>
+    {#if parts.length}
+      <Anneau {parts} {devise} choisir={(id) => (budgetOuvert = id)} />
+    {:else}
+      <p class="sous">{t("Aucune dépense ce mois-ci.")}</p>
+    {/if}
+  </section>
+    <section class="carte pile">
+    <div class="titre">
+      <h2>{t("Opérations")}</h2>
+      <button class="lien" onclick={() => (app.page = "operations")}>{t("Tout voir")}</button>
+    </div>
+    {#each recentes as o (o.id)}
+      <div class="op">
+        <IconeCategorie id={o.categorieId} />
+        <div class="corps"><span class="libelle">{libelleLisible(o.libelle)}</span><span class="sous">{dateCourte(o.date)} · {categories.get(o.categorieId ?? "")?.nom ?? t("Sans catégorie")}</span></div>
+        <span class="montant fort" class:positif={o.montant > 0}>{argent(o.montant, devise, true)}</span>
       </div>
+    {:else}
+      <p class="sous">{t("Aucune opération ce mois-ci.")}</p>
+    {/each}
+  </section>
+    {#if poches.length}
+    <section class="carte pile">
+      <div class="titre">
+        <h2>{t("Épargne et poches")}<Aide texte={t("Solde de chaque poche ou compte d'épargne. L'objectif est lu dans le nom de la poche (« Objectif : 5000€ ») ou saisi dans sa fiche.")} /></h2>
+        <button class="lien" onclick={() => (app.page = "epargne")}>{t("Gérer")}</button>
+      </div>
+      {#each poches as c (c.id)}
+        {@const s = parCompte.get(c.id) ?? 0}
+        {@const obj = objectifPoche(c)}
+        <button class="poche" onclick={() => (fiche = c)}>
+          <IconeCategorie icone={c.parentId ? "pig-money" : c.forme === "especes" ? "cash" : c.forme === "projet" ? "target" : "building-bank"} teinte={c.parentId ? "#7F77DD" : c.forme === "especes" ? "#639922" : c.forme === "projet" ? "#D85A30" : "#378ADD"} taille={34} />
+          <span class="corps">
+            <span class="ligne-haut"><span class="nom">{c.nom}</span><span class="montant fort">{argent(s, c.devise)}</span></span>
+            {#if obj}
+              <span class="jauge"><span style:width="{Math.min(100, Math.max(0, (s / obj) * 100))}%" style:background="var(--serie-revenus)"></span></span>
+              <span class="sous">{Math.round((s / obj) * 100)} {t("% de")} <span class="montant">{argent(obj, c.devise)}</span> {t("· reste")} <span class="montant">{argent(Math.max(0, obj - s), c.devise)}</span></span>
+            {/if}
+          </span>
+        </button>
+      {/each}
+    </section>
+  {/if}
+    {#if pretsEnCours.length}
+    <section class="carte pile">
+      <div class="titre">
+        <h2>{t("Prêts")}<Aide texte={t("Capital restant dû d'après l'échéancier de chaque prêt, et prochaine échéance à payer.")} /></h2>
+        <button class="lien" onclick={() => (app.page = "prets")}>{t("Gérer")}</button>
+      </div>
+      {#each pretsEnCours as { p: x, r } (x.id)}
+        <button class="poche" onclick={() => (app.page = "prets")}>
+          <IconeCategorie icone="building-bank" teinte="#534AB7" taille={34} />
+          <span class="corps">
+            <span class="ligne-haut"><span class="nom">{x.nom}</span><span class="montant fort">{argent(r.restantDu, "EUR")}</span></span>
+            <span class="jauge"><span style:width="{Math.min(100, r.avancement * 100)}%" style:background="var(--serie-revenus)"></span></span>
+            {#if r.prochaine}<span class="sous">{t("prochaine échéance")} <span class="montant">{argent(r.aPayer, "EUR")}</span> {t("le")} {dateCourte(r.prochaine.date)} {t("· fin")} {dateCourte(r.fin)}</span>{/if}
+          </span>
+        </button>
+      {/each}
+    </section>
+  {/if}
+    <section class="carte pile">
+    <h2>{t("À venir")}<Aide texte={t("Opérations qui reviennent régulièrement (abonnements, loyer, salaire…), attendues dans les 30 prochains jours.")} /></h2>
+    {#each aVenir as r (r.compteId + r.motif)}
+      <div class="op">
+        <IconeCategorie id={r.categorieId} />
+        <div class="corps"><span class="libelle">{libelleLisible(r.libelle)}</span><span class="sous">{dateCourte(r.prochaine)}</span></div>
+        <span class="montant fort" class:positif={r.montant > 0}>{r.variable ? "≈ " : ""}{argent(r.montant, devise, true)}</span>
+      </div>
+    {:else}
+      <p class="sous">{estActuel ? t("Rien d'attendu dans les 30 prochains jours.") : t("Visible sur le mois en cours.")}</p>
+    {/each}
+  </section>
     </div>
 
     {#if filtre}
@@ -388,6 +386,8 @@
     {/if}
   </div>
 {/if}
+
+<svelte:window bind:innerWidth={largeur} />
 
 {#if budgetOuvert}<BudgetEditeur id={budgetOuvert} fermer={() => (budgetOuvert = null)} />{/if}
 
@@ -551,12 +551,6 @@
     grid-template-columns: minmax(0, 1fr);
     gap: 16px;
   }
-  .droite {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    min-width: 0;
-  }
   .haut-gauche {
     display: flex;
     flex-direction: column;
@@ -564,12 +558,33 @@
     min-width: 0;
   }
   @media (min-width: 1100px) {
+    /* Rangée du haut : ce que j'ai (à gauche, dans une carte) et le mois (à droite), même hauteur */
     .haut {
-      /* La colonne de gauche prend la largeur de son contenu (600 px au plus), la carte du mois le reste :
-         pas de vide au milieu */
-      grid-template-columns: fit-content(600px) minmax(0, 1fr);
-      gap: 16px 32px;
-      align-items: start;
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      gap: 16px;
+      align-items: stretch;
+    }
+    /* Hauteur naturelle (mesurée) : c'est le graphique du mois, à droite, qui s'ajuste à elle, jamais l'inverse */
+    .haut-gauche {
+      background: var(--surface);
+      border-radius: var(--rayon);
+      padding: 18px 20px;
+      align-self: start;
+    }
+    .cartes-comptes {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .carte-compte {
+      width: auto;
+    }
+    .carte-compte.ajout {
+      width: auto;
+    }
+    /* Nombre pair de comptes : le « + » occupe une ligne basse entière ; impair : il remplit la case libre */
+    .carte-compte.ajout:nth-child(odd) {
+      height: 52px;
+      grid-column: 1 / -1;
     }
   }
   .chiffre {
@@ -595,17 +610,27 @@
     text-decoration: underline;
     flex: none;
   }
-  .grille {
+  .tableau {
     display: grid;
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     gap: 12px;
-    align-items: start;
   }
-  .colonne {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    min-width: 0;
+  @media (min-width: 900px) {
+    .tableau {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .tableau > .large {
+      grid-column: 1 / -1;
+    }
+  }
+  @media (min-width: 1100px) {
+    .tableau {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .tableau > .large {
+      grid-column: span 2;
+    }
   }
   .titre {
     display: flex;
@@ -715,11 +740,6 @@
   }
   .positif {
     color: var(--ok);
-  }
-  @media (max-width: 1099px) {
-    .grille {
-      grid-template-columns: minmax(0, 1fr);
-    }
   }
   .trois {
     display: grid;

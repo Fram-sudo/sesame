@@ -10,10 +10,10 @@ Si ce texte n'a pas changé depuis la version précédente, la version dit simpl
 
 ## FR
 
-- Graphiques plus fluides : en glissant le doigt ou la souris, le repère suit les courbes en continu au lieu de sauter d'un point à l'autre (revenus et dépenses, mes comptes).
-- Accueil sur ordinateur : « Mes comptes » se range sous la carte du mois, plus de grand vide à droite.
+- Nouvel accueil sur ordinateur, en rangées alignées et sans espace vide : votre argent, vos raccourcis et vos comptes à gauche, le mois à droite (le graphique s'ajuste à la hauteur) ; puis « Mes comptes » en large avec les budgets ; puis catégories, opérations et épargne côte à côte.
+- Graphiques plus fluides : le repère suit le doigt ou la souris en continu.
 
 ## EN
 
-- Smoother charts: when you slide your finger or mouse, the marker follows the curves continuously instead of jumping from point to point (income and spending, my accounts).
-- Home on computers: “My accounts” now sits under the month card, no more big empty space on the right.
+- New Home on computers, in aligned rows with no empty space: your money, shortcuts and accounts on the left, the month on the right (the chart fits the height); then “My accounts” wide next to budgets; then categories, transactions and savings side by side.
+- Smoother charts: the marker follows your finger or mouse continuously.
