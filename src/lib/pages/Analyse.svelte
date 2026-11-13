@@ -14,7 +14,7 @@
   import { bornes, cleMois, derniersMois, finDeMois, flux, moisPasses, perimetre, solde, variation, type Contexte } from "../stats";
   import { premiereDate } from "../donnees.svelte";
 
-  const ctx: Contexte = $derived({ ops: donnees.operations, comptes: donnees.comptes, categories: donnees.categories, taux: tauxConnus(app.params.taux), devise: deviseAffichee() });
+  const ctx: Contexte = $derived({ ops: donnees.operations, comptes: donnees.comptes, categories: donnees.categories, taux: tauxConnus(app.params.taux, app.params.tauxManuels), devise: deviseAffichee() });
   const filtre = $derived(app.filtreCompte);
   const p = $derived(perimetre(ctx, filtre));
   const devise = $derived(p.devise);

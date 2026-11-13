@@ -22,8 +22,8 @@ export function lireBce(xml: string, chargeLe: string): Taux | null {
   return date && Object.keys(valeurs).length ? { date, chargeLe, valeurs } : null;
 }
 
-/** Taux utilisables : l'euro, le franc CFA (fixe), et ceux de la BCE s'ils ont été chargés. */
-export const tauxConnus = (t?: Taux): Record<string, number> => ({ ...(t?.valeurs ?? {}), EUR: 1, XOF: XOF_PAR_EUR });
+/** Taux utilisables : ceux saisis à la main, ceux de la BCE s'ils ont été chargés, l'euro et les francs CFA (fixes). */
+export const tauxConnus = (t?: Taux, manuels?: Record<string, number>): Record<string, number> => ({ ...(manuels ?? {}), ...(t?.valeurs ?? {}), EUR: 1, XOF: XOF_PAR_EUR, XAF: XOF_PAR_EUR });
 
 /** Télécharge les taux du jour ; null en cas d'échec (pas de connexion…), on garde alors les derniers. */
 export async function chargerTaux(aujourdhui: string): Promise<Taux | null> {

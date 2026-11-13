@@ -12,7 +12,8 @@
   import CompteFormulaire from "../CompteFormulaire.svelte";
   import Courbe from "../Courbe.svelte";
   import { chargerDemo } from "../demo";
-  import { donnees, soldes, SYMBOLES, type Compte } from "../donnees.svelte";
+  import { donnees, soldes, type Compte } from "../donnees.svelte";
+  import { symboleDevise } from "../devises";
   import { annoncer, app, deviseAffichee } from "../etat.svelte";
   import { argent, dateCourte } from "../format";
   import Icone from "../Icone.svelte";
@@ -28,7 +29,7 @@
   let fiche = $state<Compte | "nouveau" | null>(null);
   let enCours = $state(false);
 
-  const ctx: Contexte = $derived({ ops: donnees.operations, comptes: donnees.comptes, categories: donnees.categories, taux: tauxConnus(app.params.taux), devise: deviseAffichee() });
+  const ctx: Contexte = $derived({ ops: donnees.operations, comptes: donnees.comptes, categories: donnees.categories, taux: tauxConnus(app.params.taux, app.params.tauxManuels), devise: deviseAffichee() });
   const filtre = $derived(app.filtreCompte);
   const p = $derived(perimetre(ctx, filtre));
   const devise = $derived(p.devise);
@@ -42,7 +43,9 @@
   const parCompte = $derived(soldes(estActuel ? undefined : jusquAu));
   // Argent disponible : comptes courants seulement ; l'épargne et les poches ont un but, elles sont à part
   const total = $derived(solde(ctx, filtre, jusquAu, false));
-  const totalEpargne = $derived(solde(ctx, filtre, jusquAu) - total);
+  // Les réserves (argent bloqué pour une dépense prévue) ne sont ni disponibles ni de l'épargne
+  const totalReserve = $derived([...p.reserves].reduce((s, id) => s + Math.round((parCompte.get(id) ?? 0) * (p.facteur.get(id) ?? 1)), 0));
+  const totalEpargne = $derived(solde(ctx, filtre, jusquAu) - total - totalReserve);
   // « 2 859,56 € » : les centimes en petit, comme dans les applis de banque
   const soldeAffiche = $derived.by(() => {
     const s = argent(total, devise);
@@ -196,9 +199,9 @@
           <Aide texte={t("Ce qu'il y a sur vos comptes courants, opérations en attente incluses (comme dans l'appli de votre banque). L'argent de vos poches, livrets et tirelires n'est pas compté : il a un but, il est affiché à part.")} />
         </p>
         <p class="solde montant" style:font-size={tailleSolde}>{soldeAffiche.ent}<span class="cts">{soldeAffiche.dec}</span></p>
-        {#each autresDevises as [d, v] (d)}<p class="sous montant">+ {argent(v, d)}</p>{/each}
+        {#each autresDevises as [d, v] (d)}<p class="sous"><span class="montant">+ {argent(v, d)}</span> · <button class="lien" onclick={() => (app.page = "parametres")}>{t("non compté : taux inconnu")}</button></p>{/each}
         {#if enAttenteTotal}<button class="lien attente" onclick={() => (voirAttente = true)}>{t("{0} en attente déjà déduits", argent(Math.abs(enAttenteTotal), devise))} ›</button>{/if}
-        {#if devisesConverties.length}<p class="sous">{t("comptes en")} {devisesConverties.map((d) => SYMBOLES[d] ?? d).join(", ")} {t("convertis en")} {devise === "EUR" ? "euros" : (SYMBOLES[devise] ?? devise)}{app.params.taux && [...devisesConverties, devise].some((d) => d === "USD" || d === "CAD") ? t(" (taux du {0})", dateCourte(app.params.taux.date)) : ""}</p>{/if}
+        {#if devisesConverties.length}<p class="sous">{t("comptes en")} {devisesConverties.map(symboleDevise).join(", ")} {t("convertis en")} {devise === "EUR" ? "euros" : symboleDevise(devise)}{app.params.taux && [...devisesConverties, devise].some((d) => app.params.taux!.valeurs[d] !== undefined) ? t(" (taux du {0})", dateCourte(app.params.taux.date)) : ""}</p>{/if}
         <button class="puce" onclick={() => (app.page = "epargne")}>
           {#if totalEpargne}+ <strong class="montant">{argent(totalEpargne, devise)}</strong> {t("de côté · poches et épargne")}{:else}{t("Mettre de l'argent de côté")}{/if}
         </button>

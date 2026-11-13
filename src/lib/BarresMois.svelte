@@ -30,6 +30,11 @@
   const HAUT = 14;
   const y = (v: number) => HAUT + (H - BAS - HAUT) * (1 - v / max);
   let survol = $state(-1);
+  // Mois sous le doigt, d'après sa position sur tout le graphique (au doigt, le pointeur reste accroché au premier élément touché)
+  function bouger(e: PointerEvent) {
+    const r = (e.currentTarget as SVGElement).getBoundingClientRect();
+    survol = Math.max(0, Math.min(donnees.length - 1, Math.floor(((e.clientX - r.left) / r.width) * donnees.length)));
+  }
   // Barre au sommet arrondi (4 px), posée sur la ligne de base
   function barre(x0: number, v: number) {
     const h = H - BAS - y(v);
@@ -45,12 +50,12 @@
     <span><i style:background="var(--serie-revenus)"></i>{t("Revenus")}</span>
     <span><i style:background="var(--serie-depenses)"></i>{t("Dépenses")}</span>
   </div>
-  <svg viewBox="0 0 {L} {H}" role="img" aria-label={t("Revenus et dépenses par mois")} onpointerleave={() => (survol = -1)}>
+  <svg viewBox="0 0 {L} {H}" role="img" aria-label={t("Revenus et dépenses par mois")} onpointermove={bouger} onpointerdown={bouger} onpointerleave={() => (survol = -1)}>
     {#each graduations as v (v)}<line x1="0" x2={L} y1={y(v)} y2={y(v)} class="grille" />{/each}
     <line x1="0" x2={L} y1={H - BAS} y2={H - BAS} class="base" />
+    {#if survol >= 0}<rect x="0" y="0" width={pas} height={H - BAS} rx="8" class="surligne" style:transform="translateX({pas * survol}px)" />{/if}
     {#each donnees as d, i (d.libelle)}
       {@const cx = pas * i + pas / 2}
-      <rect x={pas * i} y="0" width={pas} height={H} class="zone" class:active={survol === i} onpointerenter={() => (survol = i)} onpointerdown={() => (survol = i)} role="presentation" />
       <path d={barre(cx - larg - 1, d.revenus)} fill="var(--serie-revenus)" pointer-events="none" />
       <path d={barre(cx + 1, d.depenses)} fill="var(--serie-depenses)" pointer-events="none" />
       <text x={cx} y={H - 6} class="axe" text-anchor="middle">{d.libelle}</text>
@@ -79,6 +84,8 @@
     width: 100%;
     height: auto;
     overflow: visible;
+    /* Glisser à l'horizontale parcourt les mois ; à la verticale, la page défile toujours */
+    touch-action: pan-y;
   }
   .legende {
     display: flex;
@@ -112,11 +119,10 @@
     stroke-linejoin: round;
     pointer-events: none;
   }
-  .zone {
-    fill: transparent;
-  }
-  .zone.active {
+  .surligne {
     fill: var(--surface-2);
+    pointer-events: none;
+    transition: transform 0.18s cubic-bezier(0.2, 0.9, 0.2, 1);
   }
   .detail {
     font-size: 13px;

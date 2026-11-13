@@ -22,6 +22,7 @@ interface CompteS {
   soldeInitial: number;
   type?: "courant" | "epargne";
   parentId?: string;
+  reserve?: boolean;
 }
 interface OpS {
   id: string;
@@ -69,14 +70,17 @@ export function perimetre(ctx: Contexte, compteId: string) {
   const taux = ctx.taux ?? { [devise]: 1 };
   const convertible = (d: string) => d === devise || (taux[d] !== undefined && taux[devise] !== undefined);
   const dedans = ctx.comptes.filter((c) => convertible(c.devise) && (!compteId || ids.has(c.id) || (!!c.parentId && ids.has(c.parentId))));
-  const estEpargne = (c: CompteS) => !!c.parentId || (c.type === "epargne" && c.id !== compteId);
+  // Réserve : argent bloqué pour une dépense prévue, ni disponible ni épargne (sauf si on regarde ce compte lui-même)
+  const estReserve = (c: CompteS) => !!c.reserve && c.id !== compteId;
+  const estEpargne = (c: CompteS) => !estReserve(c) && (!!c.parentId || (c.type === "epargne" && c.id !== compteId));
   const facteur = new Map(dedans.map((c) => [c.id, c.devise === devise ? 1 : taux[devise] / taux[c.devise]]));
   return {
     devise,
     /** Multiplicateur vers la devise du périmètre, par compte */
     facteur,
-    courants: new Set(dedans.filter((c) => !estEpargne(c)).map((c) => c.id)),
+    courants: new Set(dedans.filter((c) => !estEpargne(c) && !estReserve(c)).map((c) => c.id)),
     epargne: new Set(dedans.filter(estEpargne).map((c) => c.id)),
+    reserves: new Set(dedans.filter(estReserve).map((c) => c.id)),
   };
 }
 
@@ -109,6 +113,8 @@ export function flux(ctx: Contexte, compteId: string, quand: string[] | { de: st
     if (o.virementId) continue;
     const t = o.categorieId ? types.get(o.categorieId) : undefined;
     if (t === "virement") continue;
+    // Réserve : y verser n'est ni un revenu ni de l'épargne ; seul ce qui en sort pour payer (la mensualité) est une dépense
+    if (p.reserves.has(o.compteId) && montant > 0) continue;
     if (t === "depense" || (!t && montant < 0)) {
       f.depenses -= montant;
       const k = t ? o.categorieId! : "";
@@ -137,7 +143,7 @@ export function moyenne(ctx: Contexte, compteId: string, p: Mois, n = 3): Flux {
 /** Solde du périmètre (comptes courants + épargne) à une date incluse. */
 export function solde(ctx: Contexte, compteId: string, jusquAu: string, avecEpargne = true): number {
   const p = perimetre(ctx, compteId);
-  const ids = new Set([...p.courants, ...(avecEpargne ? p.epargne : [])]);
+  const ids = new Set([...p.courants, ...(avecEpargne ? [...p.epargne, ...p.reserves] : [])]);
   // Chaque compte dans sa devise, puis converti une seule fois (pas d'arrondi opération par opération)
   const parCompte = new Map(ctx.comptes.filter((c) => ids.has(c.id)).map((c) => [c.id, c.soldeInitial]));
   for (const o of ctx.ops) if (parCompte.has(o.compteId) && o.date <= jusquAu) parCompte.set(o.compteId, parCompte.get(o.compteId)! + o.montant);

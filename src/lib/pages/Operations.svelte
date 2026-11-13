@@ -48,7 +48,7 @@
   });
   // Totaux de ce qui est affiché (virements entre vos comptes exclus), dans la devise d'affichage
   const totaux = $derived.by(() => {
-    const taux = tauxConnus(app.params.taux);
+    const taux = tauxConnus(app.params.taux, app.params.tauxManuels);
     const dev = deviseAffichee();
     let depenses = 0;
     let revenus = 0;

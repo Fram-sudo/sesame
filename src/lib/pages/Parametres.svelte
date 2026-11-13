@@ -6,6 +6,21 @@
   import CleRecuperation from "../CleRecuperation.svelte";
   import { annoncer, app, exporterSauvegarde, mettreAJourTaux, sauverParametres } from "../etat.svelte";
   import { maj, verifierMaj } from "../maj.svelte";
+  import { nomDevise, symboleDevise } from "../devises";
+  import { tauxConnus } from "../taux";
+  import { donnees as donneesComptes } from "../donnees.svelte";
+
+  // Devises de vos comptes ; celles qu'aucun taux officiel ne couvre se saisissent à la main
+  const devisesComptes = $derived([...new Set(donneesComptes.comptes.map((c) => c.devise))].filter((d) => d !== "EUR"));
+  const aSaisir = $derived(devisesComptes.filter((d) => app.params.tauxManuels?.[d] !== undefined || !tauxConnus(app.params.taux)[d]));
+  async function changerTaux(d: string, saisie: string) {
+    const v = parseFloat(saisie.replace(/\s/g, "").replace(",", "."));
+    const m = { ...app.params.tauxManuels };
+    if (v > 0) m[d] = v;
+    else delete m[d];
+    app.params.tauxManuels = m;
+    await sauverParametres();
+  }
   import { REGLAGES_DEFAUT, type Reglages } from "../alertes";
 
   // Alertes du téléphone : réglages, puis reprogrammation (l'autorisation est demandée en activant)
@@ -221,7 +236,7 @@
 
   <section class="carte pile">
     <h2>{t("Devises")}</h2>
-    <p class="sous">{t("Le franc CFA est toujours converti au taux fixe : 1 € = 655,957 F CFA. Pour le dollar US et le dollar canadien, l'appli peut télécharger les taux officiels de la Banque centrale européenne.")}</p>
+    <p class="sous">{t("Les francs CFA sont toujours convertis au taux fixe : 1 € = 655,957 F CFA. Pour une trentaine d'autres devises (dollar, livre, franc suisse, yen…), l'appli peut télécharger les taux officiels de la Banque centrale européenne.")}</p>
     <label class="interrupteur">
       <input type="checkbox" bind:checked={app.params.tauxActifs} onchange={async () => (await sauverParametres(), app.params.tauxActifs && (await mettreAJourTaux(true)))} />
       <span>{t("Mettre à jour les taux de change une fois par jour")}</span>
@@ -230,10 +245,16 @@
     {#if app.params.taux}
       <p class="sous">
         {t("Taux du")} {new Date(app.params.taux.date + "T00:00:00Z").toLocaleDateString(locale(), { timeZone: "UTC" })} : 1 € =
-        {(app.params.taux.valeurs.USD ?? 0).toLocaleString(locale())} {t("$ US ·")} {(app.params.taux.valeurs.CAD ?? 0).toLocaleString(locale())} {t("$ CA")}
+        {devisesComptes.filter((d) => app.params.taux!.valeurs[d] !== undefined).map((d) => `${app.params.taux!.valeurs[d].toLocaleString(locale())} ${symboleDevise(d)}`).join(" · ") || t("aucune de vos devises n'est concernée")}
       </p>
       {#if app.params.tauxActifs}<button onclick={() => agir(async () => annoncer((await mettreAJourTaux(true)) ? t("Taux mis à jour.") : t("Pas de connexion : les derniers taux sont gardés.")))} disabled={enCours}>{t("Mettre à jour maintenant")}</button>{/if}
     {/if}
+    {#each aSaisir as d (d)}
+      <label>{t("Taux à saisir pour {0} : 1 € =", nomDevise(d))}
+        <input inputmode="decimal" placeholder={t("ex. 10,85")} value={app.params.tauxManuels?.[d] ? String(app.params.tauxManuels[d]).replace(".", ",") : ""} onchange={(e) => changerTaux(d, e.currentTarget.value)} />
+      </label>
+    {/each}
+    {#if aSaisir.length}<p class="sous">{t("Ces devises ne sont pas suivies par la Banque centrale européenne : saisissez leur taux pour que ces comptes comptent dans votre argent disponible. Vous pouvez le corriger à tout moment.")}</p>{/if}
   </section>
 
   {#if estAndroid}

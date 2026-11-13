@@ -6,7 +6,8 @@
   // Pour un compte qui a des poches : leur liste.
   import CompteFormulaire from "./CompteFormulaire.svelte";
   import ControleSolde from "./ControleSolde.svelte";
-  import { classerEtLier, DEVISES, donnees, ecrire, nouvelId, soldes, supprimerCompte, type Changement, type Compte, type Devise } from "./donnees.svelte";
+  import { optionsDevises } from "./devises";
+  import { classerEtLier, donnees, ecrire, nouvelId, soldes, supprimerCompte, type Changement, type Compte, type Devise } from "./donnees.svelte";
   import { annoncer } from "./etat.svelte";
   import Feuille from "./Feuille.svelte";
   import { argent } from "./format";
@@ -15,7 +16,6 @@
 
   let { compte, fermer, cree }: { compte?: Compte; fermer: () => void; cree?: (id: string) => void } = $props();
 
-  const NOMS_DEVISES: Record<Devise, string> = { EUR: t("Euro (€)"), XOF: t("Franc CFA (XOF)"), USD: t("Dollar US ($)"), CAD: t("Dollar canadien (CA$)") };
 
   /* svelte-ignore state_referenced_locally */
   const estPoche = !!compte?.parentId;
@@ -26,7 +26,10 @@
   /* svelte-ignore state_referenced_locally */
   let devise = $state<Devise>(compte?.devise ?? "EUR");
   /* svelte-ignore state_referenced_locally */
-  let type = $state(compte?.type ?? "courant");
+  // « especes » : compte courant sans banque, le portefeuille d'espèces
+  let type = $state<"courant" | "epargne" | "especes">(compte?.type !== "epargne" && compte?.forme === "especes" ? "especes" : (compte?.type ?? "courant"));
+  /* svelte-ignore state_referenced_locally */
+  let reserve = $state(!!compte?.reserve);
   /* svelte-ignore state_referenced_locally */
   let objectif = $state(compte?.objectif ? String(compte.objectif / 100).replace(".", ",") : "");
   let confirmer = $state(false);
@@ -50,7 +53,9 @@
       banque: banque.trim(),
       devise,
       soldeInitial: compte?.soldeInitial ?? 0,
-      type,
+      type: type === "especes" ? "courant" : type,
+      ...(type === "especes" ? { forme: "especes" as const } : compte?.type !== "epargne" && compte?.forme === "especes" ? { forme: undefined } : {}),
+      reserve: (estPoche || type === "epargne") && reserve ? true : undefined,
       objectif: lireMontant(objectif) ?? undefined,
       // Une poche garde le nom qu'elle a dans les relevés : la renommer ici ne casse pas le lien avec la banque
       ...(estPoche ? { nomBanque: compte!.nomBanque ?? compte!.nom } : {}),
@@ -92,25 +97,38 @@
   }
 </script>
 
+{#snippet role()}
+  <label>{t("C'est de l'argent…")}
+    <Choix bind:valeur={reserve} titre={t("C'est de l'argent…")} options={[{ v: false, l: t("Épargné (compté dans votre épargne)") }, { v: true, l: t("Réservé (pour une dépense prévue, ex. mensualité de prêt)") }]} />
+  </label>
+{/snippet}
+
 <Feuille titre={compte ? compte.nom : t("Nouveau compte")} {fermer}>
   <form class="pile" onsubmit={enregistrer}>
     <label>{estPoche ? t("Nom de la poche") : t("Nom du compte")}<input bind:value={nom} placeholder={t("ex. Compte courant")} required /></label>
     {#if estPoche}
       {#if nomBanque && nomBanque !== nom.trim()}<p class="sous aide">{t("Sur vos relevés : «")} {nomBanque} {t("». Le lien est gardé même si vous la renommez.")}</p>{/if}
-      <label>{t("Objectif d'épargne (facultatif)")}
-        <input inputmode="decimal" bind:value={objectif} placeholder={objectifLu ? t("lu dans le nom : {0} €", objectifLu / 100) : t("ex. 5000")} />
-      </label>
+      {@render role()}
+      {#if !reserve}
+        <label>{t("Objectif d'épargne (facultatif)")}
+          <input inputmode="decimal" bind:value={objectif} placeholder={objectifLu ? t("lu dans le nom : {0} €", objectifLu / 100) : t("ex. 5000")} />
+        </label>
+      {/if}
     {:else}
       <label>{t("Banque")}<input bind:value={banque} placeholder={t("ex. Société Générale")} list="banques" /></label>
       <datalist id="banques"><option value="Société Générale"></option><option value="Revolut"></option><option value="Boursobank"></option></datalist>
       <label>{t("Devise")}
-        <Choix bind:valeur={devise} titre={t("Devise")} desactive={nbOps > 0} options={DEVISES.map((d) => ({ v: d, l: NOMS_DEVISES[d] }))} />
+        <Choix bind:valeur={devise} titre={t("Devise")} desactive={nbOps > 0} options={optionsDevises(donnees.comptes.map((c) => c.devise))} />
       </label>
       <label>{t("Type")}
-        <Choix bind:valeur={type} titre={t("Type")} options={[{ v: "courant", l: t("Compte courant") }, { v: "epargne", l: t("Épargne (livret…)") }]} />
+        <Choix bind:valeur={type} titre={t("Type")} options={[{ v: "courant", l: t("Compte courant") }, { v: "especes", l: t("Espèces (porte-monnaie)") }, { v: "epargne", l: t("Épargne (livret…)") }]} />
       </label>
+      {#if type === "especes"}
+        <p class="sous aide">{t("Votre argent liquide, compté dans votre argent disponible. Les retraits au distributeur l'alimentent tout seuls ; saisissez vos achats en espèces avec le bouton +.")}</p>
+      {/if}
       {#if type === "epargne"}
-        <label>{t("Objectif d'épargne (facultatif)")}<input inputmode="decimal" bind:value={objectif} placeholder={t("ex. 5000")} /></label>
+        {@render role()}
+        {#if !reserve}<label>{t("Objectif d'épargne (facultatif)")}<input inputmode="decimal" bind:value={objectif} placeholder={t("ex. 5000")} /></label>{/if}
       {/if}
     {/if}
     {#if !compte}

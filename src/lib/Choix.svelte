@@ -2,6 +2,7 @@
   // Liste de choix maison : remplace <select>, dont Android affiche une fenêtre système carrée.
   // Un bouton montre le choix actuel ; un appui ouvre un panneau avec une ligne par option.
   import Feuille from "./Feuille.svelte";
+  import { t } from "./i18n.svelte";
   import Icone from "./Icone.svelte";
   import IconeCategorie from "./IconeCategorie.svelte";
 
@@ -28,11 +29,15 @@
   } = $props();
 
   let ouvert = $state(false);
+  // Longues listes (toutes les devises) : un champ de recherche
+  let recherche = $state("");
+  const sansAccents = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const filtrees = $derived(recherche ? options.filter((o) => sansAccents(o.l).includes(sansAccents(recherche))) : options);
   const choisie = $derived(options.find((o) => o.v === valeur));
   // Options rangées par groupe, dans l'ordre d'apparition
   const groupes = $derived.by(() => {
     const g: [string, Option[]][] = [];
-    for (const o of options) {
+    for (const o of filtrees) {
       const nom = o.groupe ?? "";
       const dernier = g.at(-1);
       if (dernier && dernier[0] === nom) dernier[1].push(o);
@@ -45,6 +50,7 @@
     if (o.desactive) return;
     valeur = o.v;
     ouvert = false;
+    recherche = "";
     change?.(o.v);
   }
 </script>
@@ -56,6 +62,7 @@
 
 {#if ouvert}
   <Feuille {titre} fermer={() => (ouvert = false)}>
+    {#if options.length > 15}<input type="search" class="recherche" bind:value={recherche} placeholder={t("Rechercher")} aria-label={t("Rechercher")} />{/if}
     <div class="liste" role="listbox" aria-label={titre}>
       {#each groupes as [nom, liste], k (k)}
         {#if nom}<p class="groupe">{nom}</p>{/if}
@@ -71,6 +78,9 @@
 {/if}
 
 <style>
+  .recherche {
+    margin-bottom: 4px;
+  }
   .declencheur {
     width: 100%;
     justify-content: space-between;

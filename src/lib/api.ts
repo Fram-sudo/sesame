@@ -14,7 +14,9 @@ export interface Parametres {
   tauxActifs: boolean;
   /** Derniers taux chargés, gardés pour fonctionner hors connexion */
   taux?: Taux;
-  /** Devise d'affichage des totaux (EUR, XOF, USD, CAD) */
+  /** Taux saisis à la main pour les devises que la BCE ne suit pas (unités pour 1 €) */
+  tauxManuels?: Record<string, number>;
+  /** Devise d'affichage des totaux */
   devise?: string;
   /** Synchronisation (propre à chaque appareil) : identifiant, changements à envoyer, dates */
   appareil?: string;

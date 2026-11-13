@@ -928,6 +928,23 @@ export const EN: Record<string, string> = {
   "Touchez ou glissez sur la courbe pour le détail.": "Tap or slide along the curve for details.",
   "Glissez le doigt pour parcourir la courbe.": "Slide your finger along the curve.",
   "Touchez un mois pour le détail.": "Tap a month for details.",
+  "Argent réservé": "Reserved money",
+  "Ni épargne, ni argent disponible : de l'argent bloqué pour une dépense prévue, comme une mensualité de prêt.": "Neither savings nor available money: money held for a planned expense, such as a loan instalment.",
+  "Espèces (porte-monnaie)": "Cash (wallet)",
+  "Votre argent liquide, compté dans votre argent disponible. Les retraits au distributeur l'alimentent tout seuls ; saisissez vos achats en espèces avec le bouton +.": "Your cash, counted in your available money. ATM withdrawals top it up automatically; enter your cash purchases with the + button.",
+  "C'est de l'argent…": "This money is…",
+  "Épargné (compté dans votre épargne)": "Saved (counted in your savings)",
+  "Réservé (pour une dépense prévue, ex. mensualité de prêt)": "Reserved (for a planned expense, e.g. a loan instalment)",
+  "Retrait au distributeur": "ATM withdrawal",
+  "non compté : taux inconnu": "not counted: rate unknown",
+  "Les francs CFA sont toujours convertis au taux fixe : 1 € = 655,957 F CFA. Pour une trentaine d'autres devises (dollar, livre, franc suisse, yen…), l'appli peut télécharger les taux officiels de la Banque centrale européenne.": "CFA francs are always converted at the fixed rate: €1 = 655.957 F CFA. For about thirty other currencies (dollar, pound, Swiss franc, yen…), the app can download the official European Central Bank rates.",
+  "aucune de vos devises n'est concernée": "none of your currencies is covered",
+  "Taux à saisir pour {0} : 1 € =": "Rate to enter for {0}: €1 =",
+  "ex. 10,85": "e.g. 10.85",
+  "Ces devises ne sont pas suivies par la Banque centrale européenne : saisissez leur taux pour que ces comptes comptent dans votre argent disponible. Vous pouvez le corriger à tout moment.": "These currencies are not tracked by the European Central Bank: enter their rate so these accounts count in your available money. You can correct it at any time.",
+  "en euros": "in euros",
+  "Vos devises": "Your currencies",
+  "Toutes les devises": "All currencies",
 };
 
 /** Textes volontairement identiques en anglais (codes, données de démonstration) */

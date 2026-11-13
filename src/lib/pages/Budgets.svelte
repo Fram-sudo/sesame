@@ -13,7 +13,7 @@
   import Periode from "../Periode.svelte";
   import { bornes, estEnCours, etatBudgets, facteurBudget, flux, joursRestants, moyenne, perimetre, type Contexte, type EtatBudget } from "../stats";
 
-  const ctx: Contexte = $derived({ ops: donnees.operations, comptes: donnees.comptes, categories: donnees.categories, taux: tauxConnus(app.params.taux), devise: deviseAffichee() });
+  const ctx: Contexte = $derived({ ops: donnees.operations, comptes: donnees.comptes, categories: donnees.categories, taux: tauxConnus(app.params.taux, app.params.tauxManuels), devise: deviseAffichee() });
   const devise = $derived(perimetre(ctx, app.filtreCompte).devise);
   const b = $derived(bornes(app.periode, premiereDate()));
   const enCours = $derived(estEnCours(b));

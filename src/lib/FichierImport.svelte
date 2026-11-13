@@ -5,7 +5,8 @@
   // doublons écartés. L'assistant de colonnes ne s'ouvre que si l'appli n'a pas su lire le fichier.
   import { attribuerPoches } from "./categories";
   import ControleSolde from "./ControleSolde.svelte";
-  import { classerEtLier, DEVISES, donnees, ecrire, nouvelId, soldes, type Changement, type Compte, type Devise, type Import, type Operation } from "./donnees.svelte";
+  import { optionsDevises } from "./devises";
+  import { classerEtLier, donnees, ecrire, nouvelId, soldes, type Changement, type Compte, type Devise, type Import, type Operation } from "./donnees.svelte";
   import { argent, dateCourte } from "./format";
   import { coherenceSoldes, lire, manques, type FormatDate, type Role } from "./import/analyse";
   import { cleOp, rapprocherSaisies, separerDoublons } from "./import/doublons";
@@ -30,7 +31,7 @@
   /* svelte-ignore state_referenced_locally */
   let nouveauNom = $state(prep.banque ?? prep.nom.replace(/\.[a-z0-9]+$/i, ""));
   /* svelte-ignore state_referenced_locally */
-  let nouvelleDevise = $state<Devise>((DEVISES as readonly string[]).includes(prep.devise ?? "") ? (prep.devise as Devise) : "EUR");
+  let nouvelleDevise = $state<Devise>(prep.devise ?? "EUR");
   /* svelte-ignore state_referenced_locally */
   let assistant = $state(manques(prep.profil).length > 0);
   let profilModifie = false;
@@ -215,7 +216,7 @@
       <div class="deux">
         <label>{t("Nom du nouveau compte")}<input bind:value={nouveauNom} /></label>
         <label>{t("Devise")}
-          <Choix bind:valeur={nouvelleDevise} titre={t("Devise")} options={DEVISES.map((d) => ({ v: d, l: d }))} />
+          <Choix bind:valeur={nouvelleDevise} titre={t("Devise")} options={optionsDevises(donnees.comptes.map((c) => c.devise))} />
         </label>
       </div>
     {/if}

@@ -111,7 +111,7 @@ setInterval(synchroAuto, 30_000);
 /** Devise choisie pour l'affichage, si son taux est connu (sinon euros) */
 export function deviseAffichee() {
   const d = app.params.devise ?? "EUR";
-  return tauxConnus(app.params.taux)[d] ? d : "EUR";
+  return tauxConnus(app.params.taux, app.params.tauxManuels)[d] ? d : "EUR";
 }
 
 /** Taux BCE : une fois par jour au plus, et seulement si l'option est activée. */

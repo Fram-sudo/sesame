@@ -12,7 +12,9 @@ describe("taux de change", () => {
     expect(lireBce("<html>erreur</html>", "2026-11-12")).toBeNull();
   });
   it("franc CFA toujours connu, même sans BCE", () => {
-    expect(tauxConnus()).toEqual({ EUR: 1, XOF: 655.957 });
+    expect(tauxConnus()).toEqual({ EUR: 1, XOF: 655.957, XAF: 655.957 });
+    // Taux saisi à la main pour une devise que la BCE ne suit pas ; celui de la BCE l'emporte s'il existe
+    expect(tauxConnus(lireBce(XML, "x")!, { MAD: 10.9, USD: 2 })).toMatchObject({ MAD: 10.9, USD: 1.0812 });
     expect(tauxConnus(lireBce(XML, "x")!).USD).toBe(1.0812);
   });
 });

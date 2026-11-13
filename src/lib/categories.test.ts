@@ -165,3 +165,11 @@ describe("libellés lisibles", () => {
     expect(libelleLisible("CARTE X1234")).toBe("CARTE X1234");
   });
 });
+
+import { estRetraitEspeces } from "./categories";
+describe("retraits d'espèces", () => {
+  it("reconnus en français et en anglais, pas les retraits de poche", () => {
+    for (const l of ["RETRAIT DAB 12/11 PARIS", "Retrait d'espèces", "CARTE X1234 RETRAIT DAB", "Cash withdrawal at Barclays", "ATM London"]) expect(estRetraitEspeces(l), l).toBe(true);
+    for (const l of ["Retrait depuis une Pocket", "Pocket Withdrawal", "CARTE CARREFOUR", "Remboursement"]) expect(estRetraitEspeces(l), l).toBe(false);
+  });
+});

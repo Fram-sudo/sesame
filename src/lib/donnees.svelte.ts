@@ -1,16 +1,15 @@
 // Données de l'appli en mémoire (seulement tant que le coffre est ouvert).
 // Chaque modification passe par ecrire() : écrite chiffrée sur le disque, puis appliquée ici.
 import { api } from "./api";
-import { changerLangue, langue, type Langue } from "./i18n.svelte";
+import { changerLangue, langue, t, type Langue } from "./i18n.svelte";
+import { cleOp } from "./import/doublons";
 import { NOMS_CATEGORIES_EN } from "./i18n-en";
-import { attentesRemplacees, CATEGORIES_DEFAUT, COULEURS_AVANT_REFONTE, categoriser, detecterVirements, REGLES_DEFAUT, trierRegles, VIREMENT, type Categorie, type Regle, type Routage } from "./categories";
+import { attentesRemplacees, CATEGORIES_DEFAUT, COULEURS_AVANT_REFONTE, categoriser, detecterVirements, estRetraitEspeces, REGLES_DEFAUT, trierRegles, VIREMENT, type Categorie, type Regle, type Routage } from "./categories";
 import type { Profil } from "./import/analyse";
 import type { Pret } from "./prets";
 
-export const DEVISES = ["EUR", "XOF", "USD", "CAD"] as const;
-export type Devise = (typeof DEVISES)[number];
-/** Symbole court affiché sur les boutons et à côté des montants saisis */
-export const SYMBOLES: Record<string, string> = { EUR: "€", XOF: "F CFA", USD: "$ US", CAD: "$ CA" };
+/** Code ISO 4217 de la devise (EUR, XOF, GBP…) : toutes les devises sont possibles, voir devises.ts */
+export type Devise = string;
 
 export interface Compte {
   id: string;
@@ -36,7 +35,11 @@ export interface Compte {
   alias?: string[];
   /** Poche fermée côté banque : cachée de l'accueil, historique gardé */
   archive?: boolean;
-  /** Épargne : livret ou compte en banque, espèces (tirelire), ou projet (pour l'icône et les libellés) */
+  /** Poche ou épargne qui est en fait une réserve (argent bloqué pour une dépense prévue, ex. mensualité de prêt) :
+   *  ni argent disponible, ni épargne */
+  reserve?: boolean;
+  /** Épargne : livret ou compte en banque, espèces (tirelire), ou projet (pour l'icône et les libellés).
+   *  Compte courant « especes » : le portefeuille d'espèces */
   forme?: "livret" | "especes" | "projet";
   demo?: boolean;
 }
@@ -210,6 +213,22 @@ export async function classerEtLier(): Promise<number> {
       const base = maj.get(o.id) ?? o;
       maj.set(o.id, { ...base, virementId: v, ...(base.categorieManuelle ? {} : { categorieId: VIREMENT }) });
     }
+  }
+  // Retrait au distributeur : l'argent passe du compte au porte-monnaie (un virement, pas une dépense) ;
+  // les achats en espèces, saisis dans le porte-monnaie, sont les vraies dépenses
+  // shortcut: si vous supprimez l'entrée du porte-monnaie, elle est recréée au prochain passage ; « Ce n'est pas un virement » l'arrête
+  for (const o of donnees.operations) {
+    const base = maj.get(o.id) ?? o;
+    if (base.montant >= 0 || base.virementId || base.pasVirement || base.enAttente || !estRetraitEspeces(base.libelle)) continue;
+    const c = donnees.comptes.find((x) => x.id === base.compteId);
+    if (!c || c.forme === "especes" || c.type === "epargne" || c.parentId) continue;
+    const pm = donnees.comptes.find((x) => x.type !== "epargne" && x.forme === "especes" && x.devise === c.devise && !!x.demo === !!c.demo && !x.archive);
+    if (!pm) continue;
+    const v = nouvelId();
+    const id = nouvelId();
+    const libelle = t("Retrait au distributeur");
+    maj.set(base.id, { ...base, virementId: v, ...(base.categorieManuelle ? {} : { categorieId: VIREMENT }) });
+    maj.set(id, { id, compteId: pm.id, date: base.date, montant: -base.montant, libelle, cle: cleOp({ date: base.date, montant: -base.montant, libelle }), virementId: v, categorieId: VIREMENT, ...(c.demo ? { demo: true } : {}) });
   }
   const remplacees = attentesRemplacees(donnees.operations);
   await ecrire([

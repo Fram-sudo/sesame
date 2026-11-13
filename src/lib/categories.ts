@@ -318,6 +318,12 @@ export function router<T extends Op & { detail?: string }>(nouvelles: T[], routa
 const RE_VERS_POCHE = [/\bto pocket (?:[a-z]{3} )?(.+?)(?: from [a-z]{3})?$/i, /\b(?:vers|sur) (?:la )?(?:poche|pocket) (?:[a-z]{3} )?(.+?)(?: depuis [a-z]{3})?$/i];
 const RE_RETRAIT_POCHE = /\bpocket withdrawal\b|\bretrait (?:de (?:la )?|depuis (?:une |la )?)?(?:poche|pocket)\b/i;
 
+/** Retrait d'espèces au distributeur ou au guichet (français et anglais) ; pas un retrait depuis une poche. */
+export function estRetraitEspeces(libelle: string): boolean {
+  if (mouvementPoche(libelle) !== undefined) return false;
+  return /\b(retrait (dab|d especes|especes|guichet|distributeur|carte|cb)|dab|atm|cash withdrawal|cash machine|withdrawal at|cash at)\b/.test(normaliser(libelle));
+}
+
 /** Nom de la poche visée par un versement, "?" pour un retrait sans nom, undefined sinon. */
 export function mouvementPoche(libelle: string): string | undefined {
   for (const re of RE_VERS_POCHE) {

@@ -6,7 +6,8 @@
   // Modification rapide d'un budget (une catégorie, ou le plafond global) : mensuel ou annuel,
   // −/+ pour ajuster, votre moyenne en un geste, supprimer. Ouverte depuis la page Budgets, l'accueil ou une opération.
   // id vide = nouveau budget : on choisit la catégorie, ou on en crée une.
-  import { donnees, ecrire, nouvelId, SYMBOLES, type Changement } from "./donnees.svelte";
+  import { donnees, ecrire, nouvelId, type Changement } from "./donnees.svelte";
+  import { symboleDevise } from "./devises";
   import { annoncer } from "./etat.svelte";
   import Feuille from "./Feuille.svelte";
   import { argent } from "./format";
@@ -30,7 +31,7 @@
   let frequence = $state<"mois" | "annee">(existant?.frequence ?? "mois");
   /* svelte-ignore state_referenced_locally */
   const devise = deviseAffichee();
-  const fb = facteurBudget({ ops: [], comptes: [], categories: [], taux: tauxConnus(app.params.taux) }, devise);
+  const fb = facteurBudget({ ops: [], comptes: [], categories: [], taux: tauxConnus(app.params.taux, app.params.tauxManuels) }, devise);
   /* svelte-ignore state_referenced_locally */
   let montant = $state(existant ? Math.round(existant.montant * fb) / 100 : 0);
   let saisie = $state("");
@@ -40,7 +41,7 @@
 
   const categorie = $derived(donnees.categories.find((c) => c.id === cible));
   const titre = $derived(cible === "global" ? t("Plafond global") : (categorie?.nom ?? (nomNouvelle.trim() || t("Budget"))));
-  const ctx: Contexte = $derived({ ops: donnees.operations, comptes: donnees.comptes, categories: donnees.categories, taux: tauxConnus(app.params.taux), devise: deviseAffichee() });
+  const ctx: Contexte = $derived({ ops: donnees.operations, comptes: donnees.comptes, categories: donnees.categories, taux: tauxConnus(app.params.taux, app.params.tauxManuels), devise: deviseAffichee() });
   // Moyenne mensuelle des 3 derniers mois complets, arrondie à l'euro supérieur
   const moy = $derived.by(() => {
     const m = moyenne(ctx, "", moisCourant(), 3);
@@ -50,7 +51,7 @@
   const suggestion = $derived(frequence === "annee" ? moy * 12 : moy);
   // Pas du −/+ : 10 € par mois, 50 € par an (5 000 F CFA / 25 000 F CFA)
   const pas = $derived((frequence === "annee" ? 50 : 10) * (fb > 100 ? 500 : 1));
-  const symbole = SYMBOLES[devise] ?? devise;
+  const symbole = symboleDevise(devise);
 
   function changer(delta: number) {
     montant = Math.max(0, Math.round((lireMontant(saisie) ?? 0) / 100) + delta);

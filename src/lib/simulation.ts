@@ -39,6 +39,31 @@ if (import.meta.env.MODE === "demo" || new URLSearchParams(location.search).has(
         { collection: "operations", id: "att-2", valeur: { id: "att-2", compteId: c, date: auj, montant: -5010, libelle: "CARTE SNCF CONNECT", cle: "att2", enAttente: true, demo: true } as never },
       ]);
     }
+    // ?especes : porte-monnaie + retrait au distributeur sur le compte courant ; ?reserve : le Livret A devient une réserve
+    const q = new URLSearchParams(location.search);
+    if (q.has("especes") || q.has("reserve")) {
+      const { donnees, classerEtLier } = await import("./donnees.svelte");
+      const cc = donnees.comptes.find((c) => c.type !== "epargne" && !c.parentId)!;
+      if (q.has("especes")) {
+        await ecrire([
+          { collection: "comptes", id: "pm", valeur: { id: "pm", nom: "Porte-monnaie", banque: "", devise: "EUR", soldeInitial: 0, type: "courant", forme: "especes", demo: true } as never },
+          { collection: "operations", id: "dab", valeur: { id: "dab", compteId: cc.id, date: new Date().toISOString().slice(0, 10), montant: -6000, libelle: "RETRAIT DAB PARIS 12", cle: "dab", demo: true } as never },
+          { collection: "operations", id: "pain", valeur: { id: "pain", compteId: "pm", date: new Date().toISOString().slice(0, 10), montant: -450, libelle: "Boulangerie", cle: "pain", manuelle: true, demo: true } as never },
+        ]);
+      }
+      if (q.has("reserve")) {
+        const l = donnees.comptes.find((c) => c.nom.startsWith("Livret A"))!;
+        await ecrire([{ collection: "comptes", id: l.id, valeur: { ...l, nom: "Repayment of the loan (démo)", reserve: true } as never }]);
+      }
+      await classerEtLier();
+    }
+    // ?survol=0.4 : doigt posé à 40 % de la largeur du premier graphique (captures)
+    if (q.has("survol"))
+      setTimeout(() => {
+        const svg = document.querySelector(".graphique svg")!;
+        const r = svg.getBoundingClientRect();
+        svg.dispatchEvent(new PointerEvent("pointermove", { bubbles: true, clientX: r.left + r.width * +q.get("survol")!, clientY: r.top + r.height / 2 }));
+      }, 900);
     const page = new URLSearchParams(location.search).get("page");
     const { app } = await import("./etat.svelte");
     if (page) app.page = page as never;

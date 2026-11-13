@@ -59,11 +59,29 @@
   const trace = $derived(lisse(points.map((p, i) => [x(i), y(p.valeur)])));
   const aire = $derived(points.length ? `${trace} L${x(points.length - 1)},${y(min)} L${x(0)},${y(min)} Z` : "");
   let survol = $state(-1);
+  // Position exacte du doigt (pas seulement le point le plus proche) : le repère suit sans à-coup
+  let fx = $state(0);
+  let fy = $state(0);
+  let tracePath = $state<SVGPathElement>();
+  // Hauteur de la courbe dessinée à l'abscisse donnée (la courbe avance toujours vers la droite : recherche par dichotomie)
+  function hauteurA(px: number): number {
+    const p = tracePath;
+    if (!p || points.length < 2) return points.length ? y(points[0].valeur) : 0;
+    let a = 0, b = p.getTotalLength();
+    for (let k = 0; k < 22; k++) {
+      const m = (a + b) / 2;
+      if (p.getPointAtLength(m).x < px) a = m;
+      else b = m;
+    }
+    return p.getPointAtLength((a + b) / 2).y;
+  }
 
   function bouger(e: PointerEvent) {
     const r = (e.currentTarget as SVGElement).getBoundingClientRect();
     const px = ((e.clientX - r.left) / r.width) * L;
     survol = Math.max(0, Math.min(points.length - 1, Math.round(((px - 8) / (L - 16)) * (points.length - 1))));
+    fx = Math.max(x(0), Math.min(x(points.length - 1), px));
+    fy = hauteurA(fx);
   }
   // Dates sous la courbe : autant que la largeur le permet (selon la longueur des dates), réparties du début à la fin, jamais superposées
   const reperes = $derived.by(() => {
@@ -95,7 +113,7 @@
     if (survol < 0) return null;
     const texte = `${points[survol].libelle} · ${argent(points[survol].valeur, devise)}`;
     const w = texte.length * 6.6 + 16;
-    return { texte, w, x: Math.min(Math.max(x(survol) - w / 2, 2), L - w - 2) };
+    return { texte, w, x: Math.min(Math.max(fx - w / 2, 2), L - w - 2) };
   });
 </script>
 
@@ -105,19 +123,20 @@
     <line x1="0" x2={L} y1={H - BAS} y2={H - BAS} class="base" />
     {#if remplir}<path d={aire} class="aire" />{/if}
     {#if reference}<line x1="0" x2={L} y1={y(reference.valeur)} y2={y(reference.valeur)} class="moyenne" />{/if}
-    <path d={trace} class="ligne" />
+    <path d={trace} class="ligne" bind:this={tracePath} />
     {#if points.length}<circle cx={x(points.length - 1)} cy={y(points[points.length - 1].valeur)} r="4" class="dernier" />{/if}
     {#each points as p, i (p.libelle)}
       {#if reperes.has(i)}<text x={x(i)} y={H - 6} class="axe" text-anchor={i === 0 && points.length > 1 ? "start" : i === points.length - 1 && points.length > 1 ? "end" : "middle"}>{p.libelle}</text>{/if}
     {/each}
     {#if survol < 0}
       {#each extremes as e (e.haut)}
-        <text x={x(e.i)} y={y(points[e.i].valeur) + (e.haut ? -8 : 16)} class="valeur" text-anchor={ancre(e.i)}>{argent(points[e.i].valeur, devise)}</text>
+        <!-- Le plus bas s'écrit sous le point, sauf s'il touche le bas (il cacherait les dates) -->
+        <text x={x(e.i)} y={y(points[e.i].valeur) + (e.haut || y(points[e.i].valeur) + 16 > H - BAS - 2 ? -8 : 16)} class="valeur" text-anchor={ancre(e.i)}>{argent(points[e.i].valeur, devise)}</text>
       {/each}
     {/if}
     {#if survol >= 0 && bulle}
-      <line x1={x(survol)} x2={x(survol)} y1={HAUT} y2={H - BAS} class="reticule" />
-      <circle cx={x(survol)} cy={y(points[survol].valeur)} r="5" class="point" />
+      <line x1={fx} x2={fx} y1={HAUT} y2={H - BAS} class="reticule" />
+      <circle cx={fx} cy={fy} r="5" class="point" />
       <rect x={bulle.x} y="0" width={bulle.w} height="20" rx="10" class="bulle" />
       <text x={bulle.x + bulle.w / 2} y="14" class="bulle-texte" text-anchor="middle">{bulle.texte}</text>
     {/if}

@@ -1,19 +1,15 @@
 <script lang="ts">
   import { t } from "./i18n.svelte";
   // « en euros ▾ » : choisir la devise dans laquelle tous les montants s'affichent, là où on les lit.
-  // Dollars seulement quand leurs taux sont connus (Paramètres → Devises).
-  import { DEVISES } from "./donnees.svelte";
+  // Proposées : l'euro et les devises de vos comptes ; une devise sans taux connu est grisée (Paramètres → Devises).
+  import { donnees } from "./donnees.svelte";
+  import { nomDevise, symboleDevise } from "./devises";
   import { app, deviseAffichee, sauverParametres } from "./etat.svelte";
   import { tauxConnus } from "./taux";
 
-  const NOMS: Record<string, [string, string]> = {
-    EUR: ["euros", t("Euro (€)")],
-    XOF: [t("francs CFA"), t("Franc CFA (F CFA)")],
-    USD: [t("dollars US"), t("Dollar américain ($ US)")],
-    CAD: [t("dollars canadiens"), t("Dollar canadien ($ CA)")],
-  };
   let ouvert = $state(false);
-  const connus = $derived(tauxConnus(app.params.taux));
+  const connus = $derived(tauxConnus(app.params.taux, app.params.tauxManuels));
+  const proposees = $derived([...new Set(["EUR", ...donnees.comptes.map((c) => c.devise)])]);
   const actuelle = $derived(deviseAffichee());
 
   function choisir(d: string) {
@@ -27,19 +23,19 @@
 
 <span class="choix">
   <button class="declencheur" aria-haspopup="menu" aria-expanded={ouvert} onclick={() => (ouvert = !ouvert)}>
-    {t("en")} {NOMS[actuelle][0]}<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+    {actuelle === "EUR" ? t("en euros") : t("en {0}", symboleDevise(actuelle))}<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
   </button>
   {#if ouvert}
     <button class="voile" aria-label={t("Fermer")} onclick={() => (ouvert = false)}></button>
     <span class="menu" role="menu">
       <span class="titre">{t("Afficher tous les montants en")}</span>
-      {#each DEVISES as d (d)}
+      {#each proposees as d (d)}
         <button role="menuitemradio" aria-checked={actuelle === d} class:on={actuelle === d} disabled={!connus[d]} onclick={() => choisir(d)}>
-          {NOMS[d][1]}
+          {nomDevise(d)} ({symboleDevise(d)})
           {#if !connus[d]}<small>{t("taux de change à activer")}</small>{/if}
         </button>
       {/each}
-      {#if !connus.USD}
+      {#if proposees.some((d) => !connus[d])}
         <button class="lien" onclick={() => ((ouvert = false), (app.page = "parametres"))}>{t("Activer les taux de change")}</button>
       {/if}
     </span>

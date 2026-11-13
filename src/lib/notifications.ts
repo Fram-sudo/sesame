@@ -26,7 +26,7 @@ export async function programmerAlertes() {
     const maintenant = Date.now();
     const auj = new Date().toISOString().slice(0, 10);
     const devise = deviseAffichee();
-    const ctx: Contexte = { ops: donnees.operations, comptes: donnees.comptes, categories: donnees.categories, taux: tauxConnus(app.params.taux), devise };
+    const ctx: Contexte = { ops: donnees.operations, comptes: donnees.comptes, categories: donnees.categories, taux: tauxConnus(app.params.taux, app.params.tauxManuels), devise };
     const reels = donnees.operations.some((o) => !o.demo);
     const s: Situation = { maintenant, derniereSauvegarde: app.params.derniereSauvegarde, rappelSauvegardeApres: app.params.rappelSauvegardeApres };
     if (reels) {

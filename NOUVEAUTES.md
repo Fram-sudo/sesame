@@ -10,10 +10,14 @@ Si ce texte n'a pas changé depuis la version précédente, la version dit simpl
 
 ## FR
 
-- Opérations en attente : touchez « … en attente déjà déduits » sur l'Accueil pour les voir toutes et les marquer effectuées, une à une ou d'un coup.
-- Graphiques repensés pour le téléphone : dates lisibles, plus haut et plus bas écrits sur les courbes, lecture au doigt, barres des 6 derniers mois avec une échelle en euros, catégories sur deux lignes et moyennes côte à côte.
+- Graphiques : le repère suit votre doigt ou votre souris sans à-coup, le long de la courbe ; sur les barres, la zone choisie glisse d'un mois à l'autre.
+- Toutes les devises du monde : vos devises d'abord dans les listes, recherche par nom ou par code. Une trentaine de taux officiels (BCE), les deux francs CFA à parité fixe, et un taux à saisir vous-même pour les autres.
+- Compte « Espèces » (porte-monnaie) : un retrait au distributeur l'alimente tout seul, sans être compté comme une dépense ; vos achats en espèces, saisis à la main, sont les vraies dépenses.
+- Une poche peut être une « Réserve » (par exemple pour payer une mensualité de prêt) : ni épargne, ni argent disponible, affichée à part dans « Argent réservé ».
 
 ## EN
 
-- Pending transactions: tap “… pending already deducted” on Home to see them all and mark them completed, one by one or all at once.
-- Charts redesigned for phones: readable dates, highest and lowest values written on the curves, finger reading, bars for the last 6 months with a currency scale, categories on two lines and averages side by side.
+- Charts: the marker follows your finger or mouse smoothly along the curve; on bars, the highlight slides from one month to the next.
+- Every currency in the world: your currencies first in lists, search by name or code. About thirty official rates (ECB), both CFA francs at their fixed parity, and a rate you can enter yourself for the others.
+- “Cash” account (wallet): an ATM withdrawal tops it up automatically without counting as an expense; your cash purchases, entered by hand, are the real expenses.
+- A pocket can be a “Reserve” (for example to pay a loan instalment): neither savings nor available money, shown separately under “Reserved money”.

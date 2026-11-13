@@ -7,7 +7,8 @@
   // Les poches suivent les imports ; les autres se tiennent à la main (ajouter, retirer, ajuster le montant).
   import Aide from "../Aide.svelte";
   import CompteFormulaire from "../CompteFormulaire.svelte";
-  import { DEVISES, donnees, ecrire, nouvelId, soldes, type Compte, type Devise } from "../donnees.svelte";
+  import { optionsDevises } from "../devises";
+  import { donnees, ecrire, nouvelId, soldes, type Compte, type Devise } from "../donnees.svelte";
   import { annoncer } from "../etat.svelte";
   import Feuille from "../Feuille.svelte";
   import { argent } from "../format";
@@ -21,15 +22,16 @@
   const visibles = $derived(epargnes.filter((c) => !c.archive));
   const archivees = $derived(epargnes.filter((c) => c.archive));
   let voirArchivees = $state(false);
-  const total = $derived(visibles.filter((c) => c.devise === "EUR").reduce((a, c) => a + (parCompte.get(c.id) ?? 0), 0));
-  const ctx: Contexte = $derived({ ops: donnees.operations, comptes: donnees.comptes, categories: donnees.categories, taux: tauxConnus(app.params.taux), devise: deviseAffichee() });
+  const total = $derived(visibles.filter((c) => c.devise === "EUR" && !c.reserve).reduce((a, c) => a + (parCompte.get(c.id) ?? 0), 0));
+  const ctx: Contexte = $derived({ ops: donnees.operations, comptes: donnees.comptes, categories: donnees.categories, taux: tauxConnus(app.params.taux, app.params.tauxManuels), devise: deviseAffichee() });
   const ceMois = $derived(flux(ctx, "", [cleMois(moisCourant())]));
 
   const GROUPES = [
-    { cle: "poches", titre: t("Poches de vos banques"), aide: t("Créées et mises à jour automatiquement à chaque import de relevé."), garde: (c: Compte) => !!c.parentId },
-    { cle: "livrets", titre: t("Livrets et comptes d'épargne"), aide: "", garde: (c: Compte) => !c.parentId && (c.forme ?? "livret") === "livret" },
-    { cle: "especes", titre: t("Espèces et tirelires"), aide: "", garde: (c: Compte) => !c.parentId && c.forme === "especes" },
-    { cle: "projets", titre: t("Autres"), aide: "", garde: (c: Compte) => !c.parentId && c.forme === "projet" },
+    { cle: "poches", titre: t("Poches de vos banques"), aide: t("Créées et mises à jour automatiquement à chaque import de relevé."), garde: (c: Compte) => !!c.parentId && !c.reserve },
+    { cle: "livrets", titre: t("Livrets et comptes d'épargne"), aide: "", garde: (c: Compte) => !c.parentId && !c.reserve && (c.forme ?? "livret") === "livret" },
+    { cle: "especes", titre: t("Espèces et tirelires"), aide: "", garde: (c: Compte) => !c.parentId && !c.reserve && c.forme === "especes" },
+    { cle: "projets", titre: t("Autres"), aide: "", garde: (c: Compte) => !c.parentId && !c.reserve && c.forme === "projet" },
+    { cle: "reserves", titre: t("Argent réservé"), aide: t("Ni épargne, ni argent disponible : de l'argent bloqué pour une dépense prévue, comme une mensualité de prêt."), garde: (c: Compte) => !!c.reserve },
   ];
   const parent = (c: Compte) => donnees.comptes.find((x) => x.id === c.parentId)?.nom;
   const icone = (c: Compte) => (c.parentId ? "pig-money" : c.forme === "especes" ? "cash" : c.forme === "projet" ? "target" : "building-bank");
@@ -201,7 +203,7 @@
       {#if forme === "livret"}<label>{t("Banque (facultatif)")}<input bind:value={banque} placeholder={t("ex. Société Générale")} /></label>{/if}
       <div class="deux">
         <label>{t("Montant actuel")}<input inputmode="decimal" bind:value={actuel} placeholder="0,00" /></label>
-        <label>{t("Devise")}<Choix bind:valeur={devise} titre={t("Devise")} options={DEVISES.map((d) => ({ v: d, l: d }))} /></label>
+        <label>{t("Devise")}<Choix bind:valeur={devise} titre={t("Devise")} options={optionsDevises(donnees.comptes.map((c) => c.devise))} /></label>
       </div>
       <label>{t("Objectif (facultatif)")}<input inputmode="decimal" bind:value={objectif} placeholder={t("ex. 1000")} /></label>
       <button class="principal" type="submit" disabled={!nom.trim()}>{t("Ajouter")}</button>
