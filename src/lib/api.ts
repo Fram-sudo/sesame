@@ -25,6 +25,9 @@ export interface Parametres {
   dernierRecu?: string;
   /** Guide du premier lancement déjà vu */
   guideVu?: boolean;
+  /** Visite guidée : chapitre où reprendre ; données fictives ajoutées pour la visite (à retirer) */
+  visiteEtape?: number;
+  visiteDemo?: boolean;
   /** Chercher les nouvelles versions au démarrage (absent = oui) */
   majAuto?: boolean;
   /** Version dont la carte « Nouvelle version » a été fermée (« Plus tard ») */

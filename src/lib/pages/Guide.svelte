@@ -4,6 +4,7 @@
   import { locale, t } from "../i18n.svelte";
   import { HISTORIQUE, notesDansLaLangue } from "../maj.svelte";
   import Icone from "../Icone.svelte";
+  import { estAndroid } from "../api";
   import { normaliser } from "../import/analyse";
 
   let { synchro }: { synchro: () => void } = $props();
@@ -13,6 +14,26 @@
     {
       q: t("Comment importer un relevé ?"),
       r: t("Téléchargez le relevé depuis le site ou l'appli de votre banque (PDF, CSV, Excel, OFX, QIF ou CAMT), puis touchez Importer. Sésame reconnaît la banque et le compte, ignore les opérations déjà présentes et range tout dans les bonnes catégories. Vous pouvez importer plusieurs fichiers d'un coup ; sur PC, glissez-les simplement sur la fenêtre."),
+      aller: [t("Importer un relevé"), "import"],
+    },
+    {
+      q: t("Comment importer beaucoup de relevés d'un coup ?"),
+      r: t("Choisissez-les tous ensemble (même plusieurs dizaines). Sésame les regroupe par compte : vous confirmez le compte une fois par groupe, vous vérifiez une seule fois chaque format jamais vu, puis un écran montre tout ce qui va entrer (nouvelles opérations, vos saisies retrouvées, paiements en attente, poches). Un seul bouton importe le tout, les doublons entre relevés sont ignorés."),
+      aller: [t("Importer des relevés"), "import"],
+    },
+    {
+      q: t("J'ai noté une dépense à la main : fera-t-elle doublon à l'import ?"),
+      r: t("Non. Quand le relevé arrive, Sésame retrouve votre saisie (même montant, date proche) et la remplace par la ligne de la banque. Dans l'onglet « Vos saisies retrouvées », décochez une saisie pour la garder telle quelle."),
+      aller: [t("Importer un relevé"), "import"],
+    },
+    {
+      q: t("Que veut dire « en attente » ?"),
+      r: t("C'est un paiement par carte que la banque n'a pas encore débité. Il compte déjà dans vos dépenses et votre argent disponible ; quand il arrive sur un relevé, il est remplacé par la ligne définitive, sans doublon."),
+      aller: [t("Voir mes opérations"), "operations"],
+    },
+    {
+      q: t("À quoi sert la liste des imports précédents ?"),
+      r: t("Elle garde une ligne par import : date, comptes, nombre d'opérations. « Retirer de la liste » efface seulement la ligne, vos opérations restent. Pour annuler vraiment un import, le bouton rouge supprime ses opérations après confirmation, et remet les saisies qu'il avait remplacées."),
       aller: [t("Importer un relevé"), "import"],
     },
     {
@@ -41,6 +62,16 @@
       aller: [t("Voir mon épargne"), "epargne"],
     },
     {
+      q: t("Comment suivre mon argent liquide ?"),
+      r: t("Ajoutez un compte « Espèces » (le « + » des cartes de comptes sur l'accueil). Vos retraits au distributeur y sont versés tout seuls, et vos dépenses en liquide se notent avec « Ajouter »."),
+      aller: [t("Aller à l'accueil"), "accueil"],
+    },
+    {
+      q: t("À quoi sert « Réservé » ?"),
+      r: t("Pour de l'argent mis de côté dans un but précis, comme une poche qui paie votre mensualité de prêt. Une poche ou un compte « Réservé » ne compte ni dans votre épargne ni dans votre argent disponible. Choisissez-le en touchant la poche, dans Épargne."),
+      aller: [t("Voir mon épargne"), "epargne"],
+    },
+    {
       q: t("Comment suivre un prêt ?"),
       r: t("Dans Prêts, ajoutez le montant emprunté, le taux, la durée et la date de la première échéance. L'appli calcule l'échéancier, le capital restant dû, et peut simuler un remboursement anticipé avant que vous l'enregistriez."),
       aller: [t("Voir mes prêts"), "prets"],
@@ -56,8 +87,24 @@
       aller: [t("Ouvrir les paramètres"), "parametres"],
     },
     {
+      q: t("Comment être prévenu (budget, prélèvement, sauvegarde) ?"),
+      r: estAndroid
+        ? t("Dans Paramètres → Alertes, choisissez ce qui vous intéresse : le téléphone vous prévient même appli fermée. Les montants peuvent être masqués dans les alertes.")
+        : t("Dans Paramètres → Alertes, choisissez ce qui vous intéresse : l'ordinateur vous prévient pendant que Sésame est ouvert, et les rappels s'affichent aussi sur l'accueil. Sur téléphone, les alertes arrivent même appli fermée."),
+      aller: [t("Ouvrir les paramètres"), "parametres"],
+    },
+    {
+      q: t("Comment cacher mes montants ?"),
+      r: t("Touchez l'œil en haut de l'écran : tous les montants sont masqués, jusqu'à ce que vous le touchiez à nouveau."),
+    },
+    {
+      q: t("Comment mettre Sésame à jour ?"),
+      r: t("Sésame vérifie au démarrage s'il existe une nouvelle version et affiche une petite carte : touchez-la pour l'installer. Vos données sont conservées. Vous pouvez aussi chercher vous-même dans Paramètres → Mises à jour."),
+      aller: [t("Ouvrir les paramètres"), "parametres"],
+    },
+    {
       q: t("Comment changer de devise ou de langue ?"),
-      r: t("La devise se choisit sur l'accueil, à côté d'« Argent disponible » (en euros ▾). Les dollars demandent d'activer les taux de change dans Paramètres → Devises. La langue se change dans Paramètres → Affichage."),
+      r: t("La devise d'affichage se choisit sur l'accueil, à côté d'« Argent disponible » (en euros ▾) ; « Autre devise… » en ajoute une. Les conversions demandent d'activer les taux de change dans Paramètres → Devises ; pour une devise non suivie par la Banque centrale européenne, saisissez son taux vous-même. Un compte dans une autre devise se crée avec le « + » des cartes de comptes ; la devise d'un compte qui a déjà des opérations ne change plus. La langue se change dans Paramètres → Affichage."),
       aller: [t("Ouvrir les paramètres"), "parametres"],
     },
     {
@@ -91,14 +138,19 @@
 </script>
 
 <div class="pile">
-  <label class="recherche">
+  <label class="recherche" data-visite="aide">
     <Icone nom="recherche" taille={18} />
     <input type="search" bind:value={recherche} placeholder={t("Chercher dans l'aide")} aria-label={t("Chercher dans l'aide")} />
   </label>
 
-  <button class="revoir" onclick={() => (app.revoirGuide = true)}>
-    <Icone nom="serrure" taille={20} />{t("Revoir la prise en main")}
-  </button>
+  <div class="visite">
+    {#if app.params.visiteEtape !== undefined}
+      <button class="revoir" onclick={() => (app.visite = app.params.visiteEtape!)}><Icone nom="serrure" taille={20} />{t("Reprendre la visite guidée")}</button>
+      <button class="lien" onclick={() => (app.visite = 0)}>{t("Recommencer depuis le début")}</button>
+    {:else}
+      <button class="revoir" onclick={() => (app.visite = 0)}><Icone nom="serrure" taille={20} />{t("Faire la visite guidée (3 min)")}</button>
+    {/if}
+  </div>
 
   <div class="liste">
     {#each visibles as x (x.i)}
@@ -172,6 +224,12 @@
   }
   .recherche input:focus-visible {
     outline: none;
+  }
+  .visite {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 14px;
   }
   .revoir {
     align-self: flex-start;

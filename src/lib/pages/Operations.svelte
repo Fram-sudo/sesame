@@ -74,7 +74,7 @@
 
 <div class="pile">
   {#if !recherche}<Periode sansComptes />{/if}
-  <label class="recherche">
+  <label class="recherche" data-visite="recherche">
     <Icone nom="recherche" taille={18} />
     <input type="search" placeholder={t("Rechercher un libellé (toutes dates)")} aria-label={t("Rechercher")} bind:value={recherche} />
   </label>

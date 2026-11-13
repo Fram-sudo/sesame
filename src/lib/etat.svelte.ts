@@ -23,6 +23,8 @@ export const app = $state({
   filtreCategorie: "",
   /** Prise en main relancée depuis la page Aide */
   revoirGuide: false,
+  /** Visite guidée de l'appli : étape de départ (-1 : fermée) */
+  visite: -1,
 });
 
 let minuteur: ReturnType<typeof setTimeout> | undefined;
@@ -51,6 +53,13 @@ export async function demarrer() {
 export async function apresOuverture() {
   app.params = await api.lireParametres();
   await charger();
+  // Visite interrompue (appli fermée) : ses données fictives ne doivent pas rester
+  if (app.params.visiteDemo) {
+    const demo = await import("./demo");
+    if (demo.aDesDonneesDemo()) await demo.retirerDemo();
+    app.params.visiteDemo = undefined;
+    await sauverParametres();
+  }
   appliquerTheme();
   void mettreAJourTaux();
   void import("./maj.svelte").then((m) => m.verifierMaj());

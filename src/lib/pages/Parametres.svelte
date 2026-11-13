@@ -135,7 +135,7 @@
 </script>
 
 <div class="pile">
-  <section class="carte pile">
+  <section class="carte pile" data-visite="affichage">
     <h2>{t("Affichage")}</h2>
     <!-- Boutons plutôt que listes déroulantes : pas de fenêtre système carrée sur Android -->
     {#snippet choix<V>(nom: string, valeur: V, options: [V, string][], changer: (v: V) => void)}
@@ -164,7 +164,7 @@
     <button onclick={() => (app.page = "banques")}>{t("Banques et imports")}</button>
   </section>
 
-  <section class="carte pile">
+  <section class="carte pile" data-visite="securite">
     <h2>{t("Sécurité")}</h2>
     {#if empreinte.possible}
       <label class="interrupteur">
@@ -209,7 +209,7 @@
     {/if}
   </section>
 
-  <section class="carte pile">
+  <section class="carte pile" data-visite="sauvegarde">
     <h2>{t("Sauvegarde")}</h2>
     <p class="sous">{t("Le fichier de sauvegarde est chiffré comme le coffre : il ne s'ouvre qu'avec votre mot de passe.")}</p>
     <p class="sous">{app.params.derniereSauvegarde ? t("Dernière sauvegarde depuis cet appareil : le {0}.", new Date(app.params.derniereSauvegarde).toLocaleDateString(locale(), { day: "numeric", month: "long", year: "numeric" })) : t("Aucune sauvegarde exportée depuis cet appareil pour l'instant.")}</p>
@@ -235,7 +235,7 @@
     {/if}
   </section>
 
-  <section class="carte pile">
+  <section class="carte pile" data-visite="devises">
     <h2>{t("Devises")}</h2>
     <p class="sous">{t("Les francs CFA sont toujours convertis au taux fixe : 1 € = 655,957 F CFA. Pour une trentaine d'autres devises (dollar, livre, franc suisse, yen…), l'appli peut télécharger les taux officiels de la Banque centrale européenne.")}</p>
     <label class="interrupteur">
@@ -258,23 +258,21 @@
     {#if aSaisir.length}<p class="sous">{t("Ces devises ne sont pas suivies par la Banque centrale européenne : saisissez leur taux pour que ces comptes comptent dans votre argent disponible. Vous pouvez le corriger à tout moment.")}</p>{/if}
   </section>
 
-  {#if estAndroid}
-    <section class="carte pile">
-      <h2>{t("Alertes")}</h2>
-      <p class="sous">{t("Sésame programme ces alertes quand vous l'ouvrez : vos données restent chiffrées, rien ne tourne en arrière-plan.")}</p>
-      {#each TYPES_ALERTES as [cle, libelle] (cle)}
-        <label class="interrupteur">
-          <input type="checkbox" checked={reglagesAlertes[cle]} onchange={(e) => changerAlerte(cle, e.currentTarget.checked)} />
-          <span>{libelle}</span>
-        </label>
-      {/each}
+  <section class="carte pile" data-visite="alertes">
+    <h2>{t("Alertes")}</h2>
+    <p class="sous">{estAndroid ? t("Sésame programme ces alertes quand vous l'ouvrez : vos données restent chiffrées, rien ne tourne en arrière-plan.") : t("Sur ordinateur, ces alertes s'affichent pendant que Sésame est ouvert (même réduit). Les rappels de sauvegarde apparaissent aussi sur l'accueil.")}</p>
+    {#each TYPES_ALERTES as [cle, libelle] (cle)}
       <label class="interrupteur">
-        <input type="checkbox" checked={reglagesAlertes.montants} onchange={(e) => changerAlerte("montants", e.currentTarget.checked)} />
-        <span>{t("Afficher les montants dans les alertes")}</span>
+        <input type="checkbox" checked={reglagesAlertes[cle]} onchange={(e) => changerAlerte(cle, e.currentTarget.checked)} />
+        <span>{libelle}</span>
       </label>
-      <p class="sous">{t("Les alertes peuvent s'afficher sur l'écran verrouillé : sans montant, personne ne voit vos chiffres.")}</p>
-    </section>
-  {/if}
+    {/each}
+    <label class="interrupteur">
+      <input type="checkbox" checked={reglagesAlertes.montants} onchange={(e) => changerAlerte("montants", e.currentTarget.checked)} />
+      <span>{t("Afficher les montants dans les alertes")}</span>
+    </label>
+    <p class="sous">{t("Les alertes peuvent s'afficher sur l'écran verrouillé : sans montant, personne ne voit vos chiffres.")}</p>
+  </section>
 
   <section class="carte pile">
     <h2>{t("Mises à jour")}</h2>

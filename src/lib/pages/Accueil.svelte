@@ -207,14 +207,14 @@
         </button>
       </section>
 
-      <div class="actions">
+      <div class="actions" data-visite="actions">
         <button class="act prim" onclick={() => (app.saisie = "depense")}><span><Icone nom="plus" taille={22} /></span>{t("Ajouter")}</button>
         <button class="act" onclick={() => (app.page = "import")}><span><Icone nom="importer" taille={22} /></span>{t("Importer")}</button>
         <button class="act" onclick={() => (app.page = "budgets")}><span><Icone nom="budgets" taille={22} /></span>{t("Budgets")}</button>
         <button class="act" onclick={() => (app.page = "epargne")}><span><Icone nom="epargne" taille={22} /></span>{t("Épargne")}</button>
       </div>
 
-      <div class="cartes-comptes">
+      <div class="cartes-comptes" data-visite="comptes">
         {#each principaux as c, k (c.id)}
           {@const teinte = teinteCompte(c, k)}
           <button class="carte-compte" class:choisie={filtre === c.id} style:background={teinte.fond} onclick={() => (app.filtreCompte = filtre === c.id ? "" : c.id)}>
@@ -226,7 +226,7 @@
       </div>
 
       </div>
-      <section class="carte pile mois">
+      <section class="carte pile mois" data-visite="mois">
         <div class="titre">
           <h2>{b.libelle.charAt(0).toUpperCase() + b.libelle.slice(1)}</h2>
           <button class="lien" onclick={() => (app.page = "operations")}>{t("Détails")}</button>

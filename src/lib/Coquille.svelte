@@ -19,6 +19,7 @@
   import Bienvenue from "./Bienvenue.svelte";
   import CarteMaj from "./CarteMaj.svelte";
   import VisiteDemo from "./VisiteDemo.svelte";
+  import VisiteAppli from "./VisiteAppli.svelte";
   const visite = (import.meta.env.MODE === "demo" || new URLSearchParams(location.search).has("visite")) && !new URLSearchParams(location.search).has("capture");
   import { maj } from "./maj.svelte";
   import Saisie from "./Saisie.svelte";
@@ -129,13 +130,13 @@
         <button class="ajout-pc" onclick={() => (app.saisie = "depense")}>
           <Icone nom="plus" taille={18} />{t("Ajouter")}
         </button>
-        <button class="rond" aria-label={app.params.discret ? t("Afficher les montants") : t("Masquer les montants")} aria-pressed={app.params.discret} onclick={basculerDiscret}>
+        <button class="rond" data-visite="discret" aria-label={app.params.discret ? t("Afficher les montants") : t("Masquer les montants")} aria-pressed={app.params.discret} onclick={basculerDiscret}>
           <Icone nom={app.params.discret ? "oeilBarre" : "oeil"} taille={20} />
         </button>
         <button class="rond" aria-label={sombre ? t("Passer en mode clair") : t("Passer en mode sombre")} title={sombre ? t("Mode clair") : t("Mode sombre")} onclick={basculerTheme}>
           <Icone nom={sombre ? "soleil" : "lune"} taille={20} />
         </button>
-        <button class="rond pastille" class:active={app.params.aEnvoyer} aria-label={app.params.aEnvoyer ? t("Synchroniser : changements à envoyer") : t("Synchroniser mes appareils")} onclick={() => (synchro = true)}>
+        <button class="rond pastille" data-visite="synchro" class:active={app.params.aEnvoyer} aria-label={app.params.aEnvoyer ? t("Synchroniser : changements à envoyer") : t("Synchroniser mes appareils")} onclick={() => (synchro = true)}>
           <Icone nom="synchro" taille={20} />
         </button>
         <button class="rond" aria-label={t("Verrouiller")} onclick={verrouiller}><Icone nom="cadenas" taille={20} /></button>
@@ -177,6 +178,9 @@
 
 <!-- Démo du site : visite guidée -->
 {#if visite}<VisiteDemo />{/if}
+
+<!-- Visite guidée de l'appli (Aide, ou fin de la prise en main) -->
+{#if app.visite >= 0}<VisiteAppli />{/if}
 
 <!-- Premier lancement : guide, seulement tant que le coffre est vide -->
 {#if app.revoirGuide || (!app.params.guideVu && !donnees.comptes.length && !donnees.operations.length)}<Bienvenue />{/if}

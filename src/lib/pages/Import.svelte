@@ -6,6 +6,13 @@
   import { api, estAndroid, type Releve } from "../api";
   import { classerEtLier, comptesImport, donnees, ecrire, nouvelId, supprimer, type Changement, type Import } from "../donnees.svelte";
   import { separerDoublons } from "../import/doublons";
+  import { SvelteSet } from "svelte/reactivity";
+  import Choix from "../Choix.svelte";
+  import ControleSolde from "../ControleSolde.svelte";
+  import { optionsDevises } from "../devises";
+  import { argent } from "../format";
+  import { libelleLisible } from "../categories";
+  import type { Compte, Operation } from "../donnees.svelte";
   import { annoncer } from "../etat.svelte";
   import FichierImport from "../FichierImport.svelte";
   import { dateCourte } from "../format";
@@ -86,6 +93,27 @@
     }
     enCours = false;
     annoncer(t("Import terminé."));
+    if (plusieurs) {
+      // Bilan par compte ; le contrôle du solde se fait sur le relevé le plus récent du compte
+      const parGroupe = new Map<string, BilanCompte>();
+      for (const c of cartes) {
+        const r = c?.resultatFinal();
+        if (!r) continue;
+        const g = parGroupe.get(r.cle) ?? { cle: r.cle, compte: r.compte, nb: 0, reconnues: 0, poches: 0, nouvellesPoches: [], ecart: 0 };
+        g.nb += r.nb;
+        g.reconnues += r.reconnues;
+        g.poches += r.poches;
+        g.nouvellesPoches.push(...r.nouvellesPoches.filter((p) => !g.nouvellesPoches.includes(p)));
+        if (r.soldeBanque !== undefined && r.date && (!g.date || r.date >= g.date)) Object.assign(g, { soldeBanque: r.soldeBanque, date: r.date, ecart: r.ecart, compte: r.compte });
+        parGroupe.set(r.cle, g);
+      }
+      bilanLot = [...parGroupe.values()];
+      fichiers = fichiers.filter((_, i) => !cartes[i]?.resultatFinal());
+      garder.clear();
+      // Tout correspond à la banque : le bilan se retire de lui-même ; sinon il reste pour corriger
+      if (bilanLot.every((b) => !b.ecart)) setTimeout(() => (bilanLot = []), 6000);
+      return;
+    }
     // Le fichier n'est jamais gardé : une fois importé (soldes d'accord), sa carte se retire d'elle-même
     setTimeout(() => (fichiers = fichiers.filter((_, i) => !cartes[i]?.fini())), 4000);
   }
@@ -132,24 +160,73 @@
   // Un relevé d'un format jamais vu attend qu'on vérifie son aperçu
   const aVerifier = $derived(cartes.some((c) => c?.attendValidation()));
   const plusieurs = $derived(fichiers.length > 1);
-  const toutValider = () => cartes.forEach((c) => c?.peutValider() && c.valider());
 
-  // Plusieurs relevés : récapitulatif par compte, les opérations présentes dans deux relevés comptées une fois
-  const recap = $derived.by(() => {
-    const parCompte = new Map<string, { nom: string; releves: number; nouvelles: number; poches: number; vues: { cle: string }[] }>();
+  // ---------- Plusieurs relevés : tout se règle et se vérifie une seule fois ----------
+  type BilanCompte = { cle: string; compte?: Compte; nb: number; reconnues: number; poches: number; nouvellesPoches: string[]; soldeBanque?: number; date?: string; ecart: number };
+  let bilanLot = $state<BilanCompte[]>([]);
+  // Saisies à la main que l'utilisateur préfère garder (la ligne de la banque correspondante n'est alors pas importée)
+  const garder = new SvelteSet<string>();
+  let onglet = $state<"nouvelles" | "saisies" | "attente" | "poches">("nouvelles");
+  let limite = $state(100);
+
+  // Groupes : les relevés d'un même compte, réglés ensemble (un seul choix de compte pour tout le groupe)
+  const groupes = $derived.by(() => {
+    const m = new Map<string, { cle: string; compteId: string; nouveauNom: string; nouvelleDevise: string; cartes: FichierImport[] }>();
     for (const c of cartes) {
-      const r = c?.resume();
-      if (!r) continue;
-      const g = parCompte.get(r.cle) ?? { nom: r.nom, releves: 0, nouvelles: 0, poches: 0, vues: [] };
-      const { nouvelles } = separerDoublons(r.nouvelles, g.vues);
-      g.releves++;
-      g.nouvelles += nouvelles.length;
-      g.poches += r.poches;
-      g.vues.push(...nouvelles);
-      parCompte.set(r.cle, g);
+      const g = c?.groupe();
+      if (!g) continue;
+      const x = m.get(g.cle) ?? { ...g, cartes: [] };
+      x.cartes.push(c);
+      m.set(g.cle, x);
     }
-    return [...parCompte.values()];
+    return [...m.values()];
   });
+  const reglerGroupe = (g: { cartes: FichierImport[] }, r: { compteId?: string; nouveauNom?: string; nouvelleDevise?: string }) => g.cartes.forEach((c) => c.regler(r));
+  const optionsComptes = $derived([{ v: "", l: t("Nouveau compte…") }, ...donnees.comptes.filter((c) => !c.parentId).map((c) => ({ v: c.id, l: `${c.nom}${c.banque ? ` · ${c.banque}` : ""} (${c.devise})` }))]);
+
+  // Formats jamais vus : un seul aperçu par format, pour tous les relevés de ce format
+  const formats = $derived.by(() => {
+    const m = new Map<string, { carte: FichierImport; apercu: NonNullable<ReturnType<FichierImport["apercu"]>>; n: number }>();
+    for (const c of cartes) {
+      const a = c?.apercu();
+      if (!a) continue;
+      const x = m.get(c.formatCle());
+      if (x) x.n++;
+      else m.set(c.formatCle(), { carte: c, apercu: a, n: 1 });
+    }
+    return [...m.values()];
+  });
+  async function toutValider() {
+    for (const f of formats) if (f.apercu.ops.length) await f.carte.valider();
+  }
+
+  // Vérification commune : tous les relevés fusionnés, les opérations présentes dans deux relevés comptées une fois
+  type Element = { o: { date: string; montant: number; libelle: string; detail?: string }; attente: boolean; saisie?: Operation; compte: string; devise: string };
+  const revue = $derived.by(() => {
+    const vues = new Map<string, { cle: string }[]>();
+    const nouvelles: Element[] = [];
+    const saisies = new Map<string, Element>();
+    const poches = new Map<string, number>();
+    let deja = 0;
+    for (const c of cartes) {
+      const e = c?.elements();
+      if (!e) continue;
+      const v = vues.get(e.cle) ?? [];
+      const { nouvelles: n, doublons } = separerDoublons(e.nouvelles.map((x, i) => ({ date: x.o.date, montant: x.o.montant, libelle: x.o.libelle, i })), v);
+      deja += e.doublons + doublons.length;
+      v.push(...n);
+      vues.set(e.cle, v);
+      for (const k of n) {
+        const x: Element = { ...e.nouvelles[k.i], compte: e.nom, devise: e.devise };
+        nouvelles.push(x);
+        if (x.saisie && !saisies.has(x.saisie.id)) saisies.set(x.saisie.id, x);
+      }
+      for (const p of e.poches) poches.set(p.nom, (poches.get(p.nom) ?? 0) + p.n);
+    }
+    nouvelles.sort((a, b) => b.o.date.localeCompare(a.o.date));
+    return { nouvelles, saisies: [...saisies.values()], attente: nouvelles.filter((x) => x.attente), poches: [...poches], deja };
+  });
+  const liste = $derived(onglet === "saisies" ? revue.saisies : onglet === "attente" ? revue.attente : revue.nouvelles);
 </script>
 
 <div class="pile">
@@ -162,30 +239,108 @@
 
   {#each erreurs as e, i (i)}<p class="erreur">{e}</p>{/each}
 
+  {#if plusieurs}<h2 class="titre-lot">{t("Vos relevés ({0})", fichiers.length)}</h2>{/if}
   {#each fichiers as f, i (f.cle)}
-    <FichierImport bind:this={cartes[i]} prep={f.prep} dansUnLot={plusieurs} retirer={() => (fichiers = fichiers.filter((x) => x.cle !== f.cle))} />
+    <FichierImport bind:this={cartes[i]} prep={f.prep} dansUnLot={plusieurs} {garder} retirer={() => (fichiers = fichiers.filter((x) => x.cle !== f.cle))} />
   {/each}
 
-  {#if nbPrets}
-    {#if plusieurs && recap.length}
-      <section class="carte pile recap">
-        <h2>{t("Votre import : {0} relevés", fichiers.length)}</h2>
-        {#each recap as r (r.nom)}
-          <p><strong>{r.nom}</strong> · {t("{0} relevé(s)", r.releves)} · {t("{0} nouvelle(s) opération(s)", r.nouvelles)}{r.poches ? ` · ${t("dont {0} dans les poches", r.poches)}` : ""}</p>
+  {#if plusieurs}
+    <!-- 1. Un compte par groupe de relevés (reconnu tout seul ; à choisir seulement s'il est inconnu) -->
+    <section class="carte pile">
+      <h2>{t("Dans quels comptes ?")}</h2>
+      {#each groupes as g (g.cle)}
+        <div class="groupe pile">
+          <p class="sous">{t("{0} relevé(s)", g.cartes.length)}{g.compteId ? "" : ` · ${t("compte inconnu : créé à l'import, ou choisissez-en un")}`}</p>
+          <Choix valeur={g.compteId} titre={t("Compte")} options={optionsComptes} change={(v) => reglerGroupe(g, { compteId: v as string })} />
+          {#if !g.compteId}
+            <div class="deux">
+              <label>{t("Nom du nouveau compte")}<input value={g.nouveauNom} oninput={(e) => reglerGroupe(g, { nouveauNom: e.currentTarget.value })} /></label>
+              <label>{t("Devise")}<Choix valeur={g.nouvelleDevise} titre={t("Devise")} options={optionsDevises(donnees.comptes.map((c) => c.devise))} change={(v) => reglerGroupe(g, { nouvelleDevise: v as string })} /></label>
+            </div>
+          {/if}
+        </div>
+      {/each}
+    </section>
+
+    {#if formats.length}
+      <!-- 2. Formats jamais vus : un aperçu par format, une seule validation -->
+      <section class="carte pile verifier-lot" data-visite="verifier">
+        <h2>{t("Vérifiez vos relevés")}</h2>
+        <p class="sous">{t("Première fois que Sésame voit ces formats : voici ce qu'il a compris. Une seule fois : les prochains relevés de ces formats seront reconnus tout seuls.")}</p>
+        {#each formats as f (f.carte.formatCle())}
+          <div class="format pile">
+            <p><strong>{f.apercu.banque ?? f.apercu.fichier}</strong> <span class="sous">· {t("{0} relevé(s) de ce format", f.n)}</span></p>
+            {#if f.apercu.ops.length}
+              <ul class="apercu">
+                {#each f.apercu.ops as o, k (k)}
+                  <li><span class="texte"><span class="libelle">{o.libelle}</span><span class="sous">{dateCourte(o.date)}</span></span><span class="montant" class:plus={o.montant > 0}>{argent(o.montant, f.apercu.devise, true)}</span></li>
+                {/each}
+              </ul>
+            {:else}
+              <p class="erreur">{t("Aucune opération lue : indiquez quelle colonne contient quoi.")}</p>
+            {/if}
+            {#if f.apercu.inverser}<p class="info">{t("Dans ce relevé, les dépenses sont écrites sans signe moins : Sésame les a remises dans le bon sens.")}</p>{/if}
+            {#if f.apercu.soldesFaux}<p class="erreur">{t("Les soldes du relevé ne suivent pas ces montants : vérifiez les colonnes.")}</p>{/if}
+            <button class="lien gauche" onclick={() => f.carte.corriger()}>{t("Corriger les colonnes de ce format")}</button>
+          </div>
         {/each}
-        <p class="sous">{t("Les opérations présentes dans deux relevés ne sont comptées qu'une fois. Tout sera importé en une fois, et pourra être annulé en une fois.")}</p>
+        <button class="principal" data-visite="valider" onclick={toutValider}>{t("C'est bon pour tous")}</button>
+      </section>
+    {:else if revue.nouvelles.length || revue.poches.length}
+      <!-- 3. Vérification commune, en onglets -->
+      <section class="carte pile">
+        <h2>{t("Ce qui va être importé")}</h2>
+        <div class="onglets" role="tablist">
+          <button role="tab" aria-selected={onglet === "nouvelles"} onclick={() => (onglet = "nouvelles")}>{t("Nouvelles")} ({revue.nouvelles.length})</button>
+          {#if revue.saisies.length}<button role="tab" aria-selected={onglet === "saisies"} onclick={() => (onglet = "saisies")}>{t("Vos saisies retrouvées")} ({revue.saisies.length})</button>{/if}
+          {#if revue.attente.length}<button role="tab" aria-selected={onglet === "attente"} onclick={() => (onglet = "attente")}>{t("En attente")} ({revue.attente.length})</button>{/if}
+          {#if revue.poches.length}<button role="tab" aria-selected={onglet === "poches"} onclick={() => (onglet = "poches")}>{t("Poches")} ({revue.poches.reduce((s, [, n]) => s + n, 0)})</button>{/if}
+        </div>
+        {#if onglet === "poches"}
+          <ul class="ops">{#each revue.poches as [nom, n] (nom)}<li><span class="libelle">{nom}</span><span class="sous">{t("{0} nouvelle(s) opération(s)", n)}</span></li>{/each}</ul>
+        {:else}
+          {#if onglet === "saisies"}<p class="sous">{t("Cochée : la ligne de la banque remplace votre saisie (votre catégorie et votre note sont gardées). Décochée : votre saisie reste telle quelle.")}</p>{/if}
+          <ul class="ops">
+            {#each liste.slice(0, limite) as x, k (k)}
+              <li>
+                {#if onglet === "saisies" && x.saisie}
+                  {@const id = x.saisie.id}
+                  <label class="case"><input type="checkbox" checked={!garder.has(id)} onchange={(e) => (e.currentTarget.checked ? garder.delete(id) : garder.add(id))} />
+                    <span class="texte"><span class="libelle">{libelleLisible(x.o.libelle)}</span><span class="sous">{t("remplace « {0} » du {1}", x.saisie.libelle, dateCourte(x.saisie.date))}</span></span>
+                  </label>
+                {:else}
+                  <span class="texte"><span class="libelle">{libelleLisible(x.o.libelle)}</span><span class="sous">{dateCourte(x.o.date)} · {x.compte}{x.attente ? ` · ${t("en attente")}` : ""}</span></span>
+                {/if}
+                <span class="montant" class:plus={x.o.montant > 0}>{argent(x.o.montant, x.devise, true)}</span>
+              </li>
+            {/each}
+          </ul>
+          {#if liste.length > limite}<button onclick={() => (limite += 300)}>{t("Afficher plus ({0} restantes)", liste.length - limite)}</button>{/if}
+        {/if}
+        {#if revue.deja}<p class="sous">{t("{0} opération(s) en double (entre vos relevés ou déjà dans l'appli) : ignorées.", revue.deja)}</p>{/if}
       </section>
     {/if}
-    {#if aVerifier}
-      {#if plusieurs}
-        <div class="valider-tout">
-          <p class="sous">{t("Vérifiez les aperçus ci-dessus : si les dates, libellés et montants sont justes, validez tout d'un coup.")}</p>
-          <button class="principal" data-visite="valider" onclick={toutValider}>{t("C'est bon pour tous")}</button>
+  {/if}
+
+  {#if bilanLot.length}
+    <!-- 4. Bilan par compte -->
+    <section class="carte pile">
+      <h2>{t("Import terminé")}</h2>
+      {#each bilanLot as b (b.cle)}
+        <div class="groupe pile">
+          <p class="ok" data-visite="importe">✓ {t("{0} opération(s) dans « {1} »", b.nb, b.compte?.nom ?? "")}{b.poches ? t(", {0} dans les poches", b.poches) : ""}.</p>
+          {#if b.reconnues}<p class="sous">{t("{0} opération(s) déjà notée(s) retrouvée(s) dans le relevé : remplacée(s) par la ligne de la banque, catégorie gardée.", b.reconnues)}</p>{/if}
+          {#each b.nouvellesPoches as n (n)}<p class="info">{t("Nouvelle poche détectée : «")} {n} {t("». Renommez-la ou fixez-lui un objectif depuis sa fiche.")}</p>{/each}
+          {#if b.compte && b.soldeBanque !== undefined}<ControleSolde compte={b.compte} soldeBanque={b.soldeBanque} date={b.date} />{/if}
         </div>
-      {:else}
-        <p class="sous">{t("Vérifiez d'abord l'aperçu du relevé ci-dessus, puis touchez « C'est bon ».")}</p>
-      {/if}
-    {/if}
+      {/each}
+      <button class="lien gauche" onclick={() => (bilanLot = [])}>{t("Fermer")}</button>
+    </section>
+  {/if}
+
+  {#if nbPrets}
+    {#if aVerifier && !plusieurs}<p class="sous">{t("Vérifiez d'abord l'aperçu du relevé ci-dessus, puis touchez « C'est bon ».")}</p>{/if}
+    {#if plusieurs && !aVerifier && revue.nouvelles.length}<p class="sous">{t("Tout sera importé en une fois, et pourra être retrouvé en une seule ligne dans l'historique.")}</p>{/if}
     <div class="actions">
       <button onclick={() => (fichiers = [])}>{t("Tout effacer")}</button>
       <button class="principal" data-visite="importer" onclick={toutImporter} disabled={enCours || aVerifier}>{enCours ? t("Import en cours…") : plusieurs ? t("Importer tout") : t("Importer")}</button>
@@ -208,7 +363,7 @@
   {/if}
 
   {#if historique.length}
-    <section class="carte pile">
+    <section class="carte pile" data-visite="historique">
       <h2>{t("Imports précédents")}</h2>
       {#each historique as imp (imp.id)}
         {@const noms = comptesImport(imp).map((id) => donnees.comptes.find((x) => x.id === id)?.nom).filter(Boolean).join(", ")}
@@ -279,22 +434,100 @@
   .histo strong {
     word-break: break-all;
   }
-  .recap p {
+  .titre-lot {
+    font-size: 1.05rem;
+    margin: 4px 0 -4px;
+  }
+  .groupe {
+    border-top: 1px solid var(--bord);
+    padding-top: 10px;
+    gap: 8px;
+  }
+  .groupe .sous,
+  .groupe p {
     margin: 0;
   }
-  .valider-tout {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
+  .deux {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+  }
+  .verifier-lot {
     background: var(--accent-fond);
-    border-radius: 16px;
-    padding: 12px 14px;
   }
-  .valider-tout .sous {
-    flex: 1 1 240px;
+  .format {
+    gap: 8px;
+  }
+  .format p {
     margin: 0;
+  }
+  .apercu,
+  .ops {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 6px;
+  }
+  .apercu li,
+  .ops li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    background: var(--fond);
+    border-radius: 10px;
+    padding: 8px 10px;
+  }
+  .texte {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .libelle {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+  .montant {
+    font-weight: 700;
+    color: var(--danger);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .montant.plus {
+    color: var(--ok);
+  }
+  .case {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+  .onglets {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    padding: 4px;
+    border-radius: 999px;
+    background: var(--fond);
+    width: fit-content;
+  }
+  .onglets button {
+    border-radius: 999px;
+    padding: 7px 12px;
+    font-size: 13px;
+    background: none;
+    color: var(--doux);
+  }
+  .onglets button[aria-selected="true"] {
+    background: var(--accent);
+    color: var(--sur-accent);
+  }
+  .gauche {
+    align-self: flex-start;
   }
   .fichiers {
     word-break: break-all;

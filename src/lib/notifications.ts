@@ -1,4 +1,5 @@
-// Programme les alertes du téléphone (Android) d'après les données ouvertes. Voir alertes.ts.
+// Programme les alertes d'après les données ouvertes. Voir alertes.ts.
+// Téléphone : programmées dans Android, elles arrivent même appli fermée. PC : affichées tant que Sésame reste ouvert.
 import { alertesAPlanifier, REGLAGES_DEFAUT, type Situation } from "./alertes";
 import { estAndroid } from "./api";
 import { donnees } from "./donnees.svelte";
@@ -13,13 +14,14 @@ const JOUR = 86_400_000;
 
 /** Autorisation d'afficher des notifications (Android 13+ la demande une fois). */
 export async function autoriser(): Promise<boolean> {
-  if (!estAndroid) return false;
   const n = await import("@tauri-apps/plugin-notification");
   return (await n.isPermissionGranted()) || (await n.requestPermission()) === "granted";
 }
 
+let minuteursPC: ReturnType<typeof setTimeout>[] = [];
+
 export async function programmerAlertes() {
-  if (!estAndroid || app.ecran !== "app") return;
+  if (app.ecran !== "app") return;
   try {
     const n = await import("@tauri-apps/plugin-notification");
     const r = { ...REGLAGES_DEFAUT, ...app.params.alertes };
@@ -52,10 +54,24 @@ export async function programmerAlertes() {
       await sauverParametres();
       if (!(await autoriser())) return;
     }
+    const garder = Object.entries(vues).filter(([, q]) => q > maintenant - 60 * JOUR);
+    if (!estAndroid) {
+      // PC : pas de programmation possible appli fermée ; une alerte n'est retenue qu'une fois affichée
+      minuteursPC.forEach(clearTimeout);
+      minuteursPC = alertes
+        .filter((a) => a.quand - maintenant < JOUR)
+        .map((a) =>
+          setTimeout(async () => {
+            n.sendNotification({ title: "Sésame", body: a.texte });
+            app.params.alertesVues = { ...app.params.alertesVues, [a.cle]: a.quand };
+            await sauverParametres();
+          }, Math.max(0, a.quand - Date.now())),
+        );
+      return;
+    }
     await n.cancel([1, 2, 3, 4]);
     for (const a of alertes) n.sendNotification({ id: a.id, title: "Sésame", body: a.texte, schedule: n.Schedule.at(new Date(a.quand), false, true) });
     // Mémoire des alertes programmées (deux mois), pour ne pas répéter celles déjà passées
-    const garder = Object.entries(vues).filter(([, q]) => q > maintenant - 60 * JOUR);
     app.params.alertesVues = Object.fromEntries([...garder, ...alertes.map((a) => [a.cle, a.quand] as [string, number])]);
     await sauverParametres();
   } catch {

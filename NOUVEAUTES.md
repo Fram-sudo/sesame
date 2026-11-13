@@ -10,12 +10,12 @@ Si ce texte n'a pas changé depuis la version précédente, la version dit simpl
 
 ## FR
 
-- Correction : réimporter un relevé dont le format était déjà connu (par exemple après « Remettre des comptes à zéro ») affichait une erreur « DataCloneError » et bloquait l'import.
-- Afficher vos montants dans n'importe quelle devise : « Autre devise… » dans le menu « en euros ▾ » de l'Accueil (les taux de change s'activent au besoin).
-- La devise d'un compte qui a déjà des opérations est expliquée : pourquoi elle ne peut plus changer, et comment faire.
+- Importez des dizaines de relevés en une fois : ils sont regroupés par compte, chaque format se vérifie une seule fois, et un seul écran montre tout ce qui va entrer avant d'importer.
+- Nouvelle visite guidée (3 minutes) de toute l'appli, chapitre par chapitre, à lancer ou reprendre depuis l'Aide ; l'Aide répond maintenant à chaque fonction.
+- Sur ordinateur aussi, Sésame vous prévient (budget presque atteint, prélèvement à venir, sauvegarde à faire) pendant qu'il est ouvert.
 
 ## EN
 
-- Fix: re-importing a statement whose format was already known (for example after “Reset accounts”) showed a “DataCloneError” and blocked the import.
-- Show your amounts in any currency: “Other currency…” in the “in euros ▾” menu on Home (exchange rates turn on if needed).
-- An account that already has transactions now explains why its currency can no longer change, and what to do.
+- Import dozens of statements at once: they're grouped by account, each format is checked only once, and one screen shows everything coming in before you import.
+- New guided tour (3 minutes) of the whole app, chapter by chapter, to start or resume from Help; Help now answers every feature.
+- On computers too, Sesame alerts you (budget almost reached, upcoming debit, backup due) while it's open.

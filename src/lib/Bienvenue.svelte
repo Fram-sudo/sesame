@@ -64,7 +64,8 @@
   {:else if etape < ETAPES.length - 1}
     <button class="principal" onclick={() => (etape += 1)}>{t("Suivant")}</button>
   {:else}
-    <button class="principal" onclick={() => terminer()}>{t("C'est parti")}</button>
+    <button class="principal" onclick={() => terminer().then(() => (app.visite = 0))}>{t("Faire la visite guidée (3 min)")}</button>
+    <button onclick={() => terminer()}>{t("Plus tard")}</button>
   {/if}
   {#if etape < ETAPES.length - 1}<button class="lien" onclick={() => terminer()}>{t("Passer le guide")}</button>{/if}
 </Feuille>

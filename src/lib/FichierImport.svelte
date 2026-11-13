@@ -12,8 +12,11 @@
   import { cleOp, rapprocherSaisies, separerDoublons } from "./import/doublons";
   import { choisirCompte, deviner, type Preparation } from "./import/fichier";
 
-  // dansUnLot : plusieurs relevés importés ensemble (une seule validation, un seul historique)
-  let { prep, retirer, dansUnLot = false }: { prep: Preparation; retirer: () => void; dansUnLot?: boolean } = $props();
+  // dansUnLot : plusieurs relevés importés ensemble. La carte devient une ligne ; la page Importer règle le compte
+  // (par groupe), la vérification (par format) et les saisies à garder pour tous les relevés d'un coup.
+  // garder : saisies que l'utilisateur préfère garder plutôt que de les remplacer par la ligne de la banque.
+  let { prep, retirer, dansUnLot = false, garder }: { prep: Preparation; retirer: () => void; dansUnLot?: boolean; garder?: Set<string> } = $props();
+  let details = $state(false);
 
   // L'état de départ vient du fichier lu ; l'utilisateur peut ensuite tout ajuster
   /* svelte-ignore state_referenced_locally */
@@ -80,6 +83,11 @@
   let valide = $state(!prep.profilNouveau);
   const cleProfil = (p: { cle?: string; entete: string[] }) => p.cle ?? p.entete.join("|");
   const aValider = $derived(!valide && !donnees.profils.some((p) => cleProfil(p) === cleProfil(profil)));
+  // Un autre relevé du même format vient d'être validé (ou corrigé) : on reprend ses réglages
+  $effect(() => {
+    const p = donnees.profils.find((x) => cleProfil(x) === cleProfil(prep.profil));
+    if (p && !profilModifie && etat === "pret" && JSON.stringify($state.snapshot(profil)) !== JSON.stringify($state.snapshot(p))) profil = JSON.parse(JSON.stringify(p));
+  });
   export async function valider() {
     await ecrire([{ collection: "profils", id: profil.id, valeur: $state.snapshot(profil) }]);
     valide = true;
@@ -98,6 +106,8 @@
   // dans le relevé (même montant, à quelques jours près) : la ligne de la banque les remplace, sans doublon
   const saisies = $derived(compteId ? donnees.operations.filter((o) => o.compteId === compteId && (o.manuelle || o.enAttente || o.etaitEnAttente)) : []);
   const reconnues = $derived(tri ? rapprocherSaisies(tri.nouvelles.filter((o) => !o.enAttente), saisies) : new Map());
+  // Saisie gardée par l'utilisateur : la ligne de la banque qui lui correspond n'est pas importée (pas de doublon)
+  const gardee = (o: unknown) => !!garder?.has(reconnues.get(o as never)?.id ?? "");
   const nbAttente = $derived(tri ? tri.nouvelles.filter((o) => o.enAttente || prep.enAttente.includes(principal[o.ligne - 1]?.[iSection] ?? "")).length : 0);
   const pret = $derived(ok && !aValider && !!tri && (tri.nouvelles.length > 0 || nbPoches > 0));
 
@@ -119,7 +129,7 @@
     if (!pret || etat !== "pret" || !tri || !lecture) return;
     etat = "encours";
     erreur = "";
-    const nbPrincipal = tri.nouvelles.length;
+    const nbPrincipal = tri.nouvelles.filter((o) => !gardee(o)).length;
     const nbDansPoches = nbPoches;
     try {
       const ch: Changement[] = [];
@@ -132,7 +142,7 @@
       } else if (!compte?.empreinte && prep.empreinte) ch.push({ collection: "comptes", id: cid, valeur: { ...compte!, empreinte: prep.empreinte } });
 
       const importId = lot.id;
-      const ops: Operation[] = tri.nouvelles.map((o) => {
+      const ops: Operation[] = tri.nouvelles.filter((o) => !gardee(o)).map((o) => {
         const { ligne, solde: _s, enAttente: attenteLue, ...op } = o;
         const attente = attenteLue || prep.enAttente.includes(principal[ligne - 1]?.[iSection] ?? "");
         // Saisie à la main retrouvée : on garde sa catégorie et sa note, la banque donne la date et le libellé exacts
@@ -140,9 +150,9 @@
         const garde = s ? { ...(s.categorieId ? { categorieId: s.categorieId, categorieManuelle: true } : {}), ...(s.note ? { note: s.note } : {}) } : {};
         return { ...op, ...garde, id: nouvelId(), compteId: cid, importId, ...(attente ? { enAttente: true } : {}) };
       });
-      const remplacees = [...reconnues.values()].map((s) => $state.snapshot(s) as Operation);
+      const remplacees = [...reconnues.values()].filter((s) => !garder?.has(s.id)).map((s) => $state.snapshot(s) as Operation);
       for (const s of remplacees) ch.push({ collection: "operations", id: s.id, valeur: null });
-      const nbReconnues = reconnues.size;
+      const nbReconnues = remplacees.length;
       // Poches : un sous-compte d'épargne par poche, créé au premier import ; reconnu ensuite par son nom
       // dans le relevé (même si vous l'avez renommé dans l'appli) ; une poche archivée qui bouge à nouveau réapparaît
       const nouvellesPoches: string[] = [];
@@ -188,6 +198,42 @@
     tri && etat === "pret"
       ? { cle: compteId || `nouveau|${prep.empreinte || prep.banque || nouveauNom.trim()}`, nom: compte?.nom ?? (nouveauNom.trim() || t("Nouveau compte")), nouvelles: tri.nouvelles, poches: nbPoches }
       : undefined;
+  // ---- Pour la page Importer, quand plusieurs relevés sont importés ensemble ----
+  // Groupe : le compte reconnu au départ (fixe, même si l'utilisateur change ensuite le compte du groupe)
+  /* svelte-ignore state_referenced_locally */
+  const groupeInitial = compteId || `nouveau|${prep.empreinte || prep.banque || nouveauNom.trim()}`;
+  export const groupe = () => ({ cle: groupeInitial, compteId, nouveauNom, nouvelleDevise });
+  export function regler(r: { compteId?: string; nouveauNom?: string; nouvelleDevise?: string }) {
+    if (r.compteId !== undefined) compteId = r.compteId;
+    if (r.nouveauNom !== undefined) nouveauNom = r.nouveauNom;
+    if (r.nouvelleDevise !== undefined) nouvelleDevise = r.nouvelleDevise;
+  }
+  export const formatCle = () => cleProfil(profil);
+  // Aperçu d'un format jamais vu (montré une seule fois pour tous les relevés de ce format)
+  export const apercu = () =>
+    lecture && aValider ? { ops: lecture.ops.slice(0, 5), devise, inverser: !!profil.inverser, soldesFaux, fichier: prep.nom, banque: prep.banque } : undefined;
+  export function corriger() {
+    details = true;
+    assistant = true;
+  }
+  // Ce que ce relevé apporterait, pour l'écran de vérification commun (onglets)
+  export const elements = () =>
+    tri && etat === "pret" && !aValider
+      ? {
+          cle: groupeInitial,
+          nom: compte?.nom ?? (nouveauNom.trim() || t("Nouveau compte")),
+          devise,
+          nouvelles: tri.nouvelles.map((o) => ({ o, attente: !!o.enAttente || prep.enAttente.includes(principal[o.ligne - 1]?.[iSection] ?? ""), saisie: reconnues.get(o) as Operation | undefined })),
+          poches: poches ? [...poches.parPoche].map(([nom, l]) => ({ nom, n: l.length })) : [],
+          doublons: tri.doublons.length + (poches?.doublons ?? 0),
+        }
+      : undefined;
+  export const resultatFinal = () => (etat === "fait" && resultat ? { cle: groupeInitial, ...resultat, ecart: ecartFinal } : undefined);
+  const periode = $derived.by(() => {
+    const d = (lecture?.ops ?? []).map((o) => o.date).sort();
+    return d.length ? `${dateCourte(d[0])} → ${dateCourte(d.at(-1)!)}` : "";
+  });
+
   // Import terminé et soldes d'accord avec la banque (ou pas de solde à comparer) : la carte peut se retirer
   const ecartFinal = $derived(resultat?.compte && resultat.soldeBanque !== undefined && resultat.date ? resultat.soldeBanque - (soldes(resultat.date).get(resultat.compte.id) ?? 0) : 0);
   export const fini = () => etat === "fait" && ecartFinal === 0;
@@ -216,7 +262,26 @@
   </label>
 {/snippet}
 
-<section class="carte pile" data-visite="fichier">
+{#if dansUnLot}
+  <!-- Une ligne par relevé : le compte, la vérification et le détail des opérations se règlent pour tous plus bas -->
+  <div class="ligne-fichier">
+    <span class="infos">
+      <strong class="nom">{prep.nom}</strong>
+      <span class="sous"><span class="badge" class:inconnue={!prep.banque}>{prep.banque ?? t("Banque non reconnue")}</span> {periode}</span>
+    </span>
+    <span class="etat sous">
+      {#if etat === "fait"}<span class="fait">✓ {t("importé")}</span>
+      {:else if erreur}<span class="erreur-texte">{t("erreur")}</span>
+      {:else if aValider}{t("à vérifier")}
+      {:else if tri}{t("{0} nouvelle(s)", tri.nouvelles.length + nbPoches)}{/if}
+    </span>
+    <button class="lien" onclick={() => (details = !details)} aria-expanded={details}>{details ? t("Masquer") : t("Détails")}</button>
+    {#if etat === "pret"}<button class="lien retirer" onclick={retirer} aria-label={t("Retirer")} title={t("Retirer")}>✕</button>{/if}
+  </div>
+{/if}
+
+{#if !dansUnLot || details}
+<section class="carte pile" class:detail-lot={dansUnLot} data-visite="fichier">
   <div class="tete">
     <div class="titre">
       <strong>{prep.nom}</strong>
@@ -355,8 +420,46 @@
     {#if erreur}<p class="erreur">{erreur}</p>{/if}
   {/if}
 </section>
+{/if}
 
 <style>
+  .ligne-fichier {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 10px 12px;
+  }
+  .ligne-fichier .infos {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .ligne-fichier .nom {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .ligne-fichier .etat {
+    white-space: nowrap;
+  }
+  .ligne-fichier .fait {
+    color: var(--ok);
+    font-weight: 700;
+  }
+  .erreur-texte {
+    color: var(--danger);
+    font-weight: 700;
+  }
+  .retirer {
+    font-size: 15px;
+    padding: 4px 6px;
+  }
+  .detail-lot {
+    margin-top: -4px;
+  }
   .tete {
     display: flex;
     justify-content: space-between;

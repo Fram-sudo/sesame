@@ -82,6 +82,8 @@ if (import.meta.env.MODE === "demo" || new URLSearchParams(location.search).has(
     const page = new URLSearchParams(location.search).get("page");
     const { app } = await import("./etat.svelte");
     if (page) app.page = page as never;
+    // ?tour=3 : visite guidée de l'appli ouverte à l'étape 3 (captures)
+    if (q.has("tour")) app.visite = +q.get("tour")!;
     const mode = new URLSearchParams(location.search).get("mode");
     if (mode) app.periode = { ...app.periode, mode: mode as never };
     // Captures du site : seule la section voulue reste sous l'en-tête (repère data-visite)

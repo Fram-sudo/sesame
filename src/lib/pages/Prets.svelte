@@ -48,7 +48,7 @@
 </script>
 
 <div class="pile">
-  <div class="carte resume">
+  <div class="carte resume" data-visite="prets">
     <div>
       <p class="sous">{t("Capital restant dû")}<Aide texte={t("Somme de vos prêts, d'après leur échéancier : chaque échéance dont la date est passée est considérée comme payée. Les remboursements anticipés enregistrés sont déduits.")} /></p>
       <p class="montant enorme">{argent(totalDu, "EUR")}</p>
