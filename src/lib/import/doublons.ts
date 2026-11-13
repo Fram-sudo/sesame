@@ -26,22 +26,37 @@ export function separerDoublons<T extends { date: string; montant: number; libel
     const n = parCle.get(e.cle) ?? 0;
     if (n > 0) (prises.add(e), parCle.set(e.cle, n - 1));
   }
+  const restantes: (T & { cle: string })[] = [];
   for (const o of lues) {
     const cle = cleOp(o);
     const n = vues.get(cle) ?? 0;
     vues.set(cle, n + 1);
-    if (n < (deja.get(cle) ?? 0)) {
-      doublons.push(o);
-      continue;
-    }
+    if (n < (deja.get(cle) ?? 0)) doublons.push(o);
+    else restantes.push({ ...o, cle });
+  }
+  // À compléter : d'abord l'ancien libellé le plus précis retrouvé dans le texte lu (deux achats du même montant le même jour
+  // ne s'échangent pas), puis seulement les anciens « (sans libellé) » (lus avant que la ligne collée aux dates soit récupérée)
+  const candidates = (o: T) => existantes.filter((x) => !prises.has(x) && x.date === o.date && x.montant === o.montant && x.libelle);
+  const trouvees = new Map<T & { cle: string }, E>();
+  for (const o of restantes) {
+    if (o.libelle === "(sans libellé)") continue;
     const lib = normaliser(o.libelle);
     // Texte complet lu maintenant (libellé et détail) : l'ancien libellé doit s'y retrouver
     const complet = normaliser(`${o.libelle} ${(o as { detail?: string }).detail ?? ""}`);
-    // « (sans libellé) » : lu avant que la ligne collée aux dates soit récupérée (relevés PDF Société Générale)
-    const incomplet = (x: E) => x.libelle === "(sans libellé)" || (normaliser(x.libelle!) !== lib && complet.includes(normaliser(x.libelle!)));
-    const e = existantes.find((x) => !prises.has(x) && x.date === o.date && x.montant === o.montant && x.libelle && o.libelle !== "(sans libellé)" && incomplet(x));
-    if (e) (prises.add(e), doublons.push(o), reparees.push({ lue: { ...o, cle }, existante: e }));
-    else nouvelles.push({ ...o, cle });
+    const e = candidates(o)
+      .filter((x) => x.libelle !== "(sans libellé)" && normaliser(x.libelle!) !== lib && complet.includes(normaliser(x.libelle!)))
+      .sort((x, y) => normaliser(y.libelle!).length - normaliser(x.libelle!).length)[0];
+    if (e) (prises.add(e), trouvees.set(o, e));
+  }
+  for (const o of restantes) {
+    if (trouvees.has(o) || o.libelle === "(sans libellé)") continue;
+    const e = candidates(o).find((x) => x.libelle === "(sans libellé)");
+    if (e) (prises.add(e), trouvees.set(o, e));
+  }
+  for (const o of restantes) {
+    const e = trouvees.get(o);
+    if (e) (doublons.push(o), reparees.push({ lue: o, existante: e }));
+    else nouvelles.push(o);
   }
   return { nouvelles, doublons, reparees };
 }

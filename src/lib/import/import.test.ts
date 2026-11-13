@@ -134,3 +134,21 @@ describe("libellé collé aux dates (PDF Société Générale)", () => {
     expect(separerDoublons(r.ops, [ancienne]).reparees.map((x) => x.existante.id)).toEqual(["b"]);
   });
 });
+
+describe("réparation : deux opérations du même montant le même jour", () => {
+  it("chaque ancienne ligne retrouve la bonne, quel que soit l'ordre", () => {
+    const lues = [
+      { date: "2026-02-12", montant: -699, libelle: "CARTE X1579 11/02 GOOGLE PLAY APPS", detail: "6,99 EUR IRLANDE COMMERCE ELECTRONIQUE" },
+      { date: "2026-02-12", montant: -699, libelle: "CARTE X1579 11/02 GOOGLE PLAY APPS" },
+    ];
+    const anciennes = [
+      { id: "vide", date: "2026-02-12", montant: -699, libelle: "(sans libellé)", cle: "2026-02-12|-699|sans libelle" },
+      { id: "texte", date: "2026-02-12", montant: -699, libelle: "6,99 EUR IRLANDE COMMERCE ELECTRONIQUE", cle: "2026-02-12|-699|6 99 eur irlande commerce electronique" },
+    ];
+    for (const ordre of [anciennes, [...anciennes].reverse()]) {
+      const r = separerDoublons(lues, ordre);
+      expect(r.nouvelles).toEqual([]);
+      expect(r.reparees.map((x) => x.existante.id).sort()).toEqual(["texte", "vide"]);
+    }
+  });
+});
