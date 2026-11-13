@@ -6,6 +6,23 @@
   import CleRecuperation from "../CleRecuperation.svelte";
   import { annoncer, app, exporterSauvegarde, mettreAJourTaux, sauverParametres } from "../etat.svelte";
   import { maj, verifierMaj } from "../maj.svelte";
+  import { REGLAGES_DEFAUT, type Reglages } from "../alertes";
+
+  // Alertes du téléphone : réglages, puis reprogrammation (l'autorisation est demandée en activant)
+  const reglagesAlertes = $derived({ ...REGLAGES_DEFAUT, ...app.params.alertes });
+  const TYPES_ALERTES: [keyof Reglages, string][] = [
+    ["decouvert", t("Risque de découvert (quelques jours avant)")],
+    ["budget", t("Budget presque atteint")],
+    ["import", t("Rappel d'importer vos relevés (après 2 semaines)")],
+    ["sauvegarde", t("Rappel de sauvegarde")],
+  ];
+  async function changerAlerte(cle: keyof Reglages, oui: boolean) {
+    app.params.alertes = { ...app.params.alertes, [cle]: oui };
+    await sauverParametres();
+    const n = await import("../notifications");
+    if (oui && cle !== "montants") await n.autoriser();
+    await n.programmerAlertes();
+  }
   import { aDesDonneesDemo, chargerDemo, retirerDemo } from "../demo";
   import { charger, vider } from "../donnees.svelte";
   import GestionCategories from "../GestionCategories.svelte";
@@ -218,6 +235,24 @@
       {#if app.params.tauxActifs}<button onclick={() => agir(async () => annoncer((await mettreAJourTaux(true)) ? t("Taux mis à jour.") : t("Pas de connexion : les derniers taux sont gardés.")))} disabled={enCours}>{t("Mettre à jour maintenant")}</button>{/if}
     {/if}
   </section>
+
+  {#if estAndroid}
+    <section class="carte pile">
+      <h2>{t("Alertes")}</h2>
+      <p class="sous">{t("Sésame programme ces alertes quand vous l'ouvrez : vos données restent chiffrées, rien ne tourne en arrière-plan.")}</p>
+      {#each TYPES_ALERTES as [cle, libelle] (cle)}
+        <label class="interrupteur">
+          <input type="checkbox" checked={reglagesAlertes[cle]} onchange={(e) => changerAlerte(cle, e.currentTarget.checked)} />
+          <span>{libelle}</span>
+        </label>
+      {/each}
+      <label class="interrupteur">
+        <input type="checkbox" checked={reglagesAlertes.montants} onchange={(e) => changerAlerte("montants", e.currentTarget.checked)} />
+        <span>{t("Afficher les montants dans les alertes")}</span>
+      </label>
+      <p class="sous">{t("Les alertes peuvent s'afficher sur l'écran verrouillé : sans montant, personne ne voit vos chiffres.")}</p>
+    </section>
+  {/if}
 
   <section class="carte pile">
     <h2>{t("Mises à jour")}</h2>

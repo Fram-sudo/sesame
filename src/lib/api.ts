@@ -30,6 +30,10 @@ export interface Parametres {
   /** Dernière sauvegarde exportée depuis cet appareil (ms), et rappel repoussé jusqu'à (ms) */
   derniereSauvegarde?: number;
   rappelSauvegardeApres?: number;
+  /** Alertes du téléphone : réglages, alertes déjà programmées (clé → heure), autorisation déjà demandée */
+  alertes?: Partial<import("./alertes").Reglages>;
+  alertesVues?: Record<string, number>;
+  alertesDemandees?: boolean;
 }
 
 export interface Recus {

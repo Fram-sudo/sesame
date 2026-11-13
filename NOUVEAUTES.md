@@ -10,10 +10,8 @@ Si ce texte n'a pas changé depuis la version précédente, la version dit simpl
 
 ## FR
 
-- Nouveaux formats de relevés : OFX et QFX (Money, Quicken), QIF et CAMT (le format européen des banques). La banque et le compte sont reconnus automatiquement.
-- Rappel de sauvegarde sur l'Accueil : Sésame vous propose d'exporter une sauvegarde chiffrée si vous n'en avez pas, ou si la dernière date de plus d'un mois. La date de la dernière sauvegarde est visible dans Paramètres.
+- Alertes sur le téléphone (Android) : risque de découvert quelques jours avant, budget presque atteint, rappel d'importer vos relevés et rappel de sauvegarde. Sans montant sur l'écran verrouillé, sauf si vous le choisissez. Réglages dans Paramètres → Alertes.
 
 ## EN
 
-- New statement formats: OFX and QFX (Money, Quicken), QIF and CAMT (the European bank format). The bank and account are recognised automatically.
-- Backup reminder on Home: Sesame suggests exporting an encrypted backup if you don't have one, or if the last one is over a month old. The date of the last backup is shown in Settings.
+- Phone alerts (Android): overdraft risk a few days ahead, budget almost reached, reminder to import your statements and backup reminder. No amounts on the lock screen unless you choose so. Settings in Settings → Alerts.

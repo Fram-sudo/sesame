@@ -896,6 +896,20 @@ export const EN: Record<string, string> = {
   "Sauvegarder": "Back up",
   "Dernière sauvegarde depuis cet appareil : le {0}.": "Last backup from this device: {0}.",
   "Aucune sauvegarde exportée depuis cet appareil pour l'instant.": "No backup exported from this device yet.",
+  "Alertes": "Alerts",
+  "Sésame programme ces alertes quand vous l'ouvrez : vos données restent chiffrées, rien ne tourne en arrière-plan.": "Sesame schedules these alerts when you open it: your data stays encrypted, nothing runs in the background.",
+  "Afficher les montants dans les alertes": "Show amounts in alerts",
+  "Les alertes peuvent s'afficher sur l'écran verrouillé : sans montant, personne ne voit vos chiffres.": "Alerts may show on the lock screen: without amounts, nobody sees your figures.",
+  "Risque de découvert (quelques jours avant)": "Overdraft risk (a few days before)",
+  "Budget presque atteint": "Budget almost reached",
+  "Rappel d'importer vos relevés (après 2 semaines)": "Reminder to import your statements (after 2 weeks)",
+  "Rappel de sauvegarde": "Backup reminder",
+  "Votre argent disponible pourrait passer sous zéro vers le {0} (au plus bas : {1}).": "Your available money could drop below zero around {0} (lowest: {1}).",
+  "Votre argent disponible risque de passer sous zéro dans quelques jours. Ouvrez Sésame pour voir la prévision.": "Your available money may drop below zero in a few days. Open Sesame to see the forecast.",
+  "Budget « {0} » : {1} dépensés sur {2}.": "Budget “{0}”: {1} spent out of {2}.",
+  "Un de vos budgets est presque atteint ce mois-ci.": "One of your budgets is almost reached this month.",
+  "Pensez à importer vos derniers relevés pour garder vos comptes à jour.": "Remember to import your latest statements to keep your accounts up to date.",
+  "Pensez à exporter une sauvegarde de Sésame : c'est elle qui vous permet de tout retrouver si vous perdez cet appareil.": "Remember to export a Sesame backup: it's what lets you get everything back if you lose this device.",
 };
 
 /** Textes volontairement identiques en anglais (codes, données de démonstration) */

@@ -3,5 +3,5 @@
   "identifier": "default",
   "description": "Droits de la fenêtre principale : le strict minimum",
   "windows": ["main"],
-  "permissions": ["core:default"]
+  "permissions": ["core:default", "notification:default"]
 }

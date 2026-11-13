@@ -54,6 +54,7 @@ export async function apresOuverture() {
   appliquerTheme();
   void mettreAJourTaux();
   void import("./maj.svelte").then((m) => m.verifierMaj());
+  void import("./notifications").then((m) => m.programmerAlertes());
   app.page = "accueil";
   app.ecran = "app";
   relancerMinuteur();
@@ -140,6 +141,8 @@ export async function sauverParametres() {
 
 export async function verrouiller() {
   clearTimeout(minuteur);
+  // Dernières données connues avant de tout effacer de la mémoire : les alertes partent de là
+  await import("./notifications").then((m) => m.programmerAlertes());
   await api.verrouiller();
   vider();
   app.params.discret = false;
@@ -158,7 +161,7 @@ for (const ev of ["pointerdown", "keydown", "wheel", "touchstart"]) {
   addEventListener(ev, relancerMinuteur, { passive: true });
 }
 document.addEventListener("visibilitychange", () => {
-  if (document.hidden) cacheDepuis = Date.now();
+  if (document.hidden) (cacheDepuis = Date.now()), void import("./notifications").then((m) => m.programmerAlertes());
   else if (app.ecran === "app" && Date.now() - cacheDepuis > app.params.verrouMinutes * 60_000) verrouiller();
   else void synchroAuto();
 });
