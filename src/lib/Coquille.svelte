@@ -20,6 +20,7 @@
   import CarteMaj from "./CarteMaj.svelte";
   import VisiteDemo from "./VisiteDemo.svelte";
   import VisiteAppli from "./VisiteAppli.svelte";
+  import { couleurCompte } from "./couleurs";
   const visite = (import.meta.env.MODE === "demo" || new URLSearchParams(location.search).has("visite")) && !new URLSearchParams(location.search).has("capture");
   import { maj } from "./maj.svelte";
   import Saisie from "./Saisie.svelte";
@@ -44,7 +45,6 @@
   // Menu de gauche (PC) : vos comptes et leur solde, un clic affiche le tableau de bord du compte
   const principaux = $derived(donnees.comptes.filter((c) => !c.parentId && c.type !== "epargne"));
   const parCompte = $derived(soldes());
-  const COULEURS = ["#378ADD", "#639922", "#D85A30", "#7F77DD", "#1D9E75", "#D4537E", "#BA7517"];
   const libelleMois = $derived(bornes(app.periode, premiereDate()).libelle);
 
   let synchro = $state(false);
@@ -105,13 +105,13 @@
     {/each}
     {#if principaux.length}
       <p class="rubrique">{t("Mes comptes")}</p>
-      {#each principaux as c, k (c.id)}
+      {#each principaux as c (c.id)}
         <button
           class="compte"
           class:choisi={app.page === "accueil" && app.filtreCompte === c.id}
           onclick={() => ((app.filtreCompte = app.filtreCompte === c.id ? "" : c.id), (app.page = "accueil"))}
         >
-          <i style:background={COULEURS[k % COULEURS.length]}></i><span class="nom">{c.nom}</span><span class="montant">{argent(parCompte.get(c.id) ?? 0, c.devise)}</span>
+          <i style:background={couleurCompte(c)}></i><span class="nom">{c.nom}</span><span class="montant">{argent(parCompte.get(c.id) ?? 0, c.devise)}</span>
         </button>
       {/each}
     {/if}

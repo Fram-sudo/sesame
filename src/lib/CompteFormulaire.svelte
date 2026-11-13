@@ -6,6 +6,7 @@
   // Pour un compte qui a des poches : leur liste.
   import CompteFormulaire from "./CompteFormulaire.svelte";
   import ControleSolde from "./ControleSolde.svelte";
+  import { couleurCompte, PALETTE_COMPTES } from "./couleurs";
   import { optionsDevises } from "./devises";
   import { classerEtLier, donnees, ecrire, nouvelId, soldes, supprimerCompte, type Changement, type Compte, type Devise } from "./donnees.svelte";
   import { annoncer } from "./etat.svelte";
@@ -30,6 +31,8 @@
   let type = $state<"courant" | "epargne" | "especes">(compte?.type !== "epargne" && compte?.forme === "especes" ? "especes" : (compte?.type ?? "courant"));
   /* svelte-ignore state_referenced_locally */
   let reserve = $state(!!compte?.reserve);
+  /* svelte-ignore state_referenced_locally */
+  let couleur = $state(compte?.couleur ?? "");
   // Porte-monnaie : suivi des espèces à partir d'une date (nouveau porte-monnaie : aujourd'hui, pour ne pas rattraper des années de retraits)
   /* svelte-ignore state_referenced_locally */
   let especesDepuis = $state(compte ? (compte.especesDepuis ?? "") : new Date().toISOString().slice(0, 10));
@@ -59,6 +62,7 @@
       type: type === "especes" ? "courant" : type,
       ...(type === "especes" ? { forme: "especes" as const } : compte?.type !== "epargne" && compte?.forme === "especes" ? { forme: undefined } : {}),
       especesDepuis: type === "especes" && especesDepuis ? especesDepuis : undefined,
+      couleur: couleur || undefined,
       reserve: (estPoche || type === "epargne") && reserve ? true : undefined,
       objectif: lireMontant(objectif) ?? undefined,
       // Une poche garde le nom qu'elle a dans les relevés : la renommer ici ne casse pas le lien avec la banque
@@ -127,6 +131,18 @@
         <Choix bind:valeur={devise} titre={t("Devise")} desactive={nbOps > 0} options={optionsDevises(donnees.comptes.map((c) => c.devise))} />
       </label>
       {#if nbOps > 0}<p class="sous aide">{t("Ce compte a déjà des opérations : sa devise ne peut plus changer (les montants sont enregistrés dans cette devise). Pour un compte dans une autre devise, créez-en un nouveau.")}</p>{/if}
+      {#if !estPoche}
+        {@const actuelle = couleur || couleurCompte({ id: compte?.id ?? "nouveau", banque, nom, forme: type === "especes" ? "especes" : undefined })}
+        <div class="couleurs" role="radiogroup" aria-label={t("Couleur du compte")}>
+          <span class="sous">{t("Couleur du compte")}</span>
+          <div class="pastilles">
+            {#each PALETTE_COMPTES as c (c)}
+              <button type="button" role="radio" aria-checked={actuelle === c} aria-label={c} class:on={actuelle === c} style:background={c} onclick={() => (couleur = c)}></button>
+            {/each}
+          </div>
+          <div class="apercu" style:background={actuelle}><small>{banque || t("Mon compte")}</small><strong>{nom || t("Compte")}</strong></div>
+        </div>
+      {/if}
       <label>{t("Type")}
         <Choix bind:valeur={type} titre={t("Type")} options={[{ v: "courant", l: t("Compte courant") }, { v: "especes", l: t("Espèces (porte-monnaie)") }, { v: "epargne", l: t("Épargne (livret…)") }]} />
       </label>
@@ -234,5 +250,39 @@
   .rouge {
     color: var(--danger);
     align-self: flex-start;
+  }
+  .couleurs {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .pastilles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .pastilles button {
+    width: 32px;
+    height: 32px;
+    min-height: 0;
+    padding: 0;
+    border-radius: 50%;
+  }
+  .pastilles button.on {
+    box-shadow:
+      0 0 0 2px var(--fond),
+      0 0 0 4px var(--texte);
+  }
+  .apercu {
+    color: #fff;
+    border-radius: 14px;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    max-width: 220px;
+  }
+  .apercu small {
+    font-size: 12px;
+    opacity: 0.85;
   }
 </style>

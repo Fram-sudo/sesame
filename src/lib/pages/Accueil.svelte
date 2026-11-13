@@ -10,7 +10,8 @@
   import { detecterRecurrences, libelleLisible } from "../categories";
   import ChoixDevise from "../ChoixDevise.svelte";
   import CompteFormulaire from "../CompteFormulaire.svelte";
-  import Courbe from "../Courbe.svelte";
+  import BarresMois from "../BarresMois.svelte";
+  import { couleurCompte } from "../couleurs";
   import { chargerDemo } from "../demo";
   import { donnees, soldes, type Compte } from "../donnees.svelte";
   import { symboleDevise } from "../devises";
@@ -57,15 +58,6 @@
   const tailleSolde = $derived(`min(var(--solde-max, 44px), ${Math.floor(560 / (soldeAffiche.ent.length + soldeAffiche.dec.length * 0.5))}px)`);
   const tailleCarte = (t: string) => `${Math.min(19, Math.floor(230 / t.length))}px`;
   const principaux = $derived(donnees.comptes.filter((c) => !c.parentId && c.type !== "epargne" && !c.archive));
-  // Couleur de carte par banque (reconnue au nom), sinon une teinte de la palette
-  const TEINTES = ["#111318", "#3B5BFD", "#6D4AE0", "#0E7C66", "#C2410C", "#BE185D"];
-  function teinteCompte(c: Compte, k: number) {
-    const b = `${c.banque} ${c.nom}`.toLowerCase();
-    if (/soci[eé]t[eé] g[eé]n[eé]rale|\bsg\b/.test(b)) return { fond: "#111318", point: "#E5484D" };
-    if (/revolut/.test(b)) return { fond: "#3B5BFD", point: "#FFFFFF" };
-    if (/bourso/.test(b)) return { fond: "#D6006F", point: "#FFFFFF" };
-    return { fond: TEINTES[k % TEINTES.length], point: "#FFD43B" };
-  }
   const nbComptes = $derived(donnees.comptes.filter((c) => p.courants.has(c.id)).length);
   const autresDevises = $derived.by(() => {
     if (filtre) return [];
@@ -83,13 +75,16 @@
   const ecartDepenses = $derived(moy ? variation(f.depenses, moy.depenses) : undefined);
   // Courbe des dépenses par mois : les mois de la période, ou les 6 derniers pour un seul mois
   const moisCourbe = $derived(b.mois.length > 1 ? moisPasses(b.mois) : derniersMois(b.mois[0], 6));
-  const courbe = $derived(
-    moisCourbe.map((m) => ({
-      libelle: new Date(m.a, m.m, 1).toLocaleDateString(locale(), moisCourbe.length > 12 ? { month: "short", year: "2-digit" } : { month: "short" }).replace(".", ""),
-      valeur: Math.max(0, flux(ctx, filtre, [cleMois(m)]).depenses),
-    })),
+  const barresMois = $derived(
+    moisCourbe.map((m) => {
+      const fm = flux(ctx, filtre, [cleMois(m)]);
+      return {
+        libelle: new Date(m.a, m.m, 1).toLocaleDateString(locale(), moisCourbe.length > 12 ? { month: "short", year: "2-digit" } : { month: "short" }).replace(".", ""),
+        revenus: Math.max(0, fm.revenus),
+        depenses: Math.max(0, fm.depenses),
+      };
+    }),
   );
-  const moyenneCourbe = $derived(courbe.length ? Math.round(courbe.reduce((a, x) => a + x.valeur, 0) / courbe.length) : 0);
 
   // Répartition des dépenses du mois : 5 plus grosses catégories, le reste regroupé
   const categories = $derived(new Map(donnees.categories.map((c) => [c.id, c])));
@@ -215,10 +210,9 @@
       </div>
 
       <div class="cartes-comptes" data-visite="comptes">
-        {#each principaux as c, k (c.id)}
-          {@const teinte = teinteCompte(c, k)}
-          <button class="carte-compte" class:choisie={filtre === c.id} style:background={teinte.fond} onclick={() => (app.filtreCompte = filtre === c.id ? "" : c.id)}>
-            <small><i style:background={teinte.point}></i>{c.banque || t("Mon compte")}</small>
+        {#each principaux as c (c.id)}
+          <button class="carte-compte" class:choisie={filtre === c.id} style:background={couleurCompte(c)} onclick={() => (app.filtreCompte = filtre === c.id ? "" : c.id)}>
+            <small><i></i>{c.banque || t("Mon compte")}</small>
             <span><small>{c.nom}</small><strong class="montant" style:font-size={tailleCarte(argent(parCompte.get(c.id) ?? 0, c.devise))}>{argent(parCompte.get(c.id) ?? 0, c.devise)}</strong></span>
           </button>
         {/each}
@@ -231,27 +225,24 @@
           <h2>{b.libelle.charAt(0).toUpperCase() + b.libelle.slice(1)}</h2>
           <button class="lien" onclick={() => (app.page = "operations")}>{t("Détails")}</button>
         </div>
-        <div class="titre">
+        <div class="trois">
           <div>
-            <p class="sous">{t("Dépensé")}<Aide texte={t("Sorties d'argent de la période, classées par catégorie de dépense. Un remboursement rangé dans la même catégorie les diminue. Les virements entre vos comptes et l'argent mis de côté ne sont pas des dépenses. « D'habitude » : moyenne des 3 périodes précédentes (l'année précédente pour une année). La courbe montre chaque mois, avec leur moyenne en pointillés.")} /></p>
+            <p class="sous"><i class="carre" style:background="var(--serie-revenus)"></i>{t("Revenus")}</p>
+            <p class="montant chiffre">{argent(f.revenus, devise, true)}</p>
+            {#if moy?.revenus}<p class="sous">{t("d'habitude")} <span class="montant">{argent(moy.revenus, devise)}</span></p>{/if}
+          </div>
+          <div>
+            <p class="sous"><i class="carre" style:background="var(--serie-depenses)"></i>{t("Dépenses")}<Aide texte={t("Sorties d'argent de la période, classées par catégorie de dépense. Un remboursement rangé dans la même catégorie les diminue. Les virements entre vos comptes et l'argent mis de côté ne sont pas des dépenses. « D'habitude » : moyenne des 3 périodes précédentes (l'année précédente pour une année).")} /></p>
             <p class="montant chiffre">{argent(f.depenses, devise)}</p>
+            {#if ecartDepenses !== undefined}<p class="sous">{ecartDepenses > 0 ? "+" : "−"}{Math.abs(ecartDepenses)} {t("% vs d'habitude")}</p>{/if}
           </div>
-          {#if ecartDepenses !== undefined}
-            <span class="tendance" class:hausse={ecartDepenses > 0}>{ecartDepenses > 0 ? "+" : "−"}{Math.abs(ecartDepenses)} {t("% vs d'habitude")}</span>
-          {/if}
-        </div>
-        {#if moy?.depenses}
-          <div class="piste" aria-hidden="true">
-            <b style:width="{Math.min(100, (f.depenses / Math.max(f.depenses, moy.depenses * 1.25)) * 100)}%"></b>
-            <span class="repere" style:left="{(moy.depenses / Math.max(f.depenses, moy.depenses * 1.25)) * 100}%"></span>
+          <div>
+            <p class="sous">{t("Reste")}<Aide texte={t("Revenus moins dépenses de la période. En rouge : vous avez dépensé plus que ce qui est rentré.")} /></p>
+            <p class="montant chiffre" class:positif={bilan >= 0} class:negatif={bilan < 0}>{argent(bilan, devise, true)}</p>
+            {#if f.misDeCote - f.pioche}<p class="sous">{t("Épargne")} <span class="montant">{argent(f.misDeCote - f.pioche, devise, true)}</span></p>{/if}
           </div>
-        {/if}
-        <div class="legende">
-          <span>{t("Revenus")} <strong class="montant">{argent(f.revenus, devise, true)}</strong></span>
-          <span>{t("Épargne")} <strong class="montant">{argent(f.misDeCote - f.pioche, devise, true)}</strong></span>
-          {#if moy?.depenses}<span>{t("d'habitude")} <strong class="montant">{argent(moy.depenses, devise)}</strong></span>{/if}
         </div>
-        <Courbe points={courbe} {devise} couleur="var(--serie-depenses)" hauteur={150} reference={moyenneCourbe ? { valeur: moyenneCourbe, libelle: t("moyenne de ces mois") } : undefined} />
+        <BarresMois donnees={barresMois} {devise} hauteur={150} reste />
       </section>
     </div>
 
@@ -495,6 +486,7 @@
     height: 8px;
     border-radius: 50%;
     flex: none;
+    background: rgb(255 255 255 / 0.85);
   }
   .carte-compte > span {
     display: flex;
@@ -558,38 +550,6 @@
       align-items: start;
     }
   }
-  .piste {
-    position: relative;
-    height: 10px;
-    border-radius: 5px;
-    background: var(--surface-2);
-  }
-  .piste b {
-    position: absolute;
-    inset: 0 auto 0 0;
-    border-radius: 5px;
-    background: var(--accent);
-  }
-  .piste .repere {
-    position: absolute;
-    top: -4px;
-    width: 2px;
-    height: 18px;
-    border-radius: 1px;
-    background: var(--texte);
-  }
-  .legende {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 4px 12px;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--doux);
-  }
-  .legende strong {
-    color: var(--texte);
-  }
   .chiffre {
     font-size: 26px;
     font-weight: 800;
@@ -630,19 +590,6 @@
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-  }
-  .tendance {
-    font-size: 12px;
-    font-weight: 700;
-    background: var(--ok-fond);
-    color: var(--ok);
-    border-radius: 999px;
-    padding: 3px 10px;
-    flex: none;
-  }
-  .tendance.hausse {
-    background: var(--danger-fond);
-    color: var(--danger);
   }
   .budget,
   .op,
@@ -751,5 +698,30 @@
     .grille {
       grid-template-columns: minmax(0, 1fr);
     }
+  }
+  .trois {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .trois p {
+    margin: 0;
+  }
+  .trois .chiffre {
+    font-size: clamp(17px, 4.6vw, 26px);
+  }
+  .chiffre.positif {
+    color: var(--ok);
+  }
+  .chiffre.negatif {
+    color: var(--danger);
+  }
+  .carre {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    margin-right: 6px;
+    vertical-align: -1px;
   }
 </style>

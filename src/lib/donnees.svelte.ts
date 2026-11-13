@@ -43,6 +43,8 @@ export interface Compte {
   forme?: "livret" | "especes" | "projet";
   /** Porte-monnaie : retraits et dépôts d'espèces suivis à partir de cette date (AAAA-MM-JJ) ; absent = depuis toujours */
   especesDepuis?: string;
+  /** Couleur choisie (carte, menu, graphiques) ; absente = couleur par défaut (voir couleurs.ts) */
+  couleur?: string;
   demo?: boolean;
 }
 

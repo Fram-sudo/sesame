@@ -3,7 +3,18 @@
   // Revenus et dépenses par mois : barres groupées, une seule échelle, survol pour le détail.
   import { argent } from "./format";
 
-  let { donnees: tous, devise = "EUR", hauteur = 180 }: { donnees: { libelle: string; revenus: number; depenses: number }[]; devise?: string; hauteur?: number } = $props();
+  let {
+    donnees: tous,
+    devise = "EUR",
+    hauteur = 180,
+    reste = false,
+  }: {
+    donnees: { libelle: string; revenus: number; depenses: number }[];
+    devise?: string;
+    hauteur?: number;
+    /** Afficher au-dessus de chaque mois ce qui reste (revenus − dépenses), en rouge si négatif */
+    reste?: boolean;
+  } = $props();
 
   // Largeur réelle du graphique (mesurée) : le texte garde sa taille sur grand écran
   let L = $state(600);
@@ -27,7 +38,7 @@
   const graduations = $derived(Array.from({ length: Math.round(max / pasEchelle) }, (_, k) => (k + 1) * pasEchelle));
   const pas = $derived(L / Math.max(1, donnees.length));
   const larg = $derived(Math.max(3, Math.min(26, pas * 0.32)));
-  const HAUT = 14;
+  const HAUT = $derived(reste ? 30 : 14);
   const y = (v: number) => HAUT + (H - BAS - HAUT) * (1 - v / max);
   let survol = $state(-1);
   // Mois sous le doigt, d'après sa position sur tout le graphique (au doigt, le pointeur reste accroché au premier élément touché)
@@ -59,6 +70,10 @@
       <path d={barre(cx - larg - 1, d.revenus)} fill="var(--serie-revenus)" pointer-events="none" />
       <path d={barre(cx + 1, d.depenses)} fill="var(--serie-depenses)" pointer-events="none" />
       <text x={cx} y={H - 6} class="axe" text-anchor="middle">{d.libelle}</text>
+      {#if reste && (d.revenus || d.depenses)}
+        {@const r = d.revenus - d.depenses}
+        <text x={cx} y={y(Math.max(d.revenus, d.depenses)) - 7} class="reste" class:negatif={r < 0} text-anchor="middle">{r < 0 ? "−" : "+"}{court(Math.abs(r))}</text>
+      {/if}
     {/each}
     <!-- Montants de l'échelle par-dessus les barres, détourés pour rester lisibles -->
     {#each graduations as v (v)}<text x="2" y={y(v) - 4} class="axe echelle">{court(v)}</text>{/each}
@@ -100,6 +115,15 @@
     border-radius: 3px;
     margin-right: 6px;
     vertical-align: -1px;
+  }
+  .reste {
+    font-size: 12px;
+    font-weight: 700;
+    fill: var(--ok);
+    font-variant-numeric: tabular-nums;
+  }
+  .reste.negatif {
+    fill: var(--danger);
   }
   .grille {
     stroke: var(--bord);

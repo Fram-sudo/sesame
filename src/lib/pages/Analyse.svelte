@@ -6,6 +6,8 @@
   import BarresMois from "../BarresMois.svelte";
   import { libelleLisible } from "../categories";
   import Courbe from "../Courbe.svelte";
+  import SoldesComptes from "../SoldesComptes.svelte";
+  import { couleurCompte } from "../couleurs";
   import { donnees } from "../donnees.svelte";
   import { app, deviseAffichee } from "../etat.svelte";
   import { argent, dateCourte } from "../format";
@@ -24,7 +26,13 @@
   const court = (m: { a: number; m: number }) => new Date(m.a, m.m, 1).toLocaleDateString(locale(), mois.length > 12 ? { month: "short", year: "2-digit" } : { month: "short" }).replace(".", "");
   const parMois = $derived(mois.map((m) => ({ m, f: flux(ctx, filtre, [cleMois(m)]) })));
 
-  const soldes = $derived(mois.map((m) => ({ libelle: `${court(m)} ${String(m.a).slice(2)}`, valeur: solde(ctx, filtre, finDeMois(m)) })));
+  // Solde de chaque compte (poches comprises) à la fin de chaque mois, dans la devise affichée
+  const comptesGraphe = $derived.by(() => {
+    const ids = new Set([...p.courants, ...p.epargne, ...p.reserves]);
+    return donnees.comptes.filter((c) => ids.has(c.id) && !c.parentId && !c.archive);
+  });
+  const seriesComptes = $derived(comptesGraphe.map((c) => ({ id: c.id, nom: c.nom, couleur: couleurCompte(c), valeurs: mois.map((m) => solde(ctx, c.id, finDeMois(m))) })));
+  const totalSoldes = $derived(mois.map((m) => solde(ctx, filtre, finDeMois(m))));
   const barres = $derived(parMois.map(({ m, f }) => ({ libelle: court(m), revenus: Math.max(0, f.revenus), depenses: Math.max(0, f.depenses) })));
 
   // Moyennes mensuelles sur la période (mois sans aucune opération exclus, pour ne pas fausser un historique récent)
@@ -83,8 +91,8 @@
   </div>
 
   <section class="carte pile">
-    <h2>{t("Évolution du solde")}<Aide texte={t("Solde à la fin de chaque mois, épargne et poches comprises.")} /></h2>
-    <Courbe points={soldes} {devise} />
+    <h2>{t("Mes comptes, mois par mois")}<Aide texte={t("Solde de chaque compte à la fin de chaque mois, épargne et poches comprises, dans sa couleur. Le total est en pointillés. Sous 0 €, la zone est rouge.")} /></h2>
+    <SoldesComptes libelles={mois.map((m) => `${court(m)} ${String(m.a).slice(2)}`)} series={seriesComptes} total={comptesGraphe.length > 1 ? totalSoldes : undefined} {devise} />
   </section>
 
   {#if prevision}

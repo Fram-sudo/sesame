@@ -1070,6 +1070,16 @@ export const EN: Record<string, string> = {
   "Ajoutez un compte « Espèces » (le « + » des cartes de comptes sur l'accueil) et choisissez à partir de quelle date le suivre. Ensuite, vos retraits au distributeur y sont versés tout seuls (et vos dépôts au guichet en sortent) ; vos dépenses en liquide se notent avec « Ajouter ». Les retraits d'avant cette date restent de simples dépenses.": "Add a “Cash” account (the “+” after the account cards on Home) and choose from which date to track it. Then your ATM withdrawals go into it automatically (and cash deposits at the bank come out of it); cash spending is noted with “Add”. Withdrawals before that date stay as plain spending.",
   "Comment actualiser l'appli ?": "How do I refresh the app?",
   "Dans Paramètres, touchez « Actualiser maintenant » : l'appli relit vos données, refait le classement et les virements, et cherche les changements de vos autres appareils et les mises à jour.": "In Settings, tap “Refresh now”: the app reloads your data, redoes sorting and transfers, and checks for changes from your other devices and for updates.",
+  "Couleur du compte": "Account colour",
+  "Mes comptes, mois par mois": "My accounts, month by month",
+  "Solde de chaque compte à la fin de chaque mois, épargne et poches comprises, dans sa couleur. Le total est en pointillés. Sous 0 €, la zone est rouge.": "Each account's balance at the end of each month, savings and pockets included, in its colour. The total is dotted. Below €0, the area is red.",
+  "Solde de chaque compte, mois par mois": "Each account's balance, month by month",
+  "sous 0": "below 0",
+  "Total": "Total",
+  "{0} sous 0 € en {1} : {2}": "{0} below €0 in {1}: {2}",
+  "Touchez un mois pour le détail, ou un compte pour le masquer.": "Tap a month for details, or an account to hide it.",
+  "Revenus moins dépenses de la période. En rouge : vous avez dépensé plus que ce qui est rentré.": "Income minus spending for the period. In red: you spent more than came in.",
+  "Sorties d'argent de la période, classées par catégorie de dépense. Un remboursement rangé dans la même catégorie les diminue. Les virements entre vos comptes et l'argent mis de côté ne sont pas des dépenses. « D'habitude » : moyenne des 3 périodes précédentes (l'année précédente pour une année).": "Money going out during the period, sorted by spending category. A refund in the same category reduces it. Transfers between your accounts and money set aside aren't spending. “Usually”: average of the 3 previous periods (the previous year for a year).",
 };
 
 /** Textes volontairement identiques en anglais (codes, données de démonstration) */

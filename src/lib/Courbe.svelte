@@ -7,7 +7,7 @@
   let {
     points,
     devise = "EUR",
-    couleur = "var(--serie-revenus)",
+    couleur = "var(--accent)",
     reference,
     hauteur = 170,
     remplir = true,

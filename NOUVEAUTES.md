@@ -10,8 +10,12 @@ Si ce texte n'a pas changé depuis la version précédente, la version dit simpl
 
 ## FR
 
-- Réimport de relevés déjà importés : pour un même jour et un même montant, Sésame compte les opérations au lieu de comparer seulement les libellés. Plus de fausses « nouvelles » opérations, même quand des libellés ont été complétés entre-temps ou lus autrement.
+- Accueil : revenus (en vert) et dépenses (en orange) côte à côte, avec ce qui reste du mois, en rouge s'il est négatif. Le graphique des 6 derniers mois compare revenus et dépenses et affiche le reste de chaque mois.
+- Chaque compte a sa couleur, à choisir dans sa fiche ; la même partout (carte, menu, graphiques).
+- Analyse : le solde de chaque compte mois par mois, dans sa couleur, avec le total ; la zone sous 0 € est en rouge. Touchez un compte pour le masquer.
 
 ## EN
 
-- Re-importing statements already imported: for the same day and amount, Sesame counts transactions instead of only comparing labels. No more false “new” transactions, even when labels were completed in between or read differently.
+- Home: income (green) and spending (orange) side by side, with what's left for the month, in red when negative. The last 6 months chart compares income and spending and shows each month's leftover.
+- Each account has its own colour, chosen in its sheet; the same everywhere (card, menu, charts).
+- Insights: each account's balance month by month, in its colour, with the total; the area below €0 is red. Tap an account to hide it.
