@@ -25,7 +25,12 @@ export interface Regle {
 }
 
 /** Mots-clés d'une règle, normalisés. */
-export const motsDe = (r: Pick<Regle, "motif">) => r.motif.split(",").map(normaliser).filter(Boolean);
+const motsParMotif = new Map<string, string[]>();
+export const motsDe = (r: Pick<Regle, "motif">) => {
+  let m = motsParMotif.get(r.motif);
+  if (!m) motsParMotif.set(r.motif, (m = r.motif.split(",").map(normaliser).filter(Boolean)));
+  return m;
+};
 
 /** La règle s'applique-t-elle à ce libellé et ce montant ? */
 export function regleTouche(r: Regle, o: Pick<Op, "libelle" | "montant">, categories: Categorie[]): boolean {
@@ -142,7 +147,12 @@ export function motif(libelle: string): string {
     .join(" ");
 }
 
-const contient = (libelle: string, m: string) => ` ${normaliser(libelle)} `.includes(` ${m} `);
+// Le même libellé est testé contre toutes les règles d'affilée : on garde sa version normalisée
+let dernier = { libelle: "", norme: "  " };
+const contient = (libelle: string, m: string) => {
+  if (dernier.libelle !== libelle) dernier = { libelle, norme: ` ${normaliser(libelle)} ` };
+  return dernier.norme.includes(` ${m} `);
+};
 
 /** Vos règles d'abord, puis les plus précises (motif le plus long). */
 export const trierRegles = (r: Regle[]) => [...r].sort((a, b) => Number(b.appris) - Number(a.appris) || b.motif.length - a.motif.length);
@@ -182,13 +192,15 @@ export function moitieDejaLa<T extends Op>(ops: T[], de: string, vers: string, m
 export function detecterVirements<T extends Op>(ops: T[], deviseDe: (compteId: string) => string): [T, T][] {
   const jours = (a: string, b: string) => Math.abs(Date.parse(a) - Date.parse(b)) / 86_400_000;
   const libres = ops.filter((o) => !o.virementId && !o.pasVirement && o.montant !== 0);
-  const entrees = libres.filter((o) => o.montant > 0);
+  // Entrées rangées par montant : chaque sortie ne regarde que les entrées du même montant
+  const parMontant = new Map<number, T[]>();
+  for (const o of libres) if (o.montant > 0) parMontant.set(o.montant, [...(parMontant.get(o.montant) ?? []), o]);
   const pris = new Set<string>();
   const paires: [T, T][] = [];
   for (const s of libres.filter((o) => o.montant < 0).sort((a, b) => a.date.localeCompare(b.date))) {
     let meilleur: T | undefined;
-    for (const e of entrees) {
-      if (pris.has(e.id) || e.compteId === s.compteId || e.montant !== -s.montant || deviseDe(e.compteId) !== deviseDe(s.compteId)) continue;
+    for (const e of parMontant.get(-s.montant) ?? []) {
+      if (pris.has(e.id) || e.compteId === s.compteId || deviseDe(e.compteId) !== deviseDe(s.compteId)) continue;
       const d = jours(e.date, s.date);
       if (d <= 4 && (!meilleur || d < jours(meilleur.date, s.date))) meilleur = e;
     }
@@ -332,10 +344,31 @@ export function router<T extends Op & { detail?: string }>(nouvelles: T[], routa
 const RE_VERS_POCHE = [/\bto pocket (?:[a-z]{3} )?(.+?)(?: from [a-z]{3})?$/i, /\b(?:vers|sur) (?:la )?(?:poche|pocket) (?:[a-z]{3} )?(.+?)(?: depuis [a-z]{3})?$/i];
 const RE_RETRAIT_POCHE = /\bpocket withdrawal\b|\bretrait (?:de (?:la )?|depuis (?:une |la )?)?(?:poche|pocket)\b/i;
 
-/** Retrait d'espèces au distributeur ou au guichet (français et anglais) ; pas un retrait depuis une poche. */
+// Espèces : libellés des banques françaises, africaines, en ligne et étrangères (texte normalisé : minuscules, sans accents)
+const RE_RETRAIT_ESPECES = new RegExp(
+  "\\b(" +
+    [
+      "ret(?:rait)? (?:dab|gab|guichet|distributeur|automatique|d especes?|especes?|carte|cb|au (?:distributeur|guichet|dab|gab))",
+      "dab|gab|atm|rdab",
+      "cash withdrawal|withdrawal at|cash machine|cash at|atm withdrawal|cash point",
+      "bargeldauszahlung|bargeldabhebung|geldautomat",
+      "prelievo (?:bancomat|contanti|atm)|retirada (?:de efectivo|cajero|en cajero)|reintegro (?:cajero|efectivo)|levantamento",
+    ].join("|") +
+    ")\\b",
+);
+const RE_DEPOT_ESPECES =
+  /\b(v(?:e)?rst (?:esp|gab|dab)|vers(?:ement)? (?:d )?especes?|depot (?:d )?especes?|remise (?:d )?especes?|depot (?:dab|gab|guichet)|cash deposit|deposit at|bareinzahlung|versamento contanti|ingreso (?:en )?efectivo|deposito (?:em )?dinheiro)\b/;
+
+/** Retrait d'espèces au distributeur ou au guichet (toutes langues courantes) ; pas un retrait depuis une poche. */
 export function estRetraitEspeces(libelle: string): boolean {
   if (mouvementPoche(libelle) !== undefined) return false;
-  return /\b(retrait (dab|d especes|especes|guichet|distributeur|carte|cb)|dab|atm|cash withdrawal|cash machine|withdrawal at|cash at)\b/.test(normaliser(libelle));
+  const n = normaliser(libelle);
+  return RE_RETRAIT_ESPECES.test(n) && !RE_DEPOT_ESPECES.test(n);
+}
+
+/** Dépôt d'espèces sur le compte (« VERST ESP GAB », « versement espèces », « cash deposit »…). */
+export function estDepotEspeces(libelle: string): boolean {
+  return RE_DEPOT_ESPECES.test(normaliser(libelle));
 }
 
 /** Nom de la poche visée par un versement, "?" pour un retrait sans nom, undefined sinon. */

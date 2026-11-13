@@ -7,20 +7,43 @@ export const cleOp = (o: { date: string; montant: number; libelle: string }) => 
  * Sépare les nouvelles opérations des doublons déjà présents dans le compte.
  * Deux cafés identiques le même jour restent deux opérations : on compare le nombre d'occurrences.
  */
-export function separerDoublons<T extends { date: string; montant: number; libelle: string }>(lues: T[], existantes: { cle: string }[]) {
+export function separerDoublons<T extends { date: string; montant: number; libelle: string }, E extends { cle: string; date?: string; montant?: number; libelle?: string }>(
+  lues: T[],
+  existantes: E[],
+) {
   const deja = new Map<string, number>();
   for (const e of existantes) deja.set(e.cle, (deja.get(e.cle) ?? 0) + 1);
   const vues = new Map<string, number>();
   const nouvelles: (T & { cle: string })[] = [];
   const doublons: T[] = [];
+  /** Déjà là sous un libellé plus court (lu avant une amélioration de la lecture) : à compléter, pas à dupliquer */
+  const reparees: { lue: T & { cle: string }; existante: E }[] = [];
+  // Anciennes opérations réservées aux doublons exacts (autant que de lignes lues avec la même empreinte) : pas à compléter
+  const prises = new Set<E>();
+  const parCle = new Map<string, number>();
+  for (const o of lues) parCle.set(cleOp(o), (parCle.get(cleOp(o)) ?? 0) + 1);
+  for (const e of existantes) {
+    const n = parCle.get(e.cle) ?? 0;
+    if (n > 0) (prises.add(e), parCle.set(e.cle, n - 1));
+  }
   for (const o of lues) {
     const cle = cleOp(o);
     const n = vues.get(cle) ?? 0;
     vues.set(cle, n + 1);
-    if (n < (deja.get(cle) ?? 0)) doublons.push(o);
+    if (n < (deja.get(cle) ?? 0)) {
+      doublons.push(o);
+      continue;
+    }
+    const lib = normaliser(o.libelle);
+    // Texte complet lu maintenant (libellé et détail) : l'ancien libellé doit s'y retrouver
+    const complet = normaliser(`${o.libelle} ${(o as { detail?: string }).detail ?? ""}`);
+    // « (sans libellé) » : lu avant que la ligne collée aux dates soit récupérée (relevés PDF Société Générale)
+    const incomplet = (x: E) => x.libelle === "(sans libellé)" || (normaliser(x.libelle!) !== lib && complet.includes(normaliser(x.libelle!)));
+    const e = existantes.find((x) => !prises.has(x) && x.date === o.date && x.montant === o.montant && x.libelle && o.libelle !== "(sans libellé)" && incomplet(x));
+    if (e) (prises.add(e), doublons.push(o), reparees.push({ lue: { ...o, cle }, existante: e }));
     else nouvelles.push({ ...o, cle });
   }
-  return { nouvelles, doublons };
+  return { nouvelles, doublons, reparees };
 }
 
 /**

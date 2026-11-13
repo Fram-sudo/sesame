@@ -4,7 +4,7 @@ import { api } from "./api";
 import { changerLangue, langue, t, type Langue } from "./i18n.svelte";
 import { cleOp } from "./import/doublons";
 import { NOMS_CATEGORIES_EN } from "./i18n-en";
-import { attentesRemplacees, CATEGORIES_DEFAUT, COULEURS_AVANT_REFONTE, categoriser, detecterVirements, estRetraitEspeces, REGLES_DEFAUT, trierRegles, VIREMENT, type Categorie, type Regle, type Routage } from "./categories";
+import { attentesRemplacees, CATEGORIES_DEFAUT, COULEURS_AVANT_REFONTE, categoriser, detecterVirements, estDepotEspeces, estRetraitEspeces, REGLES_DEFAUT, trierRegles, VIREMENT, type Categorie, type Regle, type Routage } from "./categories";
 import type { Profil } from "./import/analyse";
 import type { Pret } from "./prets";
 
@@ -41,6 +41,8 @@ export interface Compte {
   /** Épargne : livret ou compte en banque, espèces (tirelire), ou projet (pour l'icône et les libellés).
    *  Compte courant « especes » : le portefeuille d'espèces */
   forme?: "livret" | "especes" | "projet";
+  /** Porte-monnaie : retraits et dépôts d'espèces suivis à partir de cette date (AAAA-MM-JJ) ; absent = depuis toujours */
+  especesDepuis?: string;
   demo?: boolean;
 }
 
@@ -62,6 +64,8 @@ export interface Operation {
   /** Identifiant commun aux deux moitiés d'un virement entre vos comptes */
   virementId?: string;
   pasVirement?: boolean;
+  /** Entrée du porte-monnaie créée par Sésame pour un retrait ou un dépôt d'espèces */
+  especesAuto?: boolean;
   /** Saisie à la main (et non importée) */
   manuelle?: boolean;
   note?: string;
@@ -228,28 +232,49 @@ export async function classerEtLier(): Promise<number> {
       maj.set(o.id, { ...base, virementId: v, ...(base.categorieManuelle ? {} : { categorieId: VIREMENT }) });
     }
   }
-  // Retrait au distributeur : l'argent passe du compte au porte-monnaie (un virement, pas une dépense) ;
-  // les achats en espèces, saisis dans le porte-monnaie, sont les vraies dépenses
-  // shortcut: si vous supprimez l'entrée du porte-monnaie, elle est recréée au prochain passage ; « Ce n'est pas un virement » l'arrête
+  // Espèces : un retrait au distributeur fait passer l'argent du compte au porte-monnaie (un virement, pas une dépense),
+  // un dépôt au guichet l'inverse ; les achats en espèces, saisis dans le porte-monnaie, sont les vraies dépenses.
+  // Seulement à partir de la date de suivi du porte-monnaie : avant, le retrait reste une dépense du compte.
+  const LIB_RETRAIT = [t("Retrait au distributeur"), "Retrait au distributeur", "ATM withdrawal"];
+  const LIB_DEPOT = [t("Dépôt d'espèces"), "Dépôt d'espèces", "Cash deposit"];
+  const compteDe = (id: string) => donnees.comptes.find((x) => x.id === id);
+  const retirees: Operation[] = [];
   for (const o of donnees.operations) {
+    const pm = compteDe(o.compteId);
+    if (!pm?.especesDepuis || pm.forme !== "especes" || o.date >= pm.especesDepuis || !o.virementId || o.manuelle) continue;
+    if (!o.especesAuto && !LIB_RETRAIT.includes(o.libelle) && !LIB_DEPOT.includes(o.libelle)) continue;
+    // Entrée automatique d'avant la date de suivi : retirée, et l'opération du compte redevient une dépense (ou un revenu)
+    retirees.push(o);
+    maj.delete(o.id);
+    for (const x of donnees.operations)
+      if (x.id !== o.id && x.virementId === o.virementId) {
+        const { virementId: _, ...reste } = maj.get(x.id) ?? x;
+        maj.set(x.id, x.categorieManuelle || x.categorieId !== VIREMENT ? reste : { ...reste, categorieId: categoriser(reste, regles, donnees.categories) });
+      }
+  }
+  for (const o of donnees.operations) {
+    if (retirees.includes(o)) continue;
     const base = maj.get(o.id) ?? o;
-    if (base.montant >= 0 || base.virementId || base.pasVirement || base.enAttente || !estRetraitEspeces(base.libelle)) continue;
-    const c = donnees.comptes.find((x) => x.id === base.compteId);
+    if (base.virementId || base.pasVirement || base.enAttente) continue;
+    const retrait = base.montant < 0 && estRetraitEspeces(base.libelle);
+    const depot = base.montant > 0 && estDepotEspeces(base.libelle);
+    if (!retrait && !depot) continue;
+    const c = compteDe(base.compteId);
     if (!c || c.forme === "especes" || c.type === "epargne" || c.parentId) continue;
     const pm = donnees.comptes.find((x) => x.type !== "epargne" && x.forme === "especes" && x.devise === c.devise && !!x.demo === !!c.demo && !x.archive);
-    if (!pm) continue;
+    if (!pm || (pm.especesDepuis && base.date < pm.especesDepuis)) continue;
     const v = nouvelId();
     const id = nouvelId();
-    const libelle = t("Retrait au distributeur");
+    const libelle = retrait ? LIB_RETRAIT[0] : LIB_DEPOT[0];
     maj.set(base.id, { ...base, virementId: v, ...(base.categorieManuelle ? {} : { categorieId: VIREMENT }) });
-    maj.set(id, { id, compteId: pm.id, date: base.date, montant: -base.montant, libelle, cle: cleOp({ date: base.date, montant: -base.montant, libelle }), virementId: v, categorieId: VIREMENT, ...(c.demo ? { demo: true } : {}) });
+    maj.set(id, { id, compteId: pm.id, date: base.date, montant: -base.montant, libelle, cle: cleOp({ date: base.date, montant: -base.montant, libelle }), virementId: v, categorieId: VIREMENT, especesAuto: true, ...(c.demo ? { demo: true } : {}) });
   }
   const remplacees = attentesRemplacees(donnees.operations);
   await ecrire([
     ...[...maj.values()].map((o) => ({ collection: "operations", id: o.id, valeur: o }) as Changement),
-    ...supprimer("operations", remplacees),
+    ...supprimer("operations", [...remplacees, ...retirees]),
   ]);
-  return maj.size + remplacees.length;
+  return maj.size + remplacees.length + retirees.length;
 }
 
 /** Change la langue et renomme les catégories fournies qui portent encore leur nom d'origine. */

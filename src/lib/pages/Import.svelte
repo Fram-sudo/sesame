@@ -106,9 +106,10 @@
       for (const c of cartes) {
         const r = c?.resultatFinal();
         if (!r) continue;
-        const g = parGroupe.get(r.cle) ?? { cle: r.cle, compte: r.compte, nb: 0, reconnues: 0, poches: 0, nouvellesPoches: [], ecart: 0 };
+        const g = parGroupe.get(r.cle) ?? { cle: r.cle, compte: r.compte, nb: 0, reparees: 0, reconnues: 0, poches: 0, nouvellesPoches: [], ecart: 0 };
         g.nb += r.nb;
         g.reconnues += r.reconnues;
+        g.reparees += r.reparees;
         g.poches += r.poches;
         g.nouvellesPoches.push(...r.nouvellesPoches.filter((p) => !g.nouvellesPoches.includes(p)));
         if (r.soldeBanque !== undefined && r.date && (!g.date || r.date >= g.date)) Object.assign(g, { soldeBanque: r.soldeBanque, date: r.date, ecart: r.ecart, compte: r.compte });
@@ -179,7 +180,7 @@
   const plusieurs = $derived(fichiers.length > 1);
 
   // ---------- Plusieurs relevés : tout se règle et se vérifie une seule fois ----------
-  type BilanCompte = { cle: string; compte?: Compte; nb: number; reconnues: number; poches: number; nouvellesPoches: string[]; soldeBanque?: number; date?: string; ecart: number };
+  type BilanCompte = { cle: string; compte?: Compte; nb: number; reparees: number; reconnues: number; poches: number; nouvellesPoches: string[]; soldeBanque?: number; date?: string; ecart: number };
   let bilanLot = $state<BilanCompte[]>([]);
   // Saisies à la main que l'utilisateur préfère garder (la ligne de la banque correspondante n'est alors pas importée)
   const garder = new SvelteSet<string>();
@@ -360,6 +361,7 @@
       {#each bilanLot as b (b.cle)}
         <div class="groupe pile">
           <p class="ok" data-visite="importe">✓ {t("{0} opération(s) dans « {1} »", b.nb, b.compte?.nom ?? "")}{b.poches ? t(", {0} dans les poches", b.poches) : ""}.</p>
+          {#if b.reparees}<p class="sous">{t("{0} opération(s) déjà présente(s) : libellé complété (catégorie et note gardées).", b.reparees)}</p>{/if}
           {#if b.reconnues}<p class="sous">{t("{0} opération(s) déjà notée(s) retrouvée(s) dans le relevé : remplacée(s) par la ligne de la banque, catégorie gardée.", b.reconnues)}</p>{/if}
           {#each b.nouvellesPoches as n (n)}<p class="info">{t("Nouvelle poche détectée : «")} {n} {t("». Renommez-la ou fixez-lui un objectif depuis sa fiche.")}</p>{/each}
           {#if b.compte && b.soldeBanque !== undefined}<ControleSolde compte={b.compte} soldeBanque={b.soldeBanque} date={b.date} />{/if}

@@ -105,6 +105,13 @@ export async function apresReception(r: Recus) {
 }
 
 let synchroEnCours = false;
+/** « Actualiser » : relit les données, refait classement et virements, puis cherche changements reçus, taux, mises à jour et alertes. */
+export async function actualiser() {
+  await charger(false);
+  await classerEtLier();
+  await Promise.allSettled([synchroAuto(), mettreAJourTaux(true), import("./maj.svelte").then((m) => m.verifierMaj()), import("./notifications").then((m) => m.programmerAlertes())]);
+}
+
 /** Réception automatique : à l'ouverture, au retour sur l'appli et toutes les 30 secondes */
 export async function synchroAuto() {
   if (app.ecran !== "app" || synchroEnCours) return;

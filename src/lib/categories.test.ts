@@ -166,11 +166,18 @@ describe("libellés lisibles", () => {
   });
 });
 
-import { estRetraitEspeces } from "./categories";
+import { estDepotEspeces, estRetraitEspeces } from "./categories";
 describe("retraits d'espèces", () => {
   it("reconnus en français et en anglais, pas les retraits de poche", () => {
     for (const l of ["RETRAIT DAB 12/11 PARIS", "Retrait d'espèces", "CARTE X1234 RETRAIT DAB", "Cash withdrawal at Barclays", "ATM London"]) expect(estRetraitEspeces(l), l).toBe(true);
     for (const l of ["Retrait depuis une Pocket", "Pocket Withdrawal", "CARTE CARREFOUR", "Remboursement"]) expect(estRetraitEspeces(l), l).toBe(false);
+    // Autres banques et langues
+    for (const l of ["RETRAIT GAB ABIDJAN", "RET DAB 03/01 LYON", "RETRAIT AU DISTRIBUTEUR", "RETRAIT ESPECES GUICHET AGENCE", "ATM withdrawal", "Bargeldauszahlung Geldautomat", "Prelievo bancomat", "Retirada de efectivo cajero"]) expect(estRetraitEspeces(l), l).toBe(true);
+    for (const l of ["VERST ESP GAB 30/10/26", "VRST GAB 12/03/24 10H05 123456", "Versement d'espèces", "DEPOT ESPECES GUICHET", "Cash deposit"]) {
+      expect(estDepotEspeces(l), l).toBe(true);
+      expect(estRetraitEspeces(l), l).toBe(false);
+    }
+    for (const l of ["CARTE CARREFOUR", "VIR RECU EMPLOYEUR", "Dabbawala restaurant"]) expect(estDepotEspeces(l) || estRetraitEspeces(l), l).toBe(false);
   });
 });
 

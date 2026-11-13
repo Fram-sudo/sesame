@@ -30,6 +30,9 @@
   let type = $state<"courant" | "epargne" | "especes">(compte?.type !== "epargne" && compte?.forme === "especes" ? "especes" : (compte?.type ?? "courant"));
   /* svelte-ignore state_referenced_locally */
   let reserve = $state(!!compte?.reserve);
+  // Porte-monnaie : suivi des espèces à partir d'une date (nouveau porte-monnaie : aujourd'hui, pour ne pas rattraper des années de retraits)
+  /* svelte-ignore state_referenced_locally */
+  let especesDepuis = $state(compte ? (compte.especesDepuis ?? "") : new Date().toISOString().slice(0, 10));
   /* svelte-ignore state_referenced_locally */
   let objectif = $state(compte?.objectif ? String(compte.objectif / 100).replace(".", ",") : "");
   let confirmer = $state(false);
@@ -55,12 +58,15 @@
       soldeInitial: compte?.soldeInitial ?? 0,
       type: type === "especes" ? "courant" : type,
       ...(type === "especes" ? { forme: "especes" as const } : compte?.type !== "epargne" && compte?.forme === "especes" ? { forme: undefined } : {}),
+      especesDepuis: type === "especes" && especesDepuis ? especesDepuis : undefined,
       reserve: (estPoche || type === "epargne") && reserve ? true : undefined,
       objectif: lireMontant(objectif) ?? undefined,
       // Une poche garde le nom qu'elle a dans les relevés : la renommer ici ne casse pas le lien avec la banque
       ...(estPoche ? { nomBanque: compte!.nomBanque ?? compte!.nom } : {}),
     };
     await ecrire([{ collection: "comptes", id, valeur }]);
+    // Date de suivi des espèces changée : retraits et dépôts reliés (ou déliés) en conséquence
+    if (type === "especes" && valeur.especesDepuis !== compte?.especesDepuis) await classerEtLier();
     annoncer(compte ? t("Enregistré.") : t("Compte créé."));
     cree?.(id);
     fermer();
@@ -126,6 +132,8 @@
       </label>
       {#if type === "especes"}
         <p class="sous aide">{t("Votre argent liquide, compté dans votre argent disponible. Les retraits au distributeur l'alimentent tout seuls ; saisissez vos achats en espèces avec le bouton +.")}</p>
+        <label>{t("Suivre mes espèces à partir du")}<input type="date" bind:value={especesDepuis} /></label>
+        <p class="sous aide">{t("Les retraits et dépôts d'espèces faits avant cette date restent de simples dépenses (ou revenus) sur votre compte bancaire. Laissez vide pour tout reprendre depuis le début.")}</p>
       {/if}
       {#if type === "epargne"}
         {@render role()}

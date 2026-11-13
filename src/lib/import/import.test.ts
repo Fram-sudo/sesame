@@ -108,3 +108,29 @@ describe("doublons", () => {
     expect(partiel.nouvelles.map((o) => o.libelle)).toEqual(["CARTE X1234 CAFE EXEMPLE"]);
   });
 });
+
+describe("libellé collé aux dates (PDF Société Générale)", () => {
+  const profil: Profil = { id: "p", nom: "", entete: ["date", "libelle", "detail", "debit", "credit"], colonnes: { date: "date", libelle: "libelle", debit: "debit", credit: "credit" }, formatDate: "JJ/MM/AAAA" };
+  const lignes = [
+    ["date", "libelle", "detail", "debit", "credit"],
+    ["10/11/2026 10/11/2026 CARTE X1234 RETRAIT DAB 10/11 15H59", "CASH SERVICES EXEMPLE", "", "50,00", ""],
+    ["05/11/2026", "VIR RECU EMPLOYEUR", "", "", "100,00"],
+    ["12 déc. 2025", "BOULANGERIE", "", "3,00", ""],
+  ];
+  it("la 1re ligne collée aux dates rejoint le libellé ; une date seule ou en lettres ne change rien", () => {
+    const r = lire(lignes, 0, profil, "EUR");
+    expect(r.ops.map((o) => o.libelle)).toEqual(["CARTE X1234 RETRAIT DAB 10/11 15H59 CASH SERVICES EXEMPLE", "VIR RECU EMPLOYEUR", "BOULANGERIE"]);
+  });
+  it("au réimport, une opération déjà là sous l'ancien libellé (plus court) est complétée, pas dupliquée", () => {
+    const r = lire(lignes, 0, profil, "EUR");
+    const ancienne = { id: "a", date: "2026-11-10", montant: -5000, libelle: "CASH SERVICES EXEMPLE", cle: "2026-11-10|-5000|cash services exemple" };
+    const { nouvelles, reparees } = separerDoublons(r.ops, [ancienne]);
+    expect(reparees.map((x) => x.existante.id)).toEqual(["a"]);
+    expect(nouvelles.map((o) => o.libelle)).toEqual(["VIR RECU EMPLOYEUR", "BOULANGERIE"]);
+  });
+  it("une opération lue autrefois « (sans libellé) » est complétée elle aussi", () => {
+    const r = lire(lignes, 0, profil, "EUR");
+    const ancienne = { id: "b", date: "2026-11-10", montant: -5000, libelle: "(sans libellé)", cle: "2026-11-10|-5000|sans libelle" };
+    expect(separerDoublons(r.ops, [ancienne]).reparees.map((x) => x.existante.id)).toEqual(["b"]);
+  });
+});

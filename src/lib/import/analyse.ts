@@ -111,6 +111,8 @@ export function enteteDe(lignes: string[][], idx: number): string[] {
 }
 
 const RE_DATE = /(\d{1,4})[/.\- ](\d{1,2})[/.\- ](\d{2,4})/;
+/** Une ou plusieurs dates JJ/MM(/AAAA) en tête de case */
+const RE_DATES_EN_TETE = /^(?:\s*\d{1,2}[/.-]\d{1,2}(?:[/.-]\d{2,4})?(?=\s|$))+\s*/;
 
 export function detecterFormatDate(valeurs: string[]): FormatDate {
   const m = valeurs.map((v) => RE_DATE.exec(v)).filter((x) => x !== null);
@@ -229,12 +231,17 @@ export function lire(lignes: string[][], idxEntete: number, profil: Profil, devi
     if (frais) montant -= Math.abs(frais);
     const detail = val(l, c.detail);
     const solde = lireMontant(val(l, c.solde));
+    // PDF dont la 1re ligne du libellé est collée aux dates (« 08/11/2021 08/11/2021 CARTE X1234 RETRAIT DAB… »,
+    // Société Générale) : elle rejoint le libellé au lieu d'être perdue
+    const caseDate = val(l, c.date);
+    const colle = RE_DATES_EN_TETE.test(caseDate) ? caseDate.replace(RE_DATES_EN_TETE, "").trim() : "";
+    const lib = [/[a-z]{2}/i.test(colle) && !dateEnLettres(colle) ? colle : "", val(l, c.libelle)].filter(Boolean).join(" ");
     res.ops.push({
       ligne,
       date,
       montant,
-      libelle: val(l, c.libelle) || detail || "(sans libellé)",
-      ...(detail && val(l, c.libelle) ? { detail } : {}),
+      libelle: lib || detail || "(sans libellé)",
+      ...(detail && lib ? { detail } : {}),
       ...(val(l, c.categorie) ? { categorieBanque: val(l, c.categorie) } : {}),
       ...(solde !== null ? { solde } : {}),
       ...(enAttente ? { enAttente } : {}),

@@ -96,7 +96,7 @@ if (import.meta.env.MODE === "demo" || new URLSearchParams(location.search).has(
 if (new URLSearchParams(location.search).has("gros")) {
   parametres = { guideVu: true };
   for (const c of ["ga", "gb"]) memoire.set(c, { collection: "comptes", valeur: { id: c, nom: c === "ga" ? "Courant" : "Revolut", banque: "", devise: "EUR", soldeInitial: 100000 } });
-  for (let i = 0; i < 4000; i++) {
+  for (let i = 0; i < (+new URLSearchParams(location.search).get("gros")! || 4000); i++) {
     const date = new Date(Date.UTC(2019, 6, 1) + i * 0.65 * 86_400_000).toISOString().slice(0, 10);
     const montant = (i % 6 ? -1 : 1) * (500 + ((i * 37) % 9000));
     const libelle = ["CARTE X1167 BOULANGERIE", "PRELEVEMENT EUROPEEN ENERGIE", "VIR INSTANTANE EMIS", "CARTE X1167 SUPERMARCHE", "VIR RECU EMPLOYEUR"][i % 5];

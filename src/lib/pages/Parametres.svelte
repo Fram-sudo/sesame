@@ -4,7 +4,7 @@
   import { api, estAndroid } from "../api";
   import ChampMotDePasse from "../ChampMotDePasse.svelte";
   import CleRecuperation from "../CleRecuperation.svelte";
-  import { annoncer, app, exporterSauvegarde, mettreAJourTaux, sauverParametres } from "../etat.svelte";
+  import { actualiser, annoncer, app, exporterSauvegarde, mettreAJourTaux, sauverParametres } from "../etat.svelte";
   import { maj, verifierMaj } from "../maj.svelte";
   import { nomDevise, symboleDevise } from "../devises";
   import { tauxConnus } from "../taux";
@@ -135,6 +135,12 @@
 </script>
 
 <div class="pile">
+  <section class="carte pile">
+    <h2>{t("Actualiser")}</h2>
+    <p class="sous">{t("Relit vos données, refait le classement et les virements, puis cherche les changements reçus de vos autres appareils et les mises à jour.")}</p>
+    <button onclick={() => agir(async () => (await actualiser(), annoncer(t("Actualisé."))))} disabled={enCours}><Icone nom="synchro" taille={18} />{enCours ? t("Actualisation…") : t("Actualiser maintenant")}</button>
+  </section>
+
   <section class="carte pile" data-visite="affichage">
     <h2>{t("Affichage")}</h2>
     <!-- Boutons plutôt que listes déroulantes : pas de fenêtre système carrée sur Android -->

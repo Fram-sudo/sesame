@@ -1058,6 +1058,18 @@ export const EN: Record<string, string> = {
   "Récapitulatif annuel des frais : ces frais figurent déjà dans vos relevés de compte, il n'y a rien à importer.": "Annual fee summary: these fees are already in your account statements, there's nothing to import.",
   "Rien de nouveau : vérifions le solde": "Nothing new: let's check the balance",
   "Ces relevés sont déjà dans l'appli. Voici le solde qu'ils indiquent, comparé à celui de l'appli.": "These statements are already in the app. Here is the balance they show, compared with the app's.",
+  "{0} opération(s) déjà présente(s) : libellé complété (catégorie et note gardées).": "{0} transaction(s) already there: label completed (category and note kept).",
+  "Suivre mes espèces à partir du": "Track my cash from",
+  "Les retraits et dépôts d'espèces faits avant cette date restent de simples dépenses (ou revenus) sur votre compte bancaire. Laissez vide pour tout reprendre depuis le début.": "Cash withdrawals and deposits made before this date stay as plain spending (or income) on your bank account. Leave empty to include everything from the start.",
+  "Dépôt d'espèces": "Cash deposit",
+  "Actualiser": "Refresh",
+  "Relit vos données, refait le classement et les virements, puis cherche les changements reçus de vos autres appareils et les mises à jour.": "Reloads your data, redoes sorting and transfers, then checks for changes from your other devices and for updates.",
+  "Actualisé.": "Refreshed.",
+  "Actualisation…": "Refreshing…",
+  "Actualiser maintenant": "Refresh now",
+  "Ajoutez un compte « Espèces » (le « + » des cartes de comptes sur l'accueil) et choisissez à partir de quelle date le suivre. Ensuite, vos retraits au distributeur y sont versés tout seuls (et vos dépôts au guichet en sortent) ; vos dépenses en liquide se notent avec « Ajouter ». Les retraits d'avant cette date restent de simples dépenses.": "Add a “Cash” account (the “+” after the account cards on Home) and choose from which date to track it. Then your ATM withdrawals go into it automatically (and cash deposits at the bank come out of it); cash spending is noted with “Add”. Withdrawals before that date stay as plain spending.",
+  "Comment actualiser l'appli ?": "How do I refresh the app?",
+  "Dans Paramètres, touchez « Actualiser maintenant » : l'appli relit vos données, refait le classement et les virements, et cherche les changements de vos autres appareils et les mises à jour.": "In Settings, tap “Refresh now”: the app reloads your data, redoes sorting and transfers, and checks for changes from your other devices and for updates.",
 };
 
 /** Textes volontairement identiques en anglais (codes, données de démonstration) */

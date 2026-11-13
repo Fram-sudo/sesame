@@ -40,7 +40,7 @@
   let assistant = $state(manques(prep.profil).length > 0);
   let profilModifie = false;
   let etat = $state<"pret" | "encours" | "fait">("pret");
-  let resultat = $state<{ nb: number; reconnues: number; poches: number; nouvellesPoches: string[]; soldeBanque?: number; date?: string; compte?: Compte } | null>(null);
+  let resultat = $state<{ nb: number; reparees: number; reconnues: number; poches: number; nouvellesPoches: string[]; soldeBanque?: number; date?: string; compte?: Compte } | null>(null);
   let erreur = $state("");
 
   const compte = $derived(donnees.comptes.find((c) => c.id === compteId));
@@ -109,7 +109,7 @@
   // Saisie gardée par l'utilisateur : la ligne de la banque qui lui correspond n'est pas importée (pas de doublon)
   const gardee = (o: unknown) => !!garder?.has(reconnues.get(o as never)?.id ?? "");
   const nbAttente = $derived(tri ? tri.nouvelles.filter((o) => o.enAttente || prep.enAttente.includes(principal[o.ligne - 1]?.[iSection] ?? "")).length : 0);
-  const pret = $derived(ok && !aValider && !!tri && (tri.nouvelles.length > 0 || nbPoches > 0));
+  const pret = $derived(ok && !aValider && !!tri && (tri.nouvelles.length > 0 || nbPoches > 0 || tri.reparees.length > 0));
 
   /** Ce que la carte a importé, pour l'historique commun du lot */
   export interface Bilan {
@@ -174,6 +174,9 @@
       const dates = ops.map((o) => o.date).sort();
       const bilan: Bilan = { compteId: cid, fichier: prep.nom, banque: prep.banque ?? profil.nom, nb: ops.length, doublons: tri.doublons.length + (poches?.doublons ?? 0), dates, remplacees, depart: prep.soldeDebut };
       ch.push(...ops.map((o) => ({ collection: "operations", id: o.id, valeur: o }) as Changement));
+      // Opérations déjà là avec un libellé incomplet (lecture plus ancienne) : libellé complété, catégorie et note gardées
+      for (const { lue, existante } of tri.reparees)
+        ch.push({ collection: "operations", id: existante.id, valeur: { ...(existante as Operation), libelle: lue.libelle, cle: lue.cle, ...(lue.detail ? { detail: lue.detail } : {}) } });
       if (prep.profilNouveau || profilModifie) ch.push({ collection: "profils", id: profil.id, valeur: $state.snapshot(profil) });
       await ecrire(ch);
       await classerEtLier();
@@ -186,7 +189,7 @@
       const ceJour = avecSolde.filter((o) => o.date === max);
       const ref = decroissant ? ceJour[0] : ceJour[ceJour.length - 1];
       compteId = cid;
-      resultat = { nb: nbPrincipal, reconnues: nbReconnues, poches: nbDansPoches, nouvellesPoches, soldeBanque: ref?.solde ?? depart?.montant, date: ref ? ref.date : depart?.date, compte: donnees.comptes.find((c) => c.id === cid) };
+      resultat = { nb: nbPrincipal, reparees: tri.reparees.length, reconnues: nbReconnues, poches: nbDansPoches, nouvellesPoches, soldeBanque: ref?.solde ?? depart?.montant, date: ref ? ref.date : depart?.date, compte: donnees.comptes.find((c) => c.id === cid) };
       etat = "fait";
       return bilan;
     } catch (e) {
@@ -298,6 +301,7 @@
 
   {#if etat === "fait" && resultat}
     <p class="ok" data-visite="importe">✓ {resultat.nb} {t("opération")}{resultat.nb > 1 ? "s" : ""} {t("dans «")} {resultat.compte?.nom} »{resultat.poches ? t(", {0} dans les poches", resultat.poches) : ""}.</p>
+    {#if resultat.reparees}<p class="sous">{t("{0} opération(s) déjà présente(s) : libellé complété (catégorie et note gardées).", resultat.reparees)}</p>{/if}
     {#if resultat.reconnues}<p class="sous">{t("{0} opération(s) déjà notée(s) retrouvée(s) dans le relevé : remplacée(s) par la ligne de la banque, catégorie gardée.", resultat.reconnues)}</p>{/if}
     {#each resultat.nouvellesPoches as n (n)}<p class="info">{t("Nouvelle poche détectée : «")} {n} {t("». Renommez-la ou fixez-lui un objectif depuis sa fiche.")}</p>{/each}
     {#if resultat.compte && resultat.soldeBanque !== undefined}

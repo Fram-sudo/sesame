@@ -4,7 +4,6 @@
   // poches comprises, pour réimporter proprement. Les comptes peuvent être gardés ou supprimés.
   import { classerEtLier, comptesImport, donnees, ecrire, supprimer, supprimerCompte, type Changement } from "./donnees.svelte";
   import { annoncer } from "./etat.svelte";
-  import { estRetraitEspeces } from "./categories";
   import Feuille from "./Feuille.svelte";
 
   let { fermer }: { fermer: () => void } = $props();
@@ -27,15 +26,13 @@
         for (const c of donnees.comptes.filter((x) => choisis.includes(x.id))) await supprimerCompte(c);
       } else {
         const effacees = donnees.operations.filter((o) => touches.has(o.compteId));
-        // Retrait au distributeur resté sur un autre compte : sans cela, son entrée dans le porte-monnaie remis à zéro serait recréée
-        const liens = new Set(effacees.map((o) => o.virementId).filter(Boolean));
-        const retraits = donnees.operations.filter((o) => !touches.has(o.compteId) && o.virementId && liens.has(o.virementId) && o.montant < 0 && estRetraitEspeces(o.libelle));
+        const auj = new Date().toISOString().slice(0, 10);
         const ch: Changement[] = [
           ...supprimer("operations", effacees),
-          ...retraits.map((o) => ({ collection: "operations", id: o.id, valeur: { ...o, pasVirement: true } }) as Changement),
           ...supprimer("imports", donnees.imports.filter((i) => comptesImport(i).every((id) => touches.has(id)))),
           // Solde de départ remis à 0 : le prochain import repart de zéro
-          ...donnees.comptes.filter((c) => touches.has(c.id)).map((c) => ({ collection: "comptes", id: c.id, valeur: { ...c, soldeInitial: 0 } }) as Changement),
+          // Porte-monnaie : suivi des espèces repris à partir d'aujourd'hui (les anciens retraits ne reviennent pas)
+          ...donnees.comptes.filter((c) => touches.has(c.id)).map((c) => ({ collection: "comptes", id: c.id, valeur: { ...c, soldeInitial: 0, ...(c.forme === "especes" ? { especesDepuis: auj } : {}) } }) as Changement),
         ];
         await ecrire(ch);
         await classerEtLier();

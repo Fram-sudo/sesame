@@ -63,7 +63,7 @@
     },
     {
       q: t("Comment suivre mon argent liquide ?"),
-      r: t("Ajoutez un compte « Espèces » (le « + » des cartes de comptes sur l'accueil). Vos retraits au distributeur y sont versés tout seuls, et vos dépenses en liquide se notent avec « Ajouter »."),
+      r: t("Ajoutez un compte « Espèces » (le « + » des cartes de comptes sur l'accueil) et choisissez à partir de quelle date le suivre. Ensuite, vos retraits au distributeur y sont versés tout seuls (et vos dépôts au guichet en sortent) ; vos dépenses en liquide se notent avec « Ajouter ». Les retraits d'avant cette date restent de simples dépenses."),
       aller: [t("Aller à l'accueil"), "accueil"],
     },
     {
@@ -91,6 +91,11 @@
       r: estAndroid
         ? t("Dans Paramètres → Alertes, choisissez ce qui vous intéresse : le téléphone vous prévient même appli fermée. Les montants peuvent être masqués dans les alertes.")
         : t("Dans Paramètres → Alertes, choisissez ce qui vous intéresse : l'ordinateur vous prévient pendant que Sésame est ouvert, et les rappels s'affichent aussi sur l'accueil. Sur téléphone, les alertes arrivent même appli fermée."),
+      aller: [t("Ouvrir les paramètres"), "parametres"],
+    },
+    {
+      q: t("Comment actualiser l'appli ?"),
+      r: t("Dans Paramètres, touchez « Actualiser maintenant » : l'appli relit vos données, refait le classement et les virements, et cherche les changements de vos autres appareils et les mises à jour."),
       aller: [t("Ouvrir les paramètres"), "parametres"],
     },
     {
