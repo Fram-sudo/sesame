@@ -10,8 +10,8 @@ Si ce texte n'a pas changé depuis la version précédente, la version dit simpl
 
 ## FR
 
-- Réimport des relevés Société Générale : deux achats du même montant le même jour (deux achats Google Play, par exemple) ne sont plus pris pour de nouvelles opérations. Les libellés sont complétés sans aucun doublon.
+- Réimport de relevés déjà importés : pour un même jour et un même montant, Sésame compte les opérations au lieu de comparer seulement les libellés. Plus de fausses « nouvelles » opérations, même quand des libellés ont été complétés entre-temps ou lus autrement.
 
 ## EN
 
-- Re-importing Société Générale statements: two purchases of the same amount on the same day (two Google Play purchases, for example) are no longer taken for new transactions. Labels are completed with no duplicates.
+- Re-importing statements already imported: for the same day and amount, Sesame counts transactions instead of only comparing labels. No more false “new” transactions, even when labels were completed in between or read differently.

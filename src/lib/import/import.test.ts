@@ -152,3 +152,33 @@ describe("réparation : deux opérations du même montant le même jour", () => 
     }
   });
 });
+
+describe("réimport d'un relevé déjà à moitié complété", () => {
+  it("même jour et même montant : autant d'opérations dans l'appli que dans le relevé, donc rien de nouveau", () => {
+    const lues = [
+      { date: "2026-02-12", montant: -699, libelle: "CARTE X1579 11/02 GOOGLE PLAY APPS", detail: "6,99 EUR IRLANDE COMMERCE ELECTRONIQUE" },
+      { date: "2026-02-12", montant: -699, libelle: "CARTE X1579 11/02 GOOGLE PLAY APPS" },
+    ];
+    const anciennes = [
+      // déjà complétée au premier réimport (même empreinte que les deux lignes lues)
+      { id: "faite", date: "2026-02-12", montant: -699, libelle: "CARTE X1579 11/02 GOOGLE PLAY APPS", cle: "2026-02-12|-699|carte x1579 11 02 google play apps" },
+      // restée avec l'ancien bout de texte
+      { id: "ancienne", date: "2026-02-12", montant: -699, libelle: "6,99 EUR IRLANDE COMMERCE ELECTRONIQUE", cle: "2026-02-12|-699|6 99 eur irlande commerce electronique" },
+    ];
+    const r = separerDoublons(lues, anciennes);
+    expect(r.nouvelles).toEqual([]);
+    expect(r.reparees.map((x) => x.existante.id)).toEqual(["ancienne"]);
+  });
+  it("un vrai deuxième achat identique, absent de l'appli, reste nouveau ; une saisie à la main n'est pas avalée", () => {
+    const lues = [
+      { date: "2026-03-01", montant: -300, libelle: "CARTE CAFE" },
+      { date: "2026-03-01", montant: -300, libelle: "CARTE CAFE" },
+    ];
+    const r = separerDoublons(lues, [
+      { id: "a", date: "2026-03-01", montant: -300, libelle: "CARTE CAFE", cle: "2026-03-01|-300|carte cafe" },
+      { id: "m", date: "2026-03-01", montant: -300, libelle: "Café", cle: "2026-03-01|-300|cafe", manuelle: true },
+    ]);
+    expect(r.nouvelles.length).toBe(1);
+    expect(r.reparees).toEqual([]);
+  });
+});

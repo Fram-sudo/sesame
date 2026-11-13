@@ -36,7 +36,8 @@ export function separerDoublons<T extends { date: string; montant: number; libel
   }
   // À compléter : d'abord l'ancien libellé le plus précis retrouvé dans le texte lu (deux achats du même montant le même jour
   // ne s'échangent pas), puis seulement les anciens « (sans libellé) » (lus avant que la ligne collée aux dates soit récupérée)
-  const candidates = (o: T) => existantes.filter((x) => !prises.has(x) && x.date === o.date && x.montant === o.montant && x.libelle);
+  // Saisies à la main exclues : elles sont rapprochées à part (rapprocherSaisies) et remplacées par la ligne de la banque
+  const candidates = (o: T) => existantes.filter((x) => !prises.has(x) && x.date === o.date && x.montant === o.montant && x.libelle && !(x as { manuelle?: boolean }).manuelle);
   const trouvees = new Map<T & { cle: string }, E>();
   for (const o of restantes) {
     if (o.libelle === "(sans libellé)") continue;
@@ -51,6 +52,13 @@ export function separerDoublons<T extends { date: string; montant: number; libel
   for (const o of restantes) {
     if (trouvees.has(o) || o.libelle === "(sans libellé)") continue;
     const e = candidates(o).find((x) => x.libelle === "(sans libellé)");
+    if (e) (prises.add(e), trouvees.set(o, e));
+  }
+  // Enfin, même jour et même montant : le relevé fait foi sur le nombre d'opérations. Une ancienne ligne restante est la
+  // même opération lue autrement (relevé déjà à moitié complété, autre format du même compte), pas une nouvelle.
+  for (const o of restantes) {
+    if (trouvees.has(o)) continue;
+    const e = candidates(o)[0];
     if (e) (prises.add(e), trouvees.set(o, e));
   }
   for (const o of restantes) {
