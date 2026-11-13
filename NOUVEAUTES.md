@@ -10,10 +10,8 @@ Si ce texte n'a pas changé depuis la version précédente, la version dit simpl
 
 ## FR
 
-- Virement saisi à la main dont un côté est déjà importé (le relevé de l'autre compte ne va pas encore jusque-là) : seul le côté manquant est ajouté, sans compter le virement deux fois. Un message le signale avant d'enregistrer.
-- Une dépense ou un revenu saisi à la main qui répond à un virement est relié tout de suite ; quand le relevé arrive, la ligne de la banque reste reliée.
+- Ouverture bien plus rapide après le mot de passe ou l'empreinte, même avec des milliers d'opérations : l'accueil s'affiche tout de suite, le classement se fait juste après. Toute l'appli est aussi plus fluide avec beaucoup d'opérations.
 
 ## EN
 
-- A transfer entered by hand whose other side is already imported (the other account's statement doesn't reach it yet): only the missing side is added, so the transfer isn't counted twice. A message says so before saving.
-- A spend or income entered by hand that matches a transfer is linked right away; when the statement arrives, the bank's line stays linked.
+- Much faster opening after your password or fingerprint, even with thousands of transactions: Home shows right away, sorting happens just after. The whole app is also smoother with many transactions.

@@ -102,23 +102,27 @@ type Collections = { comptes: Compte; operations: Operation; imports: Import; pr
 const NOMS: Nom[] = ["comptes", "operations", "imports", "profils", "categories", "regles", "routages", "budgets", "prets"];
 type Nom = keyof Collections;
 
-export const donnees = $state({
-  comptes: [] as Compte[],
-  operations: [] as Operation[],
-  imports: [] as Import[],
-  profils: [] as Profil[],
-  categories: [] as Categorie[],
+// Listes « brutes » (pas de suivi objet par objet) : ecrire() remplace toujours la liste entière, jamais un
+// élément sur place. Lire des milliers d'opérations reste ainsi rapide (ouverture, statistiques).
+class Donnees {
+  comptes = $state.raw<Compte[]>([]);
+  operations = $state.raw<Operation[]>([]);
+  imports = $state.raw<Import[]>([]);
+  profils = $state.raw<Profil[]>([]);
+  categories = $state.raw<Categorie[]>([]);
   /** Seulement vos règles apprises ; les règles fournies sont dans categories.ts */
-  regles: [] as Regle[],
+  regles = $state.raw<Regle[]>([]);
   /** Règles de compte appliquées à l'import (voir categories.router) */
-  routages: [] as Routage[],
-  budgets: [] as Budget[],
-  prets: [] as Pret[],
-});
+  routages = $state.raw<Routage[]>([]);
+  budgets = $state.raw<Budget[]>([]);
+  prets = $state.raw<Pret[]>([]);
+}
+export const donnees = new Donnees();
 
 export const nouvelId = () => crypto.randomUUID();
 
-export async function charger() {
+/** classer : ranger et relier tout de suite (sinon l'appelant le fait plus tard, après l'affichage) */
+export async function charger(classer = true) {
   const tout = await api.lireTout();
   for (const nom of NOMS) (donnees[nom] as unknown[]) = tout.filter((l) => l.collection === nom).map((l) => l.valeur);
   // Première ouverture : catégories fournies, nommées dans la langue de l'appli
@@ -128,7 +132,7 @@ export async function charger() {
   const aRecolorer = donnees.categories.filter((c) => COULEURS_AVANT_REFONTE[c.id] === c.couleur);
   if (aRecolorer.length)
     await ecrire(aRecolorer.map((c) => ({ collection: "categories", id: c.id, valeur: { ...c, couleur: CATEGORIES_DEFAUT.find((d) => d.id === c.id)!.couleur } })));
-  await classerEtLier();
+  if (classer) await classerEtLier();
 }
 
 export function vider() {

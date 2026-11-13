@@ -1,7 +1,7 @@
 import { t } from "./i18n.svelte";
 // État global de l'interface : quel écran afficher, réglages, verrouillage automatique.
 import { api, PARAMETRES_DEFAUT, type Parametres, type Recus } from "./api";
-import { apresEcriture, charger, vider } from "./donnees.svelte";
+import { apresEcriture, charger, classerEtLier, vider } from "./donnees.svelte";
 import type { Periode } from "./stats";
 import { chargerTaux, tauxConnus } from "./taux";
 
@@ -52,7 +52,7 @@ export async function demarrer() {
 
 export async function apresOuverture() {
   app.params = await api.lireParametres();
-  await charger();
+  await charger(false);
   // Visite interrompue (appli fermée) : ses données fictives ne doivent pas rester
   if (app.params.visiteDemo) {
     const demo = await import("./demo");
@@ -66,6 +66,8 @@ export async function apresOuverture() {
   void import("./notifications").then((m) => m.programmerAlertes());
   app.page = "accueil";
   app.ecran = "app";
+  // Classement et virements après le premier affichage : l'appli s'ouvre sans attendre
+  setTimeout(() => void classerEtLier(), 50);
   relancerMinuteur();
   void synchroAuto();
 }
