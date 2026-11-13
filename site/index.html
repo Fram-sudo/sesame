@@ -47,29 +47,33 @@ nav.liens a:hover { opacity: 1; }
 .bouton.doux { background: var(--surface-2); color: var(--texte); }
 .bouton.nuit { background: var(--nuit-2); color: var(--nuit-texte); }
 
-/* ---------- La porte : la serrure de l'icône s'ouvre sur l'appli ---------- */
-/* L'icône de Sésame en grand : de la lumière passe par la serrure ; en défilant, on y entre et l'appli apparaît */
-.porte { height: 200vh; background: var(--nuit); color: var(--nuit-texte); --s: 1; --sv: 1; --t: 1; --e: 0; }
-.scene { position: sticky; top: 0; height: 100vh; overflow: hidden; --cx: 68vw; --cy: 50vh; --d: min(58vmin, 520px, 36vw); }
-/* Halo bleu derrière l'icône, comme une pièce éclairée derrière la porte */
-.scene::before { content: ""; position: absolute; width: calc(var(--d) * 2.2); height: calc(var(--d) * 2.2); left: calc(var(--cx) - var(--d) * 1.1); top: calc(var(--cy) - var(--d) * 1.1);
+/* ---------- La porte : la serrure de l'icône s'ouvre sur la vraie page ---------- */
+/* La scène reste en place pendant qu'on fait défiler la « course » qui la suit ; derrière la nuit
+   et l'icône, il y a déjà la vraie démo : le trou de la serrure la laisse voir, puis s'ouvre en grand. */
+.porte { position: relative; --s: 1; --sv: 1; --t: 1; --e: 0; }
+.scene { position: sticky; top: 0; min-height: 100vh; --cx: 68vw; --cy: 50vh; --d: min(58vmin, 520px, 36vw); }
+.course { height: 100vh; }
+/* Derrière : la démo, rapprochée et floue tant qu'on est sur le seuil, nette une fois entré */
+.scene > #essayer { transform: scale(calc(1.08 - var(--e) * .08)); filter: blur(calc((1 - var(--e)) * 10px)); transform-origin: var(--cx) var(--cy); }
+.porte.ouverte .scene > #essayer { transform: none; filter: none; }
+/* La lumière qu'on aperçoit par la serrure, qui s'efface en entrant */
+.lueur { position: absolute; left: 0; top: 0; width: 100%; height: 100vh; pointer-events: none; opacity: calc(1 - var(--e));
+  background: radial-gradient(circle at var(--cx) var(--cy), #fff 0, #eef1ff calc(var(--d) * .12), #b8c5ff calc(var(--d) * .34), var(--fond) calc(var(--d) * .75)); }
+/* Devant : la nuit, l'icône et le titre, percés par le trou de la serrure (celui de l'icône) */
+.voile { position: absolute; left: 0; top: 0; width: 100%; height: 100vh; overflow: hidden; background: var(--nuit); color: var(--nuit-texte); pointer-events: none;
+  --cle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'%3E%3Ccircle cx='512' cy='452' r='82'/%3E%3Cpath d='M466 500L440 662Q438 676 452 676L572 676Q586 676 584 662L558 500Z'/%3E%3C/svg%3E");
+  --w: calc(var(--d) * var(--sv)); --x: calc(var(--cx) - var(--w) / 2); --y: calc(var(--cy) - var(--w) / 2);
+  -webkit-mask-image: linear-gradient(#000 0 0), var(--cle); -webkit-mask-repeat: no-repeat; -webkit-mask-size: 100% 100%, var(--w) var(--w); -webkit-mask-position: 0 0, var(--x) var(--y); -webkit-mask-composite: xor;
+  mask-image: linear-gradient(#000 0 0), var(--cle); mask-repeat: no-repeat; mask-size: 100% 100%, var(--w) var(--w); mask-position: 0 0, var(--x) var(--y); mask-composite: exclude; }
+.voile a, .voile button { pointer-events: auto; }
+.porte.entre .voile a { pointer-events: none; }
+.porte.ouverte .voile, .porte.ouverte .lueur { visibility: hidden; }
+/* Halo bleu autour de l'icône */
+.voile::before { content: ""; position: absolute; width: calc(var(--d) * 2.2); height: calc(var(--d) * 2.2); left: calc(var(--cx) - var(--d) * 1.1); top: calc(var(--cy) - var(--d) * 1.1);
   background: radial-gradient(closest-side, rgba(59, 91, 253, .32), transparent); opacity: var(--t); }
 .plaque { position: absolute; width: var(--d); height: var(--d); left: calc(var(--cx) - var(--d) / 2); top: calc(var(--cy) - var(--d) / 2);
   background: url(assets/icone.svg) center / contain no-repeat; border-radius: 22.5%; box-shadow: 0 50px 90px -30px rgba(0, 0, 0, .8);
-  transform: scale(var(--s)); opacity: var(--o, 1); will-change: transform; }
-/* Le trou de la serrure : exactement celui de l'icône, qui grandit plus vite que l'icône */
-.vue { position: absolute; inset: 0; overflow: hidden;
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'%3E%3Ccircle cx='512' cy='452' r='82'/%3E%3Cpath d='M466 500L440 662Q438 676 452 676L572 676Q586 676 584 662L558 500Z'/%3E%3C/svg%3E") no-repeat;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'%3E%3Ccircle cx='512' cy='452' r='82'/%3E%3Cpath d='M466 500L440 662Q438 676 452 676L572 676Q586 676 584 662L558 500Z'/%3E%3C/svg%3E") no-repeat;
-  --w: calc(var(--d) * var(--sv));
-  -webkit-mask-size: var(--w) var(--w); mask-size: var(--w) var(--w);
-  -webkit-mask-position: calc(var(--cx) - var(--w) / 2) calc(var(--cy) - var(--w) / 2); mask-position: calc(var(--cx) - var(--w) / 2) calc(var(--cy) - var(--w) / 2); }
-/* Au repos : de la lumière ; en entrant : l'appli, d'abord floue et rapprochée, puis nette */
-.lumiere { position: absolute; inset: 0; background: radial-gradient(circle at var(--cx) var(--cy), #fff 0, #eef1ff calc(var(--d) * .12), #9eb0ff calc(var(--d) * .32), #3b5bfd calc(var(--d) * .6)); }
-.ecran { position: absolute; inset: 0; background-color: var(--fond); background-size: cover; background-position: center top; opacity: var(--e);
-  transform: scale(calc(1.18 - var(--e) * .18)); filter: blur(calc((1 - var(--e)) * 14px)); transform-origin: var(--cx) var(--cy); }
-html[lang="fr"] .ecran { background-image: url(assets/ecrans/pc-fr.webp); }
-html[lang="en"] .ecran { background-image: url(assets/ecrans/pc-en.webp); }
+  transform: scale(var(--s)); will-change: transform; }
 .texte-porte { position: absolute; left: max(24px, calc((100vw - 1160px) / 2 + 24px)); bottom: 11vh; width: min(520px, 44vw); opacity: var(--t); transform: translateY(calc((1 - var(--t)) * -40px)); }
 h1 { font-size: clamp(44px, 6.4vw, 92px); line-height: .98; font-weight: 800; letter-spacing: -0.04em; text-wrap: balance; }
 h1 em { font-style: normal; color: var(--accent-nuit); }
@@ -104,7 +108,8 @@ h2 { font-size: clamp(32px, 4.4vw, 54px); line-height: 1.04; font-weight: 800; l
 .demo[data-mode="pc"] .ecran-demo::before { content: ""; position: absolute; top: 11px; left: 14px; width: 9px; height: 9px; border-radius: 50%; background: #ff5f57; box-shadow: 15px 0 #febc2e, 30px 0 #28c840; }
 .demo[data-mode="pc"] .ecran-demo iframe { width: 1280px; height: 800px; transform: scale(var(--echelle, .5)); transform-origin: 0 0; }
 .note { font-size: 14px; color: var(--doux); font-weight: 600; }
-.plein-ecran, .tourner { display: none; }
+.plein-ecran, .tourner, .apercu-mobile { display: none; }
+.apercu-mobile .tel { display: block; width: min(260px, 64vw); }
 
 /* Les questions */
 .question { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 72px; align-items: center; padding: 72px 0; }
@@ -191,14 +196,13 @@ footer .cadre { display: flex; flex-wrap: wrap; justify-content: space-between; 
   .scene { --cx: 50vw; --cy: 27vh; --d: min(58vw, 30vh); }
   .texte-porte { left: 16px; right: 16px; width: auto; bottom: 8vh; }
   .chapeau { font-size: 17px; margin: 16px 0 22px; }
-  html[lang="fr"] .ecran { background-image: url(assets/ecrans/accueil-fr.webp); }
-  html[lang="en"] .ecran { background-image: url(assets/ecrans/accueil-en.webp); }
   .defiler { display: none; }
   .essai, .question, .question:nth-child(even), .histoire { grid-template-columns: 1fr; gap: 36px; }
   .question:nth-child(even) .tel { order: 0; }
   .tel { width: min(300px, 80vw); margin: 0 auto; }
   .demo[data-mode="tel"] .ecran-demo { display: none; }
   .demo[data-mode="tel"] .plein-ecran { display: inline-flex; }
+  .demo[data-mode="tel"] .apercu-mobile { display: block; }
   .demo[data-mode="pc"] .tourner { display: block; }
   .plateforme { grid-template-columns: 1fr; padding: 24px; }
 }
@@ -211,7 +215,6 @@ footer .cadre { display: flex; flex-wrap: wrap; justify-content: space-between; 
 @media (max-height: 640px) and (max-width: 980px) { .chapeau { display: none; } }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .porte { height: 100vh; }
   .defiler svg { animation: none; }
 }
 </style>
@@ -257,8 +260,29 @@ footer .cadre { display: flex; flex-wrap: wrap; justify-content: space-between; 
   <!-- La porte : en faisant défiler, la serrure s'ouvre sur l'appli -->
   <section class="porte" aria-label="Sésame">
     <div class="scene">
+      <!-- Derrière la porte : la démo guidée -->
+      <section class="bloc" id="essayer">
+        <div class="cadre essai">
+          <div>
+            <h2><span lang="fr">Essayez-le ici, tout de suite.</span><span lang="en">Try it here, right now.</span></h2>
+            <p class="intro"><span lang="fr">Une visite guidée vous montre l'essentiel en une minute : importer un relevé, classer, suivre ses budgets. Les données sont fictives, rien n'est enregistré.</span><span lang="en">A guided tour shows you the essentials in one minute: importing a statement, sorting, following your budgets. The data is fictional, nothing is saved.</span></p>
+            <p class="intro"><span lang="fr">Sésame existe sur téléphone et sur ordinateur. Choisissez la version à essayer :</span><span lang="en">Sesame runs on phones and computers. Pick the version to try:</span></p>
+            <div class="bascule" role="group" aria-label="Version">
+              <button data-mode="tel" aria-pressed="true"><svg class="i"><use href="#mobile"/></svg><span lang="fr">Téléphone</span><span lang="en">Phone</span></button>
+              <button data-mode="pc" aria-pressed="false"><svg class="i"><use href="#ordinateur"/></svg><span lang="fr">Ordinateur</span><span lang="en">Computer</span></button>
+            </div>
+          </div>
+          <div class="demo" data-mode="tel">
+            <div class="ecran-demo"><iframe data-src="demo/" title="Démo interactive de Sésame" loading="lazy"></iframe></div>
+            <a class="bouton plein plein-ecran" href="demo/"><svg class="i"><use href="#jouer"/></svg><span lang="fr">Ouvrir la démo téléphone</span><span lang="en">Open the phone demo</span></a>
+              <a class="apercu-mobile" href="demo/" aria-label="Ouvrir la démo téléphone"><span class="tel"><img lang="fr" src="assets/ecrans/accueil-fr.webp" width="720" height="1440" alt=""><img lang="en" src="assets/ecrans/accueil-en.webp" width="720" height="1440" alt=""></span></a>
+            <p class="note tourner"><span lang="fr">Astuce : tournez votre téléphone pour voir la version ordinateur en plus grand.</span><span lang="en">Tip: turn your phone sideways to see the computer version larger.</span></p>
+          </div>
+        </div>
+      </section>
+      <div class="lueur" aria-hidden="true"></div>
+      <div class="voile">
       <div class="plaque" aria-hidden="true"></div>
-      <div class="vue" role="img" aria-label="Sésame sur ordinateur, données fictives"><div class="lumiere"></div><div class="ecran"></div></div>
       <div class="texte-porte">
         <h1><span lang="fr">Vos finances.<br><em>Personne d'autre.</em></span><span lang="en">Your finances.<br><em>Nobody else's.</em></span></h1>
         <p class="chapeau">
@@ -272,28 +296,11 @@ footer .cadre { display: flex; flex-wrap: wrap; justify-content: space-between; 
         <p class="plateformes"><svg class="i"><use href="#windows"/></svg>Windows <svg class="i"><use href="#android"/></svg>Android <svg class="i"><use href="#linux"/></svg>Linux · <span lang="fr">français et anglais</span><span lang="en">French and English</span></p>
       </div>
       <p class="defiler" aria-hidden="true"><span lang="fr">Faites défiler : la serrure s'ouvre</span><span lang="en">Scroll: the lock opens</span><svg class="i"><use href="#bas"/></svg></p>
+      </div>
     </div>
+    <div class="course" aria-hidden="true"></div>
   </section>
 
-  <!-- La démo guidée -->
-  <section class="bloc" id="essayer">
-    <div class="cadre essai">
-      <div>
-        <h2><span lang="fr">Essayez-le ici, tout de suite.</span><span lang="en">Try it here, right now.</span></h2>
-        <p class="intro"><span lang="fr">Une visite guidée vous montre l'essentiel en une minute : importer un relevé, classer, suivre ses budgets. Les données sont fictives, rien n'est enregistré.</span><span lang="en">A guided tour shows you the essentials in one minute: importing a statement, sorting, following your budgets. The data is fictional, nothing is saved.</span></p>
-        <p class="intro"><span lang="fr">Sésame existe sur téléphone et sur ordinateur. Choisissez la version à essayer :</span><span lang="en">Sesame runs on phones and computers. Pick the version to try:</span></p>
-        <div class="bascule" role="group" aria-label="Version">
-          <button data-mode="tel" aria-pressed="true"><svg class="i"><use href="#mobile"/></svg><span lang="fr">Téléphone</span><span lang="en">Phone</span></button>
-          <button data-mode="pc" aria-pressed="false"><svg class="i"><use href="#ordinateur"/></svg><span lang="fr">Ordinateur</span><span lang="en">Computer</span></button>
-        </div>
-      </div>
-      <div class="demo" data-mode="tel">
-        <div class="ecran-demo"><iframe data-src="demo/" title="Démo interactive de Sésame" loading="lazy"></iframe></div>
-        <a class="bouton plein plein-ecran" href="demo/"><svg class="i"><use href="#jouer"/></svg><span lang="fr">Ouvrir la démo téléphone</span><span lang="en">Open the phone demo</span></a>
-        <p class="note tourner"><span lang="fr">Astuce : tournez votre téléphone pour voir la version ordinateur en plus grand.</span><span lang="en">Tip: turn your phone sideways to see the computer version larger.</span></p>
-      </div>
-    </div>
-  </section>
 
   <!-- Les questions qu'on se pose -->
   <section class="cadre" aria-label="Ce que Sésame vous dit">
@@ -575,23 +582,25 @@ footer .cadre { display: flex; flex-wrap: wrap; justify-content: space-between; 
   // La porte : la serrure grandit avec le défilement jusqu'à révéler l'appli
   const porte = document.querySelector(".porte");
   const entete = document.querySelector("header");
-  const calme = matchMedia("(prefers-reduced-motion: reduce)").matches;
   let attente = false;
   function ouvrir() {
     attente = false;
-    const course = porte.offsetHeight - innerHeight;
-    const p = calme || course <= 0 ? 0 : Math.min(1, Math.max(0, (scrollY - porte.offsetTop) / course));
+    const p = Math.min(1, Math.max(0, (scrollY - porte.offsetTop) / innerHeight));
     // On s'approche de l'icône, puis le trou de la serrure grandit bien plus vite : on passe la porte
     const lisse = (a, b) => { const x = Math.min(1, Math.max(0, (p - a) / (b - a))); return x * x * (3 - 2 * x); };
     porte.style.setProperty("--s", String(1 + 5 * p * p));
     // Sur la fin, le trou s'emballe pour couvrir tout l'écran (le bas de la serrure est étroit)
     porte.style.setProperty("--sv", String(1 + 34 * Math.pow(p, 2.4) + 260 * lisse(0.6, 0.95)));
-    porte.style.setProperty("--o", String(1 - lisse(0.7, 0.9)));
     porte.style.setProperty("--t", String(1 - lisse(0, 0.3)));
     porte.style.setProperty("--e", String(lisse(0.22, 0.72)));
-    // En-tête clair quand l'appli (claire) occupe l'écran
-    entete.classList.toggle("nuit", !(p > 0.5 || scrollY > porte.offsetTop + porte.offsetHeight - 64));
+    porte.classList.toggle("entre", p > 0.15);
+    porte.classList.toggle("ouverte", p >= 1);
+    // En-tête clair quand la page (claire) occupe l'écran
+    entete.classList.toggle("nuit", p < 0.5);
   }
+  // « Essayer la démo » et « Démo » : on passe la porte en douceur jusqu'à la démo
+  const entrer = () => scrollTo({ top: porte.offsetTop + innerHeight, behavior: "smooth" });
+  document.querySelectorAll('a[href="#essayer"]').forEach((a) => a.addEventListener("click", (e) => (e.preventDefault(), entrer())));
   addEventListener("scroll", () => { if (!attente) { attente = true; requestAnimationFrame(ouvrir); } }, { passive: true });
   addEventListener("resize", ouvrir);
   ouvrir();
@@ -608,7 +617,7 @@ footer .cadre { display: flex; flex-wrap: wrap; justify-content: space-between; 
     demo.dataset.mode = m;
     document.querySelector(".essai").classList.toggle("pc", m === "pc");
     boutonsMode.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === m)));
-    if (m === "pc" && innerWidth > 980) document.getElementById("essayer").scrollIntoView({ behavior: "smooth", block: "start" });
+    if (m === "pc" && innerWidth > 980) entrer();
   }
   boutonsMode.forEach((b) => b.addEventListener("click", () => modeDemo(b.dataset.mode)));
   new ResizeObserver(() => ecran.style.setProperty("--echelle", String(ecran.clientWidth / 1280))).observe(ecran);
