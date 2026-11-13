@@ -137,7 +137,8 @@ export function dateEnLettres(s: string): string | null {
 
 /** Date au format AAAA-MM-JJ, ou null si illisible. */
 export function lireDate(s: string, f: FormatDate): string | null {
-  const lettres = dateEnLettres(s);
+  // Une case qui commence par une date chiffrée la garde, même si le libellé collé derrière contient « 12 dec 1927 »
+  const lettres = RE_DATE.exec(s)?.index === s.search(/\S/) ? null : dateEnLettres(s);
   if (lettres) (s = lettres), (f = "JJ/MM/AAAA");
   const m = RE_DATE.exec(s);
   if (!m) return null;
@@ -151,7 +152,17 @@ export function lireDate(s: string, f: FormatDate): string | null {
 
 /** Montant en centimes : « 1 234,56 », « -1,234.56 », « 12.5 », « (12,00) », « 12,00- », « 15.000 F CFA »… */
 export function lireMontant(s: string): number | null {
+  const n = lireMontantSeul(s);
+  if (n !== null) return n;
+  // Texte du PDF débordant dans la case (« 1.443,43 N° de référence… ») : le montant en tête, avec ses centimes
+  const tete = /^\s*[-+]?\d[\d  .,']*[.,]\d{2}(?![\d.,])/.exec(s);
+  return tete ? lireMontantSeul(tete[0]) : null;
+}
+
+function lireMontantSeul(s: string): number | null {
   let t = s.replace(/[\s  ']/g, "").replace(/€|\$|£|eur|usd|cad|xof|fcfa|cfa|f(?=$)/gi, "");
+  // Renvoi en bas de page après le montant (« 9,60 * » sur les relevés Société Générale)
+  t = t.replace(/\*+$/, "");
   let neg = false;
   if (/^\(.*\)$/.test(t)) (neg = true), (t = t.slice(1, -1));
   if (t.endsWith("-")) (neg = !neg), (t = t.slice(0, -1));
@@ -274,9 +285,10 @@ export function completerParContenu(lignes: string[][], idx: number, entete: str
     };
   });
   const k = (nom?: string) => (nom === undefined ? -1 : entete.indexOf(nom));
-  // Titres trompeurs : une « date » sans dates, un « montant » sans nombres
+  // Titres trompeurs : une « date » sans dates, un « montant » sans nombres.
+  // Une colonne vide ne prouve rien (un relevé sans aucune dépense garde sa colonne Débit pour les suivants).
   if (res.date && stats[k(res.date)].date < 0.5) delete res.date;
-  for (const r of ["montant", "debit", "credit", "solde"] as Role[]) if (res[r] && stats[k(res[r])].nombre < 0.5) delete res[r];
+  for (const r of ["montant", "debit", "credit", "solde"] as Role[]) if (res[r] && stats[k(res[r])].rempli > 0 && stats[k(res[r])].nombre < 0.5) delete res[r];
   const pris = () => new Set(Object.values(res).map(k));
 
   if (!res.date) {

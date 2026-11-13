@@ -29,7 +29,8 @@ export interface Preparation {
 // (un relevé Société Générale peut contenir « VIR VERS REVOLUT » plus bas).
 const BANQUES_TEXTE: [string, RegExp][] = [
   ["Revolut", /revolut/i],
-  ["Société Générale", /soci[eé]t[eé] g[eé]n[eé]rale/i],
+  // Les relevés SG écrivent aussi « societegenerale.fr », « sg.fr » ou « l'Appli SG »
+  ["Société Générale", /soci[eé]t[eé] ?g[eé]n[eé]rale|\bsg\.fr\b|\bappli sg\b/i],
   ["Boursobank", /boursobank|boursorama/i],
   ["BNP Paribas", /bnp paribas/i],
   ["Crédit Agricole", /cr[eé]dit agricole/i],

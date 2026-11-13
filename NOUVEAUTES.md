@@ -10,12 +10,10 @@ Si ce texte n'a pas changé depuis la version précédente, la version dit simpl
 
 ## FR
 
-- Importez des dizaines de relevés en une fois : ils sont regroupés par compte, chaque format se vérifie une seule fois, et un seul écran montre tout ce qui va entrer avant d'importer.
-- Nouvelle visite guidée (3 minutes) de toute l'appli, chapitre par chapitre, à lancer ou reprendre depuis l'Aide ; l'Aide répond maintenant à chaque fonction.
-- Sur ordinateur aussi, Sésame vous prévient (budget presque atteint, prélèvement à venir, sauvegarde à faire) pendant qu'il est ouvert.
+- Import de plusieurs relevés PDF Société Générale : toutes les opérations sont maintenant lues. Avant, un relevé presque vide (sans aucune dépense) servait de modèle et faisait perdre les dépenses de tous les autres.
+- La Société Générale est reconnue même quand elle n'est écrite que « SG » ou « societegenerale.fr » ; les montants suivis d'une étoile ou d'une référence de virement sont lus correctement.
 
 ## EN
 
-- Import dozens of statements at once: they're grouped by account, each format is checked only once, and one screen shows everything coming in before you import.
-- New guided tour (3 minutes) of the whole app, chapter by chapter, to start or resume from Help; Help now answers every feature.
-- On computers too, Sesame alerts you (budget almost reached, upcoming debit, backup due) while it's open.
+- Importing several Société Générale PDF statements now reads every transaction. Before, an almost empty statement (with no spending) was used as the model and dropped the spending of all the others.
+- Société Générale is recognised even when written only as “SG” or “societegenerale.fr”; amounts followed by a star or a transfer reference are read correctly.

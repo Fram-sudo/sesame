@@ -211,7 +211,7 @@
   export const formatCle = () => cleProfil(profil);
   // Aperçu d'un format jamais vu (montré une seule fois pour tous les relevés de ce format)
   export const apercu = () =>
-    lecture && aValider ? { ops: lecture.ops.slice(0, 5), devise, inverser: !!profil.inverser, soldesFaux, fichier: prep.nom, banque: prep.banque } : undefined;
+    lecture && aValider ? { ops: lecture.ops.slice(0, 5), nb: lecture.ops.length, devise, inverser: !!profil.inverser, soldesFaux, fichier: prep.nom, banque: prep.banque } : undefined;
   export function corriger() {
     details = true;
     assistant = true;

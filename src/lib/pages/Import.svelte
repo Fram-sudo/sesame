@@ -184,14 +184,15 @@
   const reglerGroupe = (g: { cartes: FichierImport[] }, r: { compteId?: string; nouveauNom?: string; nouvelleDevise?: string }) => g.cartes.forEach((c) => c.regler(r));
   const optionsComptes = $derived([{ v: "", l: t("Nouveau compte…") }, ...donnees.comptes.filter((c) => !c.parentId).map((c) => ({ v: c.id, l: `${c.nom}${c.banque ? ` · ${c.banque}` : ""} (${c.devise})` }))]);
 
-  // Formats jamais vus : un seul aperçu par format, pour tous les relevés de ce format
+  // Formats jamais vus : un seul aperçu par format, pour tous les relevés de ce format.
+  // Le relevé le plus fourni sert de modèle (un relevé d'une seule ligne ferait mal deviner les colonnes).
   const formats = $derived.by(() => {
     const m = new Map<string, { carte: FichierImport; apercu: NonNullable<ReturnType<FichierImport["apercu"]>>; n: number }>();
     for (const c of cartes) {
       const a = c?.apercu();
       if (!a) continue;
       const x = m.get(c.formatCle());
-      if (x) x.n++;
+      if (x) (x.n++, a.nb > x.apercu.nb && ((x.carte = c), (x.apercu = a)));
       else m.set(c.formatCle(), { carte: c, apercu: a, n: 1 });
     }
     return [...m.values()];
