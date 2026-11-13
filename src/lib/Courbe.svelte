@@ -22,9 +22,10 @@
 
   // Largeur réelle du graphique (mesurée) : le texte garde sa taille sur grand écran
   let L = $state(600);
-  const H = $derived(hauteur);
+  // Un peu plus haute sur téléphone : les variations se voient mieux
+  const H = $derived(L < 520 ? hauteur + 40 : hauteur);
   const BAS = 22;
-  const HAUT = 12;
+  const HAUT = 22;
   const valeurs = $derived([...points.map((p) => p.valeur), ...(reference ? [reference.valeur] : [])]);
   const min = $derived(Math.min(0, ...valeurs));
   const max = $derived(Math.max(1, ...valeurs) * 1.05);
@@ -64,7 +65,38 @@
     const px = ((e.clientX - r.left) / r.width) * L;
     survol = Math.max(0, Math.min(points.length - 1, Math.round(((px - 8) / (L - 16)) * (points.length - 1))));
   }
-  const pas = $derived(Math.ceil(points.length / 6));
+  // Dates sous la courbe : autant que la largeur le permet (selon la longueur des dates), réparties du début à la fin, jamais superposées
+  const reperes = $derived.by(() => {
+    const n = points.length;
+    if (n < 2) return new Set([0]);
+    const largeur = Math.max(...points.map((p) => p.libelle.length), 4) * 6.4 + 24;
+    // Un repère tous les « pas » points, assez espacés pour la date la plus longue
+    const pas = Math.max(1, Math.ceil(largeur / ((L - 16) / (n - 1))));
+    const res = new Set<number>();
+    for (let i = 0; i < n; i += pas) res.add(i);
+    // La dernière date est toujours affichée ; celle d'avant saute si elle serait trop près (alignée à droite, elle déborde)
+    const avant = Math.floor((n - 1) / pas) * pas;
+    if (avant !== n - 1 && n - 1 - avant < pas * 1.6) res.delete(avant);
+    res.add(n - 1);
+    // Même chose au début : la première date est alignée à gauche
+    if (res.has(pas) && pas < 2 && n > 3) res.delete(pas);
+    return res;
+  });
+  // Plus haut et plus bas, écrits sur la courbe : on lit les montants sans toucher
+  const extremes = $derived.by(() => {
+    if (points.length < 3) return [];
+    let hi = 0, lo = 0;
+    points.forEach((p, i) => ((p.valeur > points[hi].valeur && (hi = i)), p.valeur < points[lo].valeur && (lo = i)));
+    return points[hi].valeur === points[lo].valeur ? [] : [{ i: hi, haut: true }, { i: lo, haut: false }];
+  });
+  const ancre = (i: number) => (x(i) < 60 ? "start" : x(i) > L - 60 ? "end" : "middle");
+  // Bulle de lecture au doigt : au-dessus du point, sans sortir du graphique
+  const bulle = $derived.by(() => {
+    if (survol < 0) return null;
+    const texte = `${points[survol].libelle} · ${argent(points[survol].valeur, devise)}`;
+    const w = texte.length * 6.6 + 16;
+    return { texte, w, x: Math.min(Math.max(x(survol) - w / 2, 2), L - w - 2) };
+  });
 </script>
 
 <div class="graphique" bind:clientWidth={L}>
@@ -76,20 +108,27 @@
     <path d={trace} class="ligne" />
     {#if points.length}<circle cx={x(points.length - 1)} cy={y(points[points.length - 1].valeur)} r="4" class="dernier" />{/if}
     {#each points as p, i (p.libelle)}
-      {#if i % pas === 0 || i === points.length - 1}<text x={x(i)} y={H - 6} class="axe" text-anchor={i === 0 && points.length > 1 ? "start" : i === points.length - 1 && points.length > 1 ? "end" : "middle"}>{p.libelle}</text>{/if}
+      {#if reperes.has(i)}<text x={x(i)} y={H - 6} class="axe" text-anchor={i === 0 && points.length > 1 ? "start" : i === points.length - 1 && points.length > 1 ? "end" : "middle"}>{p.libelle}</text>{/if}
     {/each}
-    {#if survol >= 0}
+    {#if survol < 0}
+      {#each extremes as e (e.haut)}
+        <text x={x(e.i)} y={y(points[e.i].valeur) + (e.haut ? -8 : 16)} class="valeur" text-anchor={ancre(e.i)}>{argent(points[e.i].valeur, devise)}</text>
+      {/each}
+    {/if}
+    {#if survol >= 0 && bulle}
       <line x1={x(survol)} x2={x(survol)} y1={HAUT} y2={H - BAS} class="reticule" />
       <circle cx={x(survol)} cy={y(points[survol].valeur)} r="5" class="point" />
+      <rect x={bulle.x} y="0" width={bulle.w} height="20" rx="10" class="bulle" />
+      <text x={bulle.x + bulle.w / 2} y="14" class="bulle-texte" text-anchor="middle">{bulle.texte}</text>
     {/if}
   </svg>
   <div class="detail">
     {#if survol >= 0}
-      <strong>{points[survol].libelle}</strong> · <span class="montant">{argent(points[survol].valeur, devise)}</span>
+      <span class="sous">{t("Glissez le doigt pour parcourir la courbe.")}</span>
     {:else if reference}
       <span class="sous"><span class="trait" style:background={couleur}></span>{t("par mois")} <span class="pointilles"></span>{t("{0} :", reference.libelle)} <span class="montant">{argent(reference.valeur, devise)}</span></span>
     {:else}
-      <span class="sous">{t("Survolez ou touchez la courbe pour le détail.")}</span>
+      <span class="sous">{t("Touchez ou glissez sur la courbe pour le détail.")}</span>
     {/if}
   </div>
 </div>
@@ -141,6 +180,21 @@
   .axe {
     font-size: 11px;
     fill: var(--pale);
+  }
+  .valeur {
+    font-size: 11px;
+    font-weight: 700;
+    fill: var(--doux);
+    font-variant-numeric: tabular-nums;
+  }
+  .bulle {
+    fill: var(--texte);
+  }
+  .bulle-texte {
+    font-size: 11px;
+    font-weight: 700;
+    fill: var(--fond);
+    font-variant-numeric: tabular-nums;
   }
   .detail {
     font-size: 13px;

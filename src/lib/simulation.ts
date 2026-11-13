@@ -29,6 +29,16 @@ if (import.meta.env.MODE === "demo" || new URLSearchParams(location.search).has(
       const { app } = await import("./etat.svelte");
       app.params.derniereSauvegarde = Date.now() - 45 * 86_400_000;
     }
+    // ?attente : deux opérations en attente sur le premier compte (essai de l'écran « Opérations en attente »)
+    if (new URLSearchParams(location.search).has("attente")) {
+      const { donnees } = await import("./donnees.svelte");
+      const c = donnees.comptes[0].id;
+      const auj = new Date().toISOString().slice(0, 10);
+      await ecrire([
+        { collection: "operations", id: "att-1", valeur: { id: "att-1", compteId: c, date: auj, montant: -24990, libelle: "CARTE FNAC", cle: "att1", enAttente: true, demo: true } as never },
+        { collection: "operations", id: "att-2", valeur: { id: "att-2", compteId: c, date: auj, montant: -5010, libelle: "CARTE SNCF CONNECT", cle: "att2", enAttente: true, demo: true } as never },
+      ]);
+    }
     const page = new URLSearchParams(location.search).get("page");
     const { app } = await import("./etat.svelte");
     if (page) app.page = page as never;

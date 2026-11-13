@@ -113,9 +113,13 @@
       {@const v = variation(x.ceMois, x.moyenne)}
       <div class="cat">
         <div class="tete">
-          <span><i class="point" style:background={x.couleur}></i>{x.nom}</span>
-          <span class="sous"><span class="montant">{argent(x.moyenne, devise)}</span>{t("/mois · dernier mois")} <span class="montant">{argent(x.ceMois, devise)}</span>{v !== undefined && v !== 0 ? ` ${v > 0 ? "▲" : "▼"} ${Math.abs(v)} %` : ""}</span>
+          <span class="nom"><i class="point" style:background={x.couleur}></i>{x.nom}</span>
+          <span class="montant moyenne">{t("{0}/mois", argent(x.moyenne, devise))}</span>
         </div>
+        <p class="sous detail-cat">
+          {t("Dernier mois : {0}", argent(x.ceMois, devise))}
+          {#if v !== undefined && v !== 0}<span class:hausse={v > 0} class:baisse={v < 0}>{v > 0 ? "▲" : "▼"} {Math.abs(v)} %</span>{/if}
+        </p>
         <div class="jauge">
           <span style:width="{(x.moyenne / maxCat) * 100}%" style:background={x.couleur}></span>
           <i class="repere" style:left="{(x.ceMois / maxCat) * 100}%"></i>
@@ -169,9 +173,31 @@
   .tete {
     display: flex;
     justify-content: space-between;
+    align-items: baseline;
     gap: 10px;
-    font-size: 14px;
-    flex-wrap: wrap;
+    font-size: 15px;
+  }
+  .nom {
+    font-weight: 700;
+    min-width: 0;
+  }
+  .moyenne {
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .detail-cat {
+    margin: -2px 0 0;
+    font-size: 13px;
+    display: flex;
+    gap: 8px;
+  }
+  .hausse {
+    color: var(--danger);
+    font-weight: 700;
+  }
+  .baisse {
+    color: var(--ok);
+    font-weight: 700;
   }
   .point {
     display: inline-block;
@@ -214,9 +240,22 @@
     flex: none;
     font-weight: 600;
   }
+  /* Téléphone : les trois moyennes côte à côte, en compact */
   @media (max-width: 599px) {
     .indicateurs {
-      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+    .indicateur {
+      padding: 10px;
+    }
+    .indicateur .sous {
+      font-size: 12px;
+      line-height: 1.25;
+    }
+    .chiffre {
+      font-size: 15px;
+      font-weight: 800;
+      margin: 4px 0 2px;
     }
   }
 </style>

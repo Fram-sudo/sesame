@@ -10,8 +10,10 @@ Si ce texte n'a pas changé depuis la version précédente, la version dit simpl
 
 ## FR
 
-- Nouvelle version plus discrète : un simple bandeau « Nouvelle version » avec « Mettre à jour » et « Plus tard » ; touchez-le pour voir les nouveautés dans une petite fenêtre.
+- Opérations en attente : touchez « … en attente déjà déduits » sur l'Accueil pour les voir toutes et les marquer effectuées, une à une ou d'un coup.
+- Graphiques repensés pour le téléphone : dates lisibles, plus haut et plus bas écrits sur les courbes, lecture au doigt, barres des 6 derniers mois avec une échelle en euros, catégories sur deux lignes et moyennes côte à côte.
 
 ## EN
 
-- A more discreet new-version notice: a simple “New version” strip with “Update” and “Later”; tap it to see what's new in a small window.
+- Pending transactions: tap “… pending already deducted” on Home to see them all and mark them completed, one by one or all at once.
+- Charts redesigned for phones: readable dates, highest and lowest values written on the curves, finger reading, bars for the last 6 months with a currency scale, categories on two lines and averages side by side.

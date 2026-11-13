@@ -28,7 +28,6 @@ export const EN: Record<string, string> = {
   ". Créez d'abord le compte de destination (accueil, « + Ajouter »).": ". First create the destination account (home, “+ Add”).",
   ". Il chiffre tout : il n'est stocké nulle part et personne ne peut le retrouver à votre place.": ". It encrypts everything: it is stored nowhere and nobody can recover it for you.",
   ". Il manque peut-être des opérations plus anciennes : vous pouvez importer un relevé plus ancien, ou corriger le solde de départ du compte.": ". Some older transactions may be missing: you can import an older statement, or correct the account's starting balance.",
-  "/mois · dernier mois": "/month · last month",
   "1 changement reçu de votre autre appareil.": "1 change received from your other device.",
   "1re échéance": "First payment",
   ": banque": ": bank",
@@ -586,8 +585,6 @@ export const EN: Record<string, string> = {
   "Sur l'écran de verrouillage, touchez « Mot de passe oublié ? » et saisissez votre clé de récupération (les 13 groupes de lettres reçus à la création). Vous choisissez alors un nouveau mot de passe. Sans mot de passe ni clé, personne ne peut rouvrir vos données.": "On the lock screen, tap “Forgot your password?” and enter your recovery key (the 13 groups of letters you got when you created the vault). You then choose a new password. Without the password or the key, nobody can reopen your data.",
   "Sur vos autres appareils": "On your other devices",
   "Sur vos relevés : «": "On your statements: “",
-  "Survolez ou touchez la courbe pour le détail.": "Hover over or tap the curve for details.",
-  "Survolez ou touchez un mois pour le détail.": "Hover over or tap a month for details.",
   "Synchroniser": "Sync",
   "Synchroniser : changements à envoyer": "Sync: changes to send",
   "Synchroniser mes appareils": "Sync my devices",
@@ -921,6 +918,16 @@ export const EN: Record<string, string> = {
   "Voir les nouveautés": "See what's new",
   "Publiée le {0}": "Released on {0}",
   "La mise à jour s'installe par-dessus : vos données sont gardées.": "The update installs on top: your data is kept.",
+  "Opérations en attente": "Pending transactions",
+  "Déjà déduites de votre argent disponible, comme chez votre banque. Marquez-les effectuées quand elles passent pour de bon ; le prochain relevé importé les remplacera sans doublon.": "Already deducted from your available money, as your bank does. Mark them completed once they go through; the next imported statement will replace them without duplicates.",
+  "Effectuée": "Completed",
+  "Tout marquer comme effectué": "Mark all as completed",
+  "{0} opérations marquées comme effectuées.": "{0} transactions marked as completed.",
+  "{0}/mois": "{0}/month",
+  "Dernier mois : {0}": "Last month: {0}",
+  "Touchez ou glissez sur la courbe pour le détail.": "Tap or slide along the curve for details.",
+  "Glissez le doigt pour parcourir la courbe.": "Slide your finger along the curve.",
+  "Touchez un mois pour le détail.": "Tap a month for details.",
 };
 
 /** Textes volontairement identiques en anglais (codes, données de démonstration) */

@@ -1,17 +1,32 @@
 <script lang="ts">
-  import { t } from "./i18n.svelte";
+  import { locale, t } from "./i18n.svelte";
   // Revenus et dépenses par mois : barres groupées, une seule échelle, survol pour le détail.
   import { argent } from "./format";
 
-  let { donnees, devise = "EUR", hauteur = 180 }: { donnees: { libelle: string; revenus: number; depenses: number }[]; devise?: string; hauteur?: number } = $props();
+  let { donnees: tous, devise = "EUR", hauteur = 180 }: { donnees: { libelle: string; revenus: number; depenses: number }[]; devise?: string; hauteur?: number } = $props();
 
   // Largeur réelle du graphique (mesurée) : le texte garde sa taille sur grand écran
   let L = $state(600);
-  const H = $derived(hauteur);
+  const telephone = $derived(L < 520);
+  // Pas de mois vides avant les premières données ; sur téléphone, les 6 derniers mois seulement (barres lisibles)
+  const donnees = $derived.by(() => {
+    const debut = tous.findIndex((d) => d.revenus || d.depenses);
+    const utiles = debut < 0 ? tous : tous.slice(debut);
+    return telephone ? utiles.slice(-6) : utiles;
+  });
+  const H = $derived(telephone ? hauteur + 30 : hauteur);
   const BAS = 22;
-  const max = $derived(Math.max(1, ...donnees.flatMap((d) => [d.revenus, d.depenses])));
+  // Échelle en montants ronds (1, 2 ou 5 × 10ⁿ) : 0 €, 1 000 €, 2 000 €…
+  const brut = $derived(Math.max(1, ...donnees.flatMap((d) => [d.revenus, d.depenses])));
+  const pasEchelle = $derived.by(() => {
+    const cible = brut / 3;
+    const p = 10 ** Math.floor(Math.log10(cible));
+    return [1, 2, 5, 10].map((k) => k * p).find((v) => v >= cible) ?? 10 * p;
+  });
+  const max = $derived(Math.ceil(brut / pasEchelle) * pasEchelle);
+  const graduations = $derived(Array.from({ length: Math.round(max / pasEchelle) }, (_, k) => (k + 1) * pasEchelle));
   const pas = $derived(L / Math.max(1, donnees.length));
-  const larg = $derived(Math.max(3, Math.min(18, pas * 0.3)));
+  const larg = $derived(Math.max(3, Math.min(26, pas * 0.32)));
   const HAUT = 14;
   const y = (v: number) => HAUT + (H - BAS - HAUT) * (1 - v / max);
   let survol = $state(-1);
@@ -22,7 +37,7 @@
     const r = Math.min(4, h, larg / 2);
     return `M${x0},${H - BAS} V${H - BAS - h + r} q0,-${r} ${r},-${r} h${larg - 2 * r} q${r},0 ${r},${r} V${H - BAS} Z`;
   }
-  const court = (v: number) => (Math.abs(v) >= 100000 ? `${Math.round(v / 100000)} k` : `${Math.round(v / 100)}`);
+  const court = (v: number) => new Intl.NumberFormat(locale(), { style: "currency", currency: devise, maximumFractionDigits: 0 }).format(v / 100);
 </script>
 
 <div class="graphique" bind:clientWidth={L}>
@@ -31,18 +46,17 @@
     <span><i style:background="var(--serie-depenses)"></i>{t("Dépenses")}</span>
   </div>
   <svg viewBox="0 0 {L} {H}" role="img" aria-label={t("Revenus et dépenses par mois")} onpointerleave={() => (survol = -1)}>
-    {#each [0.5, 1] as f (f)}
-      <line x1="0" x2={L} y1={y(max * f)} y2={y(max * f)} class="grille" />
-      <text x="2" y={y(max * f) - 4} class="axe">{court(max * f)}</text>
-    {/each}
+    {#each graduations as v (v)}<line x1="0" x2={L} y1={y(v)} y2={y(v)} class="grille" />{/each}
     <line x1="0" x2={L} y1={H - BAS} y2={H - BAS} class="base" />
     {#each donnees as d, i (d.libelle)}
       {@const cx = pas * i + pas / 2}
-      <rect x={pas * i} y="0" width={pas} height={H} class="zone" class:active={survol === i} onpointerenter={() => (survol = i)} role="presentation" />
+      <rect x={pas * i} y="0" width={pas} height={H} class="zone" class:active={survol === i} onpointerenter={() => (survol = i)} onpointerdown={() => (survol = i)} role="presentation" />
       <path d={barre(cx - larg - 1, d.revenus)} fill="var(--serie-revenus)" pointer-events="none" />
       <path d={barre(cx + 1, d.depenses)} fill="var(--serie-depenses)" pointer-events="none" />
       <text x={cx} y={H - 6} class="axe" text-anchor="middle">{d.libelle}</text>
     {/each}
+    <!-- Montants de l'échelle par-dessus les barres, détourés pour rester lisibles -->
+    {#each graduations as v (v)}<text x="2" y={y(v) - 4} class="axe echelle">{court(v)}</text>{/each}
   </svg>
   {#if survol >= 0}
     {@const d = donnees[survol]}
@@ -51,7 +65,7 @@
       {t("· solde")} <span class="montant">{argent(d.revenus - d.depenses, devise, true)}</span>
     </div>
   {:else}
-    <div class="detail sous">{t("Survolez ou touchez un mois pour le détail.")}</div>
+    <div class="detail sous">{t("Touchez un mois pour le détail.")}</div>
   {/if}
 </div>
 
@@ -90,6 +104,13 @@
   .axe {
     font-size: 11px;
     fill: var(--pale);
+  }
+  .echelle {
+    paint-order: stroke;
+    stroke: var(--surface);
+    stroke-width: 4px;
+    stroke-linejoin: round;
+    pointer-events: none;
   }
   .zone {
     fill: transparent;
