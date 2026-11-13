@@ -2,20 +2,35 @@
   import { t } from "./i18n.svelte";
   // « en euros ▾ » : choisir la devise dans laquelle tous les montants s'affichent, là où on les lit.
   // Proposées : l'euro et les devises de vos comptes ; une devise sans taux connu est grisée (Paramètres → Devises).
+  import Choix from "./Choix.svelte";
   import { donnees } from "./donnees.svelte";
-  import { nomDevise, symboleDevise } from "./devises";
-  import { app, deviseAffichee, sauverParametres } from "./etat.svelte";
+  import { nomDevise, optionsDevises, symboleDevise } from "./devises";
+  import { annoncer, app, deviseAffichee, mettreAJourTaux, sauverParametres } from "./etat.svelte";
   import { tauxConnus } from "./taux";
 
   let ouvert = $state(false);
   const connus = $derived(tauxConnus(app.params.taux, app.params.tauxManuels));
-  const proposees = $derived([...new Set(["EUR", ...donnees.comptes.map((c) => c.devise)])]);
+  const proposees = $derived([...new Set(["EUR", ...donnees.comptes.map((c) => c.devise), ...(app.params.devise ? [app.params.devise] : [])])]);
   const actuelle = $derived(deviseAffichee());
 
   function choisir(d: string) {
     app.params.devise = d;
     ouvert = false;
     void sauverParametres();
+  }
+
+  // N'importe quelle devise : son taux vient de la BCE (activée au besoin) ou se saisit dans Paramètres
+  async function autre(d: string) {
+    choisir(d);
+    if (connus[d]) return;
+    if (!app.params.tauxActifs) {
+      app.params.tauxActifs = true;
+      await sauverParametres();
+      await mettreAJourTaux(true);
+    }
+    if (tauxConnus(app.params.taux, app.params.tauxManuels)[d]) return annoncer(t("Taux de change activés : montants affichés en {0}.", nomDevise(d)));
+    annoncer(t("Saisissez le taux de {0} pour afficher vos montants dans cette devise.", nomDevise(d)));
+    app.page = "parametres";
   }
 </script>
 
@@ -35,6 +50,7 @@
           {#if !connus[d]}<small>{t("taux de change à activer")}</small>{/if}
         </button>
       {/each}
+      <span class="autre"><Choix titre={t("Autre devise")} vide={t("Autre devise…")} options={optionsDevises(proposees)} change={(d) => autre(d as string)} /></span>
       {#if proposees.some((d) => !connus[d])}
         <button class="lien" onclick={() => ((ouvert = false), (app.page = "parametres"))}>{t("Activer les taux de change")}</button>
       {/if}
@@ -43,6 +59,10 @@
 </span>
 
 <style>
+  .autre {
+    display: block;
+    margin-top: 4px;
+  }
   .choix {
     position: relative;
     display: inline-block;

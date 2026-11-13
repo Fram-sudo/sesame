@@ -959,6 +959,11 @@ export const EN: Record<string, string> = {
   "Supprimer définitivement": "Delete permanently",
   "Supprimer les {0} opérations de cet import…": "Delete the {0} transactions from this import…",
   "{0} opérations supprimées.": "{0} transactions deleted.",
+  "Autre devise": "Other currency",
+  "Autre devise…": "Other currency…",
+  "Taux de change activés : montants affichés en {0}.": "Exchange rates turned on: amounts shown in {0}.",
+  "Saisissez le taux de {0} pour afficher vos montants dans cette devise.": "Enter the {0} rate to show your amounts in this currency.",
+  "Ce compte a déjà des opérations : sa devise ne peut plus changer (les montants sont enregistrés dans cette devise). Pour un compte dans une autre devise, créez-en un nouveau.": "This account already has transactions: its currency can no longer change (amounts are recorded in this currency). For an account in another currency, create a new one.",
 };
 
 /** Textes volontairement identiques en anglais (codes, données de démonstration) */

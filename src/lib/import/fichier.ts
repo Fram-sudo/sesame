@@ -129,7 +129,8 @@ export async function preparer(r: Releve, profils: Profil[]): Promise<Preparatio
   const cle = structure ? structure.format : estPdf ? `pdf|${banqueTexte ?? ""}|${empreinte}|${entete.join("|")}` : entete.join("|");
   const connu = profils.find((p) => (p.cle ?? p.entete.join("|")) === cle);
   const banque = (estPdf ? banqueTexte : (reconnaitreBanque(entete) ?? banqueTexte)) ?? connu?.nom;
-  const profil = connu ? structuredClone(connu) : deviner(lignes, idx, { id: crypto.randomUUID(), nom: banque ?? "", entete: [], colonnes: {}, formatDate: "JJ/MM/AAAA", cle });
+  // Copie simple (JSON) : le profil retenu vient des données de l'appli, que structuredClone ne sait pas copier
+  const profil = connu ? (JSON.parse(JSON.stringify(connu)) as Profil) : deviner(lignes, idx, { id: crypto.randomUUID(), nom: banque ?? "", entete: [], colonnes: {}, formatDate: "JJ/MM/AAAA", cle });
   return { nom: r.nom, lignes, idx, profil, profilNouveau: !connu, estPdf, sections, choisies, enAttente, poches, empreinte, banque, devise: structure?.devise ?? deviseDansTexte(texte) };
 }
 

@@ -120,6 +120,7 @@
       <label>{t("Devise")}
         <Choix bind:valeur={devise} titre={t("Devise")} desactive={nbOps > 0} options={optionsDevises(donnees.comptes.map((c) => c.devise))} />
       </label>
+      {#if nbOps > 0}<p class="sous aide">{t("Ce compte a déjà des opérations : sa devise ne peut plus changer (les montants sont enregistrés dans cette devise). Pour un compte dans une autre devise, créez-en un nouveau.")}</p>{/if}
       <label>{t("Type")}
         <Choix bind:valeur={type} titre={t("Type")} options={[{ v: "courant", l: t("Compte courant") }, { v: "especes", l: t("Espèces (porte-monnaie)") }, { v: "epargne", l: t("Épargne (livret…)") }]} />
       </label>

@@ -11,7 +11,8 @@
   import { donnees as donneesComptes } from "../donnees.svelte";
 
   // Devises de vos comptes ; celles qu'aucun taux officiel ne couvre se saisissent à la main
-  const devisesComptes = $derived([...new Set(donneesComptes.comptes.map((c) => c.devise))].filter((d) => d !== "EUR"));
+  // Devises de vos comptes, et celle choisie pour l'affichage
+  const devisesComptes = $derived([...new Set([...donneesComptes.comptes.map((c) => c.devise), ...(app.params.devise ? [app.params.devise] : [])])].filter((d) => d !== "EUR"));
   const aSaisir = $derived(devisesComptes.filter((d) => app.params.tauxManuels?.[d] !== undefined || !tauxConnus(app.params.taux)[d]));
   async function changerTaux(d: string, saisie: string) {
     const v = parseFloat(saisie.replace(/\s/g, "").replace(",", "."));

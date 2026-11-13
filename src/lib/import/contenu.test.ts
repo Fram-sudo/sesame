@@ -68,3 +68,15 @@ describe("colonnes reconnues par leur contenu", () => {
     expect(r.ops[0].detail).toBe("Carte 1234");
   });
 });
+
+describe("format déjà connu", () => {
+  it("réimporter un relevé dont le format est mémorisé ne plante pas (profil venant des données de l'appli)", async () => {
+    const texte = "Buchungstag;Verwendungszweck;Betrag\n02/03/2026;Supermarché;-23,50\n05/03/2026;Salaire;1800,00";
+    const premier = await preparer(releve(texte), []);
+    // Les données de l'appli sont des objets « surveillés » (Proxy), que structuredClone refuse de copier
+    const surveille = new Proxy(premier.profil, {});
+    const ensuite = await preparer(releve(texte), [surveille]);
+    expect(ensuite.profilNouveau).toBe(false);
+    expect(lire(ensuite.lignes, ensuite.idx, ensuite.profil, "EUR").ops.length).toBe(2);
+  });
+});

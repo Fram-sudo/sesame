@@ -70,6 +70,8 @@ if (import.meta.env.MODE === "demo" || new URLSearchParams(location.search).has(
       if (etape >= 2) await clic("C'est bon pour tous");
       if (etape >= 3) await clic("Importer tout");
     }
+    // ?menudevise : menu « en euros ▾ » ouvert (captures)
+    if (q.has("menudevise")) setTimeout(() => (document.querySelector(".choix .declencheur") as HTMLElement | null)?.click(), 700);
     // ?survol=0.4 : doigt posé à 40 % de la largeur du premier graphique (captures)
     if (q.has("survol"))
       setTimeout(() => {

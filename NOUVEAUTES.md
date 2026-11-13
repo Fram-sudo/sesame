@@ -10,12 +10,12 @@ Si ce texte n'a pas changé depuis la version précédente, la version dit simpl
 
 ## FR
 
-- Plusieurs relevés importés ensemble ne font plus qu'un seul import : un récapitulatif par compte (les opérations présentes dans deux relevés comptées une fois), une seule validation, une seule ligne dans l'historique, une seule annulation.
-- Deux relevés d'une même banque sans compte existant ne créent plus deux comptes.
-- Historique des imports : « Retirer de la liste » efface seulement la ligne, vos opérations restent. Supprimer les opérations d'un import raté reste possible, à part, avec une confirmation claire ; les saisies à la main qu'il avait remplacées reviennent alors.
+- Correction : réimporter un relevé dont le format était déjà connu (par exemple après « Remettre des comptes à zéro ») affichait une erreur « DataCloneError » et bloquait l'import.
+- Afficher vos montants dans n'importe quelle devise : « Autre devise… » dans le menu « en euros ▾ » de l'Accueil (les taux de change s'activent au besoin).
+- La devise d'un compte qui a déjà des opérations est expliquée : pourquoi elle ne peut plus changer, et comment faire.
 
 ## EN
 
-- Several statements imported together now make a single import: one summary per account (transactions found in two statements counted once), one approval, one line in the history, one undo.
-- Two statements from the same bank with no existing account no longer create two accounts.
-- Import history: “Remove from list” only clears the line, your transactions stay. Deleting the transactions of a mistaken import is still possible, separately, with a clear confirmation; the manual entries it had replaced then come back.
+- Fix: re-importing a statement whose format was already known (for example after “Reset accounts”) showed a “DataCloneError” and blocked the import.
+- Show your amounts in any currency: “Other currency…” in the “in euros ▾” menu on Home (exchange rates turn on if needed).
+- An account that already has transactions now explains why its currency can no longer change, and what to do.
