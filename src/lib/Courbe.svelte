@@ -3,7 +3,7 @@
   // Évolution d'un montant dans le temps : une ligne (aire légère), une moyenne en pointillés si fournie,
   // réticule et valeur au survol (maquette validée v6).
   import { argent } from "./format";
-  import { lisse } from "./lissage";
+  import { etiquettesAxe, lisse } from "./lissage";
 
   let {
     points,
@@ -59,29 +59,18 @@
     fx = Math.max(x(0), Math.min(x(points.length - 1), px));
     fy = hauteurA(fx);
   }
-  // Dates sous la courbe : autant que la largeur le permet (selon la longueur des dates), réparties du début à la fin, jamais superposées
-  const reperes = $derived.by(() => {
-    const n = points.length;
-    if (n < 2) return new Set([0]);
-    const largeur = Math.max(...points.map((p) => p.libelle.length), 4) * 6.4 + 24;
-    // Un repère tous les « pas » points, assez espacés pour la date la plus longue
-    const pas = Math.max(1, Math.ceil(largeur / ((L - 16) / (n - 1))));
-    const res = new Set<number>();
-    for (let i = 0; i < n; i += pas) res.add(i);
-    // La dernière date est toujours affichée ; celle d'avant saute si elle serait trop près (alignée à droite, elle déborde)
-    const avant = Math.floor((n - 1) / pas) * pas;
-    if (avant !== n - 1 && n - 1 - avant < pas * 1.6) res.delete(avant);
-    res.add(n - 1);
-    // Même chose au début : la première date est alignée à gauche
-    if (res.has(pas) && pas < 2 && n > 3) res.delete(pas);
-    return res;
-  });
+  // Dates sous la courbe : jamais superposées, la première et la dernière collées aux bords, la dernière toujours
+  const reperes = $derived(etiquettesAxe(points.map((_, i) => x(i)), points.map((p) => p.libelle), L));
   // Plus haut et plus bas, écrits sur la courbe : on lit les montants sans toucher
   const extremes = $derived.by(() => {
     if (points.length < 3) return [];
     let hi = 0, lo = 0;
     points.forEach((p, i) => ((p.valeur > points[hi].valeur && (hi = i)), p.valeur < points[lo].valeur && (lo = i)));
-    return points[hi].valeur === points[lo].valeur ? [] : [{ i: hi, haut: true }, { i: lo, haut: false }];
+    if (points[hi].valeur === points[lo].valeur) return [];
+    // Les deux montants ne doivent pas se toucher : sinon on ne garde que le plus haut
+    const w = (i: number) => argent(points[i].valeur, devise).length * 6.6 + 8;
+    const proches = Math.abs(x(hi) - x(lo)) < (w(hi) + w(lo)) / 2 && Math.abs(y(points[hi].valeur) - y(points[lo].valeur)) < 30;
+    return proches ? [{ i: hi, haut: true }] : [{ i: hi, haut: true }, { i: lo, haut: false }];
   });
   const ancre = (i: number) => (x(i) < 60 ? "start" : x(i) > L - 60 ? "end" : "middle");
   // Bulle de lecture au doigt : au-dessus du point, sans sortir du graphique
@@ -101,9 +90,7 @@
     {#if reference}<line x1="0" x2={L} y1={y(reference.valeur)} y2={y(reference.valeur)} class="moyenne" />{/if}
     <path d={trace} class="ligne" bind:this={tracePath} />
     {#if points.length}<circle cx={x(points.length - 1)} cy={y(points[points.length - 1].valeur)} r="4" class="dernier" />{/if}
-    {#each points as p, i (p.libelle)}
-      {#if reperes.has(i)}<text x={x(i)} y={H - 6} class="axe" text-anchor={i === 0 && points.length > 1 ? "start" : i === points.length - 1 && points.length > 1 ? "end" : "middle"}>{p.libelle}</text>{/if}
-    {/each}
+    {#each [...reperes] as [i, ancre] (i)}<text x={x(i)} y={H - 6} class="axe" text-anchor={ancre}>{points[i].libelle}</text>{/each}
     {#if survol < 0}
       {#each extremes as e (e.haut)}
         <!-- Le plus bas s'écrit sous le point, sauf s'il touche le bas (il cacherait les dates) -->

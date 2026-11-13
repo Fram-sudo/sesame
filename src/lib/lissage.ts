@@ -35,3 +35,36 @@ export function hauteurSurChemin(p: SVGPathElement | undefined | null, px: numbe
   }
   return p.getPointAtLength((a + b) / 2).y;
 }
+
+/**
+ * Étiquettes d'un axe sans chevauchement : de gauche à droite, une étiquette n'est gardée que si elle ne touche pas
+ * la précédente ; la première et la dernière sont collées aux bords (jamais coupées), la dernière toujours affichée.
+ * `candidats` : indices autorisés (par exemple seulement les débuts d'année). Largeur estimée : 6,6 px par caractère.
+ */
+export function etiquettesAxe(xs: number[], textes: string[], largeur: number, candidats?: number[]): Map<number, "start" | "middle" | "end"> {
+  const res = new Map<number, "start" | "middle" | "end">();
+  const idx = (candidats ?? xs.map((_, i) => i)).filter((i) => i >= 0 && i < xs.length);
+  if (!idx.length) return res;
+  const boite = (i: number) => {
+    const w = textes[i].length * 6.6;
+    const ancre: "start" | "middle" | "end" = xs[i] - w / 2 < 0 ? "start" : xs[i] + w / 2 > largeur ? "end" : "middle";
+    const g = ancre === "start" ? xs[i] : ancre === "end" ? xs[i] - w : xs[i] - w / 2;
+    return { ancre, g, d: g + w };
+  };
+  const ESPACE = 10;
+  let droite = -Infinity;
+  const gardes: number[] = [];
+  for (const i of idx) {
+    const b = boite(i);
+    if (b.g >= droite + ESPACE) (gardes.push(i), (droite = b.d));
+  }
+  // La dernière étiquette compte le plus (la période en cours) : on retire celles qui la gênent
+  const der = idx[idx.length - 1];
+  if (!gardes.includes(der)) {
+    const g = boite(der).g;
+    while (gardes.length && boite(gardes[gardes.length - 1]).d + ESPACE > g) gardes.pop();
+    gardes.push(der);
+  }
+  for (const i of gardes) res.set(i, boite(i).ancre);
+  return res;
+}

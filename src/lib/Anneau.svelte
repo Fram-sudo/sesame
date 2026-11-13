@@ -26,6 +26,7 @@
     });
   });
   let survol = $state(-1);
+  const montantCentre = $derived(argent(Math.round((survol >= 0 ? segments[survol].v : total) / 100) * 100, devise).replace(/[.,]00(?!\d)/, ""));
 </script>
 
 <div class="anneau">
@@ -46,8 +47,9 @@
         role="presentation"
       />
     {/each}
-    <text x="50" y="46" text-anchor="middle" class="petit">{survol >= 0 ? segments[survol].nom.slice(0, 14) : t("total")}</text>
-    <text x="50" y="59" text-anchor="middle" class="fort montant">{argent(Math.round((survol >= 0 ? segments[survol].v : total) / 100) * 100, devise).replace(/[.,]00(?!\d)/, "")}</text>
+    <!-- Deux lignes bien séparées ; un long montant s'écrit plus petit pour rester dans l'anneau -->
+    <text x="50" y="44" text-anchor="middle" class="petit">{survol >= 0 ? segments[survol].nom.slice(0, 14) : t("total")}</text>
+    <text x="50" y="60" text-anchor="middle" class="fort montant" class:long={montantCentre.length > 8}>{montantCentre}</text>
   </svg>
   <div class="legende">
     {#each segments as s, i (s.id)}
@@ -138,5 +140,8 @@
     svg {
       align-self: center;
     }
+  }
+  .fort.long {
+    font-size: 9px;
   }
 </style>

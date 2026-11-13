@@ -10,10 +10,10 @@ Si ce texte n'a pas changé depuis la version précédente, la version dit simpl
 
 ## FR
 
-- Nouvel accueil sur ordinateur, en rangées alignées et sans espace vide : votre argent, vos raccourcis et vos comptes à gauche, le mois à droite (le graphique s'ajuste à la hauteur) ; puis « Mes comptes » en large avec les budgets ; puis catégories, opérations et épargne côte à côte.
-- Graphiques plus fluides : le repère suit le doigt ou la souris en continu.
+- Épargne : la courbe suit la période de votre choix (mois, trimestre, année, depuis le début ou des dates précises), comme les autres graphiques.
+- Plus aucune date ni aucun montant qui se chevauchent sur les graphiques, quelle que soit la période ou la taille de l'écran.
 
 ## EN
 
-- New Home on computers, in aligned rows with no empty space: your money, shortcuts and accounts on the left, the month on the right (the chart fits the height); then “My accounts” wide next to budgets; then categories, transactions and savings side by side.
-- Smoother charts: the marker follows your finger or mouse continuously.
+- Savings: the curve follows the period you choose (month, quarter, year, since the start or custom dates), like the other charts.
+- No more overlapping dates or amounts on charts, whatever the period or screen size.

@@ -4,7 +4,7 @@
   // Plus de 24 mois : un point par trimestre (moyenne par mois), seules les années sont écrites sous le graphique.
   import { argent } from "./format";
   import { locale, t } from "./i18n.svelte";
-  import { hauteurSurChemin, lisse } from "./lissage";
+  import { etiquettesAxe, hauteurSurChemin, lisse } from "./lissage";
 
   type Mois = { a: number; m: number; revenus: number; depenses: number };
   let { mois, devise = "EUR", hauteur = 170 }: { mois: Mois[]; devise?: string; hauteur?: number } = $props();
@@ -41,9 +41,15 @@
   // Zones : sous la courbe des revenus et au-dessus de celle des dépenses = vert ; l'inverse = rouge (découpes exactes)
   const sous = (d: string) => (points.length ? `${d} L${x(points.length - 1)},${H} L${x(0)},${H} Z` : "");
   const dessus = (d: string) => (points.length ? `${d} L${x(points.length - 1)},0 L${x(0)},0 Z` : "");
-  // Étiquettes de l'axe : les années (trimestres), sinon autant de mois que la place le permet, le dernier toujours
-  const saut = $derived(Math.max(1, Math.ceil(46 / ((L - 20) / Math.max(1, points.length - 1)))));
-  const montrer = (i: number) => (trimestres ? points[i].annee || i === 0 : (points.length - 1 - i) % saut === 0);
+  // Étiquettes de l'axe : les années (trimestres) ou les mois, jamais superposées, la dernière toujours
+  const axe = $derived(
+    etiquettesAxe(
+      points.map((_, i) => x(i)),
+      points.map((p) => p.axe),
+      L,
+      trimestres ? points.flatMap((p, i) => (i === 0 || p.annee ? [i] : [])) : undefined,
+    ),
+  );
   const id = Math.random().toString(36).slice(2, 8);
 
   // Le repère suit le doigt sans à-coup, le long des deux courbes ; les chiffres sont ceux de la période la plus proche
@@ -83,7 +89,7 @@
       <circle cx={x(points.length - 1)} cy={y(points.at(-1)!.revenus)} r="4.5" fill="var(--serie-revenus)" class="point" />
       <circle cx={x(points.length - 1)} cy={y(points.at(-1)!.depenses)} r="4.5" fill="var(--serie-depenses)" class="point" />
     {/if}
-    {#each points as p, i (i)}{#if montrer(i)}<text x={x(i)} y={H - 7} class="axe" text-anchor={i === 0 && trimestres ? "start" : "middle"}>{p.axe}</text>{/if}{/each}
+    {#each [...axe] as [i, ancre] (i)}<text x={x(i)} y={H - 7} class="axe" text-anchor={ancre}>{points[i].axe}</text>{/each}
   </svg>
   {#if survol >= 0}
     {@const p = points[survol]}

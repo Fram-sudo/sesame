@@ -1093,6 +1093,7 @@ export const EN: Record<string, string> = {
   "Total mis de côté à la fin de chaque mois : poches, livrets et tirelires (hors argent réservé).": "Total set aside at the end of each month: pockets, savings accounts and piggy banks (reserved money excluded).",
   "Capital restant dû, mois par mois": "Remaining balance, month by month",
   "Ce qu'il reste à rembourser, tous prêts additionnés, d'après leur échéancier (remboursements anticipés compris), jusqu'à la dernière échéance.": "What's left to repay, all loans added up, from their schedules (early repayments included), until the last instalment.",
+  "Mon épargne · {0}": "My savings · {0}",
 };
 
 /** Textes volontairement identiques en anglais (codes, données de démonstration) */

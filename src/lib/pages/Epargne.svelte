@@ -15,7 +15,9 @@
   import IconeCategorie from "../IconeCategorie.svelte";
   import { lireMontant } from "../import/analyse";
   import { cleOp } from "../import/doublons";
-  import { cleMois, derniersMois, finDeMois, flux, moisCourant, objectifPoche, type Contexte } from "../stats";
+  import { bornes, cleMois, derniersMois, finDeMois, flux, moisCourant, moisPasses, objectifPoche, type Contexte } from "../stats";
+  import Periode from "../Periode.svelte";
+  import { premiereDate } from "../donnees.svelte";
   import Courbe from "../Courbe.svelte";
 
   const parCompte = $derived(soldes());
@@ -26,12 +28,14 @@
   const total = $derived(visibles.filter((c) => c.devise === "EUR" && !c.reserve).reduce((a, c) => a + (parCompte.get(c.id) ?? 0), 0));
   const ctx: Contexte = $derived({ ops: donnees.operations, comptes: donnees.comptes, categories: donnees.categories, taux: tauxConnus(app.params.taux, app.params.tauxManuels), devise: deviseAffichee() });
   const ceMois = $derived(flux(ctx, "", [cleMois(moisCourant())]));
-  // Total mis de côté à la fin de chacun des 12 derniers mois (mêmes comptes que le total ci-dessus)
+  // Total mis de côté à la fin de chaque mois de la période choisie (un seul mois : les 12 derniers), mêmes comptes que le total
+  const periode = $derived(bornes(app.periode, premiereDate()));
+  const moisEpargne = $derived(periode.mois.length > 1 ? moisPasses(periode.mois) : derniersMois(periode.mois[0], 12));
   const evolution = $derived(
-    derniersMois(moisCourant(), 12).map((m) => {
+    moisEpargne.map((m) => {
       const s = soldes(finDeMois(m));
       return {
-        libelle: new Date(m.a, m.m, 1).toLocaleDateString(locale(), { month: "short", year: "2-digit" }).replace(".", ""),
+        libelle: new Date(m.a, m.m, 1).toLocaleDateString(locale(), moisEpargne.length > 12 ? { month: "short", year: "2-digit" } : { month: "short" }).replace(".", ""),
         valeur: visibles.filter((c) => c.devise === "EUR" && !c.reserve).reduce((a, c) => a + (s.get(c.id) ?? 0), 0),
       };
     }),
@@ -114,6 +118,7 @@
 </script>
 
 <div class="pile">
+  <Periode sansComptes />
   <div class="carte resume" data-visite="epargne">
     <div>
       <p class="sous">{t("Total mis de côté")}<Aide texte={t("Somme de vos poches, livrets, tirelires et autres épargnes (hors poches archivées). Cet argent n'est pas compté dans votre argent disponible sur l'accueil.")} /></p>
@@ -130,7 +135,7 @@
 
   {#if visibles.length && evolution.some((p) => p.valeur)}
     <section class="carte pile">
-      <h2>{t("Mon épargne sur 12 mois")}<Aide texte={t("Total mis de côté à la fin de chaque mois : poches, livrets et tirelires (hors argent réservé).")} /></h2>
+      <h2>{periode.mois.length > 1 ? t("Mon épargne · {0}", periode.libelle) : t("Mon épargne sur 12 mois")}<Aide texte={t("Total mis de côté à la fin de chaque mois : poches, livrets et tirelires (hors argent réservé).")} /></h2>
       <Courbe points={evolution} devise="EUR" couleur="var(--serie-epargne)" hauteur={150} />
     </section>
   {/if}
