@@ -1055,6 +1055,9 @@ export const EN: Record<string, string> = {
   "Sur ordinateur, ces alertes s'affichent pendant que Sésame est ouvert (même réduit). Les rappels de sauvegarde apparaissent aussi sur l'accueil.": "On a computer, these alerts show while Sesame is open (even minimised). Backup reminders also appear on Home.",
   "Ce virement est déjà sur « {0} » (le {1}) : seule l'arrivée sur « {2} » sera ajoutée.": "This transfer is already on “{0}” ({1}): only the arrival on “{2}” will be added.",
   "Ce virement est déjà arrivé sur « {0} » (le {1}) : seul le départ de « {2} » sera ajouté.": "This transfer has already arrived on “{0}” ({1}): only the departure from “{2}” will be added.",
+  "Récapitulatif annuel des frais : ces frais figurent déjà dans vos relevés de compte, il n'y a rien à importer.": "Annual fee summary: these fees are already in your account statements, there's nothing to import.",
+  "Rien de nouveau : vérifions le solde": "Nothing new: let's check the balance",
+  "Ces relevés sont déjà dans l'appli. Voici le solde qu'ils indiquent, comparé à celui de l'appli.": "These statements are already in the app. Here is the balance they show, compared with the app's.",
 };
 
 /** Textes volontairement identiques en anglais (codes, données de démonstration) */

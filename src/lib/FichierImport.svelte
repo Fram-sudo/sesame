@@ -232,6 +232,8 @@
           doublons: tri.doublons.length + (poches?.doublons ?? 0),
         }
       : undefined;
+  // Solde écrit sur le relevé, pour le comparer à l'appli quand il n'y a rien de nouveau à importer
+  export const depart = () => (prep.soldeDebut && compte ? { compte, ...prep.soldeDebut } : undefined);
   export const resultatFinal = () => (etat === "fait" && resultat ? { cle: groupeInitial, ...resultat, ecart: ecartFinal } : undefined);
   const periode = $derived.by(() => {
     const d = (lecture?.ops ?? []).map((o) => o.date).sort();

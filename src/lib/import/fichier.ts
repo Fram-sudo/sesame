@@ -128,6 +128,9 @@ export async function preparer(r: Releve, profils: Profil[]): Promise<Preparatio
     lignes = lireCsv(r.texte ?? "");
     texte = "";
   }
+  // Récapitulatif annuel des frais (Société Générale…) : ces frais sont déjà dans les relevés de compte
+  if (estPdf && /^\s*(relev[ée] (annuel )?de frais|r[ée]capitulatif annuel des frais)/im.test(texte.slice(0, 300)))
+    throw t("Récapitulatif annuel des frais : ces frais figurent déjà dans vos relevés de compte, il n'y a rien à importer.");
   if (lignes.length < 2) throw t("Aucune opération trouvée dans ce fichier.");
 
   const idx = detecterEntete(lignes);

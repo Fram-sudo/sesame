@@ -10,10 +10,12 @@ Si ce texte n'a pas changé depuis la version précédente, la version dit simpl
 
 ## FR
 
-- Relevés PDF qui indiquent un « solde précédent » (Société Générale…) : un compte créé à l'import démarre avec ce solde, au lieu de 0 €. Son solde colle ainsi à celui de la banque.
-- Après un import, le solde de la banque est comparé à celui de l'appli même quand les opérations du relevé n'ont pas de colonne de solde ; en cas d'écart, « Corriger le solde de départ » règle tout.
+- Relevés déjà tous importés : Sésame compare quand même le solde écrit sur le relevé à celui de l'appli, et propose « Corriger le solde de départ » en cas d'écart.
+- Les récapitulatifs annuels de frais (Société Générale) sont écartés avec une explication : ces frais sont déjà dans vos relevés de compte, il n'y a rien à vérifier ni à importer.
+- Un compte créé à l'import démarre au « solde précédent » écrit sur le plus ancien relevé, au lieu de 0 €.
 
 ## EN
 
-- PDF statements that show a “previous balance” (Société Générale…): an account created at import now starts from that balance instead of €0, so it matches the bank.
-- After an import, the bank's balance is compared with the app's even when the statement's lines have no balance column; if they differ, “Correct the starting balance” fixes it.
+- Statements already imported: Sesame still compares the balance written on the statement with the app's, and offers “Correct the starting balance” if they differ.
+- Annual fee summaries (Société Générale) are set aside with an explanation: those fees are already in your account statements, there's nothing to check or import.
+- An account created at import starts from the “previous balance” written on the oldest statement, instead of €0.

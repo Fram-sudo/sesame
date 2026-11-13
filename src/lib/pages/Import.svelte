@@ -164,6 +164,16 @@
   });
 
   const nbPrets = $derived(fichiers.length);
+  // Relevés déjà tous importés : on compare quand même le solde qu'ils indiquent à celui de l'appli (le plus récent par compte)
+  const controles = $derived.by(() => {
+    if (enCours || cartes.some((c) => c?.estPret() || c?.attendValidation())) return [];
+    const m = new Map<string, NonNullable<ReturnType<FichierImport["depart"]>>>();
+    for (const c of cartes) {
+      const d = c?.depart();
+      if (d && (!m.has(d.compte.id) || d.date > m.get(d.compte.id)!.date)) m.set(d.compte.id, d);
+    }
+    return [...m.values()];
+  });
   // Un relevé d'un format jamais vu attend qu'on vérifie son aperçu
   const aVerifier = $derived(cartes.some((c) => c?.attendValidation()));
   const plusieurs = $derived(fichiers.length > 1);
@@ -328,6 +338,19 @@
         {#if revue.deja}<p class="sous">{t("{0} opération(s) en double (entre vos relevés ou déjà dans l'appli) : ignorées.", revue.deja)}</p>{/if}
       </section>
     {/if}
+  {/if}
+
+  {#if controles.length && !bilanLot.length}
+    <section class="carte pile">
+      <h2>{t("Rien de nouveau : vérifions le solde")}</h2>
+      <p class="sous">{t("Ces relevés sont déjà dans l'appli. Voici le solde qu'ils indiquent, comparé à celui de l'appli.")}</p>
+      {#each controles as d (d.compte.id)}
+        <div class="groupe pile">
+          <strong>{d.compte.nom}</strong>
+          <ControleSolde compte={d.compte} soldeBanque={d.montant} date={d.date} />
+        </div>
+      {/each}
+    </section>
   {/if}
 
   {#if bilanLot.length}
