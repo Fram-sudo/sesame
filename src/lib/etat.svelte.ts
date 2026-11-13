@@ -6,7 +6,7 @@ import type { Periode } from "./stats";
 import { chargerTaux, tauxConnus } from "./taux";
 
 export type Ecran = "chargement" | "creation" | "verrou" | "app";
-export type Page = "accueil" | "operations" | "budgets" | "analyse" | "parametres" | "import" | "regles" | "banques" | "epargne" | "prets" | "plus" | "aide";
+export type Page = "accueil" | "operations" | "budgets" | "analyse" | "parametres" | "import" | "regles" | "banques" | "epargne" | "prets" | "plus" | "aide" | "classer";
 
 export const app = $state({
   ecran: "chargement" as Ecran,

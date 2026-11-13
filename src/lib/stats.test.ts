@@ -124,3 +124,21 @@ describe("devise d'affichage choisie", () => {
     expect(e.budget).toBe(Math.round(10000 * 655.957));
   });
 });
+
+import { suiviObjectif } from "./stats";
+describe("objectif d'épargne daté", () => {
+  it("effort mensuel, attendu en ligne droite, retard", () => {
+    // 1 200 € pour le 1er juillet 2027, fixé le 1er novembre 2026 avec 300 € ; 420 € le 14 novembre 2026
+    const s = suiviObjectif(120000, "2027-07-01", "2026-11-01", 30000, 42000, "2026-11-14");
+    expect(s.moisRestants).toBe(8);
+    expect(s.parMois).toBe(9750);
+    expect(s.attendu).toBe(30000 + Math.round(90000 * (13 / 242)));
+    expect(s.ecart).toBeGreaterThan(0);
+    expect(s.atteint).toBe(false);
+  });
+  it("objectif atteint, plus rien à mettre de côté", () => {
+    const s = suiviObjectif(50000, "2027-01-01", "2026-01-01", 0, 60000, "2026-11-14");
+    expect(s.atteint).toBe(true);
+    expect(s.parMois).toBe(0);
+  });
+});

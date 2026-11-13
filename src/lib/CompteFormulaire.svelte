@@ -38,6 +38,8 @@
   let especesDepuis = $state(compte ? (compte.especesDepuis ?? "") : new Date().toISOString().slice(0, 10));
   /* svelte-ignore state_referenced_locally */
   let objectif = $state(compte?.objectif ? String(compte.objectif / 100).replace(".", ",") : "");
+  /* svelte-ignore state_referenced_locally */
+  let objectifDate = $state(compte?.objectifDate ?? "");
   let confirmer = $state(false);
   let fusionVers = $state("");
   let pocheOuverte = $state<Compte | null>(null);
@@ -65,6 +67,12 @@
       couleur: couleur || undefined,
       reserve: (estPoche || type === "epargne") && reserve ? true : undefined,
       objectif: lireMontant(objectif) ?? undefined,
+      // Objectif daté : on retient d'où l'on part le jour où il est fixé ou changé (pour « où vous devriez en être »)
+      ...(objectifDate && (objectifDate !== compte?.objectifDate || lireMontant(objectif) !== compte?.objectif)
+        ? { objectifDate, objectifDepuis: new Date().toISOString().slice(0, 10), objectifDepart: compte ? (parCompte.get(compte.id) ?? 0) : 0 }
+        : objectifDate
+          ? {}
+          : { objectifDate: undefined, objectifDepuis: undefined, objectifDepart: undefined }),
       // Une poche garde le nom qu'elle a dans les relevés : la renommer ici ne casse pas le lien avec la banque
       ...(estPoche ? { nomBanque: compte!.nomBanque ?? compte!.nom } : {}),
     };
@@ -123,6 +131,7 @@
         <label>{t("Objectif d'épargne (facultatif)")}
           <input inputmode="decimal" bind:value={objectif} placeholder={objectifLu ? t("lu dans le nom : {0} €", objectifLu / 100) : t("ex. 5000")} />
         </label>
+        {#if lireMontant(objectif)}<label>{t("Pour le (facultatif)")}<input type="date" bind:value={objectifDate} /></label><p class="sous aide">{t("Avec une date, Sésame calcule combien mettre de côté chaque mois et vous dit si vous êtes dans les temps.")}</p>{/if}
       {/if}
     {:else}
       <label>{t("Banque")}<input bind:value={banque} placeholder={t("ex. Société Générale")} list="banques" /></label>
@@ -153,7 +162,7 @@
       {/if}
       {#if type === "epargne"}
         {@render role()}
-        {#if !reserve}<label>{t("Objectif d'épargne (facultatif)")}<input inputmode="decimal" bind:value={objectif} placeholder={t("ex. 5000")} /></label>{/if}
+        {#if !reserve}<label>{t("Objectif d'épargne (facultatif)")}<input inputmode="decimal" bind:value={objectif} placeholder={t("ex. 5000")} /></label>{#if lireMontant(objectif)}<label>{t("Pour le (facultatif)")}<input type="date" bind:value={objectifDate} /></label><p class="sous aide">{t("Avec une date, Sésame calcule combien mettre de côté chaque mois et vous dit si vous êtes dans les temps.")}</p>{/if}{/if}
       {/if}
     {/if}
     {#if !compte}

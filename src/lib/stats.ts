@@ -341,3 +341,34 @@ export function etatBudgets(ctx: Contexte, compteId: string, b: Bornes, budgets:
 
 /** Jours restants dans une fenêtre en cours (0 si terminée). */
 export const joursRestants = (fin: string, auj = aujourdhui()) => (auj > fin ? 0 : jours(auj, fin));
+
+export interface SuiviObjectif {
+  /** Mois entiers restants avant la date (au moins 1) */
+  moisRestants: number;
+  /** À mettre de côté chaque mois pour y arriver */
+  parMois: number;
+  /** Où l'on devrait en être aujourd'hui, en ligne droite depuis le jour où l'objectif a été fixé */
+  attendu: number;
+  /** Solde − attendu : positif = en avance, négatif = en retard */
+  ecart: number;
+  atteint: boolean;
+  depasse: boolean;
+}
+
+/** Objectif daté : effort mensuel et avance ou retard, d'après le solde au jour où l'objectif a été fixé. */
+export function suiviObjectif(objectif: number, pour: string, depuis: string, depart: number, solde: number, auj: string): SuiviObjectif {
+  const j = (d: string) => Date.parse(d + "T00:00:00Z");
+  const [a1, m1, d1] = auj.split("-").map(Number);
+  const [a2, m2, d2] = pour.split("-").map(Number);
+  const moisRestants = Math.max(1, (a2 - a1) * 12 + (m2 - m1) + (d2 >= d1 ? 0 : -1) + 1);
+  const part = j(pour) > j(depuis) ? Math.min(1, Math.max(0, (j(auj) - j(depuis)) / (j(pour) - j(depuis)))) : 1;
+  const attendu = Math.round(depart + (objectif - depart) * part);
+  return {
+    moisRestants,
+    parMois: Math.max(0, Math.ceil((objectif - solde) / moisRestants)),
+    attendu,
+    ecart: solde - attendu,
+    atteint: solde >= objectif,
+    depasse: j(auj) > j(pour),
+  };
+}

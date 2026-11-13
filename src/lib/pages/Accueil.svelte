@@ -11,12 +11,14 @@
   import ChoixDevise from "../ChoixDevise.svelte";
   import CompteFormulaire from "../CompteFormulaire.svelte";
   import FluxCourbes from "../FluxCourbes.svelte";
+  import ObjectifSuivi from "../ObjectifSuivi.svelte";
+  import BilanMois from "../BilanMois.svelte";
   import SoldesComptes from "../SoldesComptes.svelte";
   import { couleurCompte } from "../couleurs";
   import { chargerDemo } from "../demo";
   import { donnees, soldes, type Compte } from "../donnees.svelte";
   import { symboleDevise } from "../devises";
-  import { annoncer, app, deviseAffichee } from "../etat.svelte";
+  import { annoncer, app, sauverParametres, deviseAffichee } from "../etat.svelte";
   import { argent, dateCourte } from "../format";
   import Icone from "../Icone.svelte";
   import IconeCategorie from "../IconeCategorie.svelte";
@@ -25,7 +27,7 @@
   import Periode from "../Periode.svelte";
   import { resume } from "../prets";
   import { prevoir } from "../prevision";
-  import { bornes, cleMois, derniersMois, estEnCours, etatBudgets, finDeMois, flux, moisPasses, moyennePeriode, objectifPoche, perimetre, solde, variation, type Contexte } from "../stats";
+  import { bornes, cleMois, decaler, derniersMois, estEnCours, etatBudgets, finDeMois, flux, moisCourant, moisPasses, moyennePeriode, objectifPoche, perimetre, solde, variation, type Contexte } from "../stats";
   import { premiereDate } from "../donnees.svelte";
 
   let fiche = $state<Compte | "nouveau" | null>(null);
@@ -82,6 +84,11 @@
   let hTitre = $state(0);
   let hTrois = $state(0);
   const hauteurFlux = $derived(largeur >= 1100 && hGauche ? Math.max(160, Math.min(420, hGauche - hTitre - hTrois - 32 - 24 - 40)) : 160);
+  // Bilan du mois écoulé : les 10 premiers jours du mois, tant qu'il n'a pas été refermé
+  const moisPrecedent = $derived(decaler(moisCourant(), -1));
+  const voirBilan = $derived(
+    new Date().getDate() <= 10 && app.params.bilanFerme !== cleMois(moisPrecedent) && donnees.operations.some((o) => o.date.startsWith(cleMois(moisPrecedent))),
+  );
   const fluxMois = $derived(
     moisCourbe.map((m) => {
       const fm = flux(ctx, filtre, [cleMois(m)]);
@@ -131,7 +138,7 @@
       return { texte: t("À ce rythme, {0} dépassera son budget de {1} d'ici le {2}.", nomBudget(bientot), argent(bientot.projection! - bientot.budget, devise), dateCourte(bientot.fin)), action: t("Voir les budgets"), page: "budgets" as const };
     const sansCat = f.parCategorie.get("") ?? 0;
     if (f.depenses > 0 && sansCat / f.depenses > 0.25)
-      return { texte: t("{0} de dépenses sans catégorie : classez-les pour des chiffres justes (l'appli retiendra vos choix).", argent(sansCat, devise)), action: t("Les classer"), page: "operations" as const, categorie: "aucune" };
+      return { texte: t("{0} de dépenses sans catégorie : classez-les pour des chiffres justes (l'appli retiendra vos choix).", argent(sansCat, devise)), action: t("Les classer"), page: "classer" as const };
     if (ecartDepenses !== undefined && ecartDepenses >= 20 && moy?.depenses)
       return { texte: t("Vos dépenses {0} sont {1} % au-dessus de d'habitude.", periodeTexte, ecartDepenses), action: t("Comprendre"), page: "analyse" as const };
     if (!donnees.budgets.length && f.depenses) return { texte: t("Fixez des budgets en un clic, d'après vos 3 derniers mois."), action: t("Créer mes budgets"), page: "budgets" as const };
@@ -167,7 +174,6 @@
 
   function suivreConseil() {
     if (!conseil) return;
-    if (conseil.categorie) app.filtreCategorie = conseil.categorie;
     app.page = conseil.page;
   }
 
@@ -256,6 +262,8 @@
       </section>
     </div>
 
+    {#if voirBilan}<BilanMois mois={moisPrecedent} fermer={async () => ((app.params.bilanFerme = cleMois(moisPrecedent)), await sauverParametres())} />{/if}
+
     <RappelSauvegarde />
 
     {#if conseil}
@@ -339,10 +347,7 @@
           <IconeCategorie icone={c.parentId ? "pig-money" : c.forme === "especes" ? "cash" : c.forme === "projet" ? "target" : "building-bank"} teinte={c.parentId ? "#7F77DD" : c.forme === "especes" ? "#639922" : c.forme === "projet" ? "#D85A30" : "#378ADD"} taille={34} />
           <span class="corps">
             <span class="ligne-haut"><span class="nom">{c.nom}</span><span class="montant fort">{argent(s, c.devise)}</span></span>
-            {#if obj}
-              <span class="jauge"><span style:width="{Math.min(100, Math.max(0, (s / obj) * 100))}%" style:background="var(--serie-revenus)"></span></span>
-              <span class="sous">{Math.round((s / obj) * 100)} {t("% de")} <span class="montant">{argent(obj, c.devise)}</span> {t("· reste")} <span class="montant">{argent(Math.max(0, obj - s), c.devise)}</span></span>
-            {/if}
+            {#if obj}<ObjectifSuivi compte={c} solde={s} objectif={obj} />{/if}
           </span>
         </button>
       {/each}

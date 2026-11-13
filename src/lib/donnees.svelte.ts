@@ -43,6 +43,10 @@ export interface Compte {
   forme?: "livret" | "especes" | "projet";
   /** Porte-monnaie : retraits et dépôts d'espèces suivis à partir de cette date (AAAA-MM-JJ) ; absent = depuis toujours */
   especesDepuis?: string;
+  /** Objectif d'épargne daté : pour quand, et d'où l'on partait le jour où il a été fixé (date, solde) */
+  objectifDate?: string;
+  objectifDepuis?: string;
+  objectifDepart?: number;
   /** Couleur choisie (carte, menu, graphiques) ; absente = couleur par défaut (voir couleurs.ts) */
   couleur?: string;
   demo?: boolean;
@@ -131,6 +135,7 @@ export const nouvelId = () => crypto.randomUUID();
 export async function charger(classer = true) {
   const tout = await api.lireTout();
   for (const nom of NOMS) (donnees[nom] as unknown[]) = tout.filter((l) => l.collection === nom).map((l) => l.valeur);
+  await reparerBudgets(tout);
   // Première ouverture : catégories fournies, nommées dans la langue de l'appli
   if (!donnees.categories.length)
     await ecrire(CATEGORIES_DEFAUT.map((c) => ({ collection: "categories", id: c.id, valeur: langue.code === "en" ? { ...c, nom: NOMS_CATEGORIES_EN[c.id] ?? c.nom } : c })));
@@ -139,6 +144,32 @@ export async function charger(classer = true) {
   if (aRecolorer.length)
     await ecrire(aRecolorer.map((c) => ({ collection: "categories", id: c.id, valeur: { ...c, couleur: CATEGORIES_DEFAUT.find((d) => d.id === c.id)!.couleur } })));
   if (classer) await classerEtLier();
+}
+
+/**
+ * Réparation : jusqu'à la version 0.1.33, un budget était rangé dans le coffre sous l'identifiant de sa catégorie
+ * et l'effaçait (à la réouverture, la catégorie disparaissait et ses opérations passaient « Sans catégorie »).
+ * Les budgets ont maintenant leur propre clé ; les catégories effacées sont recréées (nom d'origine pour les
+ * catégories fournies, « Catégorie à renommer » pour les vôtres, encore utilisées par vos opérations).
+ */
+async function reparerBudgets(tout: { id: string; collection: string; valeur: unknown }[]) {
+  const anciens = tout.filter((l) => l.collection === "budgets" && !l.id.startsWith("budget:"));
+  if (!anciens.length) return;
+  const utilisees = new Set([...donnees.operations.map((o) => o.categorieId), ...donnees.regles.map((r) => r.categorieId)]);
+  const ch: { collection: string; id: string; valeur: unknown }[] = [];
+  const recreees: Categorie[] = [];
+  for (const l of anciens) {
+    ch.push({ collection: "budgets", id: `budget:${l.id}`, valeur: l.valeur });
+    const fournie = CATEGORIES_DEFAUT.find((c) => c.id === l.id);
+    const cat = fournie
+      ? langue.code === "en" ? { ...fournie, nom: NOMS_CATEGORIES_EN[fournie.id] ?? fournie.nom } : fournie
+      : utilisees.has(l.id) ? ({ id: l.id, nom: t("Catégorie à renommer"), type: "depense", couleur: "#888780" } as Categorie) : undefined;
+    // La clé d'origine reprend la catégorie (ou est libérée s'il n'y en avait pas, comme le plafond global)
+    ch.push(cat ? { collection: "categories", id: l.id, valeur: cat } : { collection: "budgets", id: l.id, valeur: null });
+    if (cat && !donnees.categories.some((c) => c.id === cat.id)) recreees.push(cat);
+  }
+  await api.ecrireLot(ch as never);
+  donnees.categories = [...donnees.categories, ...recreees];
 }
 
 export function vider() {
@@ -153,7 +184,9 @@ export const apresEcriture: { rappel?: () => void } = {};
 
 export async function ecrire(changements: Changement[]) {
   if (!changements.length) return;
-  await api.ecrireLot(changements.map((c) => ({ ...c, valeur: c.valeur && $state.snapshot(c.valeur) })));
+  // Dans le coffre, un budget a sa propre clé : il porte l'identifiant de sa catégorie et ne doit pas l'écraser
+  const cle = (c: Changement) => (c.collection === "budgets" && !c.id.startsWith("budget:") ? `budget:${c.id}` : c.id);
+  await api.ecrireLot(changements.map((c) => ({ ...c, id: cle(c), valeur: c.valeur && $state.snapshot(c.valeur) })));
   apresEcriture.rappel?.();
   for (const nom of NOMS) {
     const ici = changements.filter((c) => c.collection === nom);

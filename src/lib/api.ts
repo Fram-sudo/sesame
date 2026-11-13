@@ -35,6 +35,8 @@ export interface Parametres {
   /** Dernière sauvegarde exportée depuis cet appareil (ms), et rappel repoussé jusqu'à (ms) */
   derniereSauvegarde?: number;
   rappelSauvegardeApres?: number;
+  /** Bilan du mois (AAAA-MM) déjà refermé sur l'accueil */
+  bilanFerme?: string;
   /** Alertes du téléphone : réglages, alertes déjà programmées (clé → heure), autorisation déjà demandée */
   alertes?: Partial<import("./alertes").Reglages>;
   alertesVues?: Record<string, number>;
@@ -69,6 +71,7 @@ export const api = {
   ecrireParametres: (valeur: Parametres) => invoke<void>("ecrire_parametres", { valeur }),
   exporter: () => invoke<boolean>("exporter_sauvegarde"),
   enregistrerCle: (cle: string) => invoke<boolean>("enregistrer_cle_recuperation", { cle }),
+  enregistrerExport: (nom: string, contenu: string) => invoke<boolean>("enregistrer_export", { nom, contenu }),
   importer: (mdp: string) => invoke<boolean>("importer_sauvegarde", { mdp }),
   toutEffacer: () => invoke<void>("tout_effacer"),
   lireTout: () => invoke<{ id: string; collection: string; valeur: unknown }[]>("lire_tout"),

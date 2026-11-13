@@ -17,6 +17,7 @@
   import { cleOp } from "../import/doublons";
   import { bornes, cleMois, derniersMois, finDeMois, flux, moisCourant, moisPasses, objectifPoche, type Contexte } from "../stats";
   import Periode from "../Periode.svelte";
+  import ObjectifSuivi from "../ObjectifSuivi.svelte";
   import { premiereDate } from "../donnees.svelte";
   import Courbe from "../Courbe.svelte";
 
@@ -156,10 +157,7 @@
               <span class="corps">
                 <span class="haut"><span class="nom">{c.nom}</span><span class="montant fort">{argent(s, c.devise)}</span></span>
                 <span class="sous">{c.parentId ? `Poche ${parent(c) ?? ""}` : c.banque || (c.forme === "especes" ? t("Espèces") : "")}</span>
-                {#if obj}
-                  <span class="jauge"><span style:width="{Math.min(100, Math.max(0, (s / obj) * 100))}%"></span></span>
-                  <span class="sous">{Math.round((s / obj) * 100)} {t("% de")} <span class="montant">{argent(obj, c.devise)}</span> {t("· reste")} <span class="montant">{argent(Math.max(0, obj - s), c.devise)}</span></span>
-                {/if}
+                {#if obj}<ObjectifSuivi compte={c} solde={s} objectif={obj} />{/if}
               </span>
             </button>
             {#if !c.parentId}
@@ -291,19 +289,6 @@
   .nom,
   .fort {
     font-weight: 600;
-  }
-  .jauge {
-    display: block;
-    height: 8px;
-    border-radius: 999px;
-    background: var(--surface-2);
-    overflow: hidden;
-  }
-  .jauge > span {
-    display: block;
-    height: 100%;
-    border-radius: 999px;
-    background: var(--serie-revenus);
   }
   .actions {
     display: flex;

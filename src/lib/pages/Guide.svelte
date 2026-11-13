@@ -42,6 +42,36 @@
       aller: [t("Voir mes opérations"), "operations"],
     },
     {
+      q: t("Comment classer beaucoup d'opérations d'un coup ?"),
+      r: t("Ouvrez « À classer » (depuis Plus, ou le bandeau de l'accueil). Les opérations sans catégorie y sont regroupées par commerçant, les plus gros montants d'abord, avec une catégorie proposée. Un appui classe tout le groupe et crée une règle : les prochaines opérations de ce commerçant seront classées toutes seules."),
+      aller: [t("Classer en lot"), "classer"],
+    },
+    {
+      q: t("Comment me fixer une date pour un objectif d'épargne ?"),
+      r: t("Touchez votre compte d'épargne, entrez un objectif puis une date dans « Pour le ». Sésame calcule ce qu'il faut mettre de côté chaque mois et vous dit si vous êtes en avance ou en retard ; un trait sur la jauge montre où vous devriez en être."),
+      aller: [t("Voir mon épargne"), "epargne"],
+    },
+    {
+      q: t("Qu'est-ce que le bilan du mois ?"),
+      r: t("Au début de chaque mois, l'accueil résume le mois écoulé : revenus, dépenses comparées à d'habitude, ce qui vous reste, les trois plus grosses dépenses, les budgets dépassés et une bonne nouvelle. Il reste consultable dans Analyse, et une alerte peut vous le rappeler."),
+      aller: [t("Voir le bilan"), "analyse"],
+    },
+    {
+      q: t("Comment suivre mes abonnements ?"),
+      r: t("Dans Analyse, « Mes prélèvements réguliers » liste ce qui revient à date fixe, avec le coût par mois et par an. Sésame signale un prix en hausse, un prélèvement en double ou un nouveau prélèvement."),
+      aller: [t("Voir mes prélèvements"), "analyse"],
+    },
+    {
+      q: t("Comment exporter mes opérations vers Excel ou en PDF ?"),
+      r: t("Dans Opérations, choisissez ce que vous voulez (période, compte, catégorie, recherche, filtres) puis touchez « Exporter » : tableur CSV pour Excel, ou document à imprimer en PDF. Le fichier est créé sur votre appareil, rien n'est envoyé."),
+      aller: [t("Voir mes opérations"), "operations"],
+    },
+    {
+      q: t("Comment chercher par montant ou seulement les dépenses ?"),
+      r: t("Dans Opérations, touchez « Filtres » : dépenses ou revenus, montant entre deux valeurs, et, pendant une recherche, limitation à la période choisie en haut. « Effacer les filtres » remet tout à zéro."),
+      aller: [t("Voir mes opérations"), "operations"],
+    },
+    {
       q: t("Comment créer une catégorie et choisir son icône ?"),
       r: t("Depuis une opération, touchez « + Nouvelle catégorie » au bout de la liste. L'icône est devinée d'après le nom ; pour en choisir une autre, ou changer la couleur, allez dans Paramètres → Catégories et touchez l'icône de la catégorie."),
       aller: [t("Ouvrir les paramètres"), "parametres"],

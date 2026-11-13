@@ -4,6 +4,8 @@
   // Analyse : tendances sur plusieurs mois (solde, revenus et dépenses, moyennes par catégorie).
   import Aide from "../Aide.svelte";
   import FluxCourbes from "../FluxCourbes.svelte";
+  import BilanMois from "../BilanMois.svelte";
+  import Abonnements from "../Abonnements.svelte";
   import { libelleLisible } from "../categories";
   import Courbe from "../Courbe.svelte";
   import SoldesComptes from "../SoldesComptes.svelte";
@@ -13,7 +15,7 @@
   import { argent, dateCourte } from "../format";
   import Periode from "../Periode.svelte";
   import { prevoir } from "../prevision";
-  import { bornes, cleMois, derniersMois, finDeMois, flux, moisPasses, perimetre, solde, variation, type Contexte } from "../stats";
+  import { bornes, cleMois, decaler, derniersMois, finDeMois, flux, moisCourant, moisPasses, perimetre, solde, variation, type Contexte } from "../stats";
   import { premiereDate } from "../donnees.svelte";
 
   const ctx: Contexte = $derived({ ops: donnees.operations, comptes: donnees.comptes, categories: donnees.categories, taux: tauxConnus(app.params.taux, app.params.tauxManuels), devise: deviseAffichee() });
@@ -123,6 +125,10 @@
     {/each}
   </section>
   </div>
+
+  <BilanMois mois={decaler(moisCourant(), -1)} />
+
+  <Abonnements />
 
   {#if prevision}
     <section class="carte pile" data-visite="prevision">

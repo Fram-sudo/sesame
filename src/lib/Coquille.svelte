@@ -16,6 +16,7 @@
   import Parametres from "./pages/Parametres.svelte";
   import Plus from "./pages/Plus.svelte";
   import Guide from "./pages/Guide.svelte";
+  import Classer from "./pages/Classer.svelte";
   import Bienvenue from "./Bienvenue.svelte";
   import CarteMaj from "./CarteMaj.svelte";
   import VisiteDemo from "./VisiteDemo.svelte";
@@ -39,7 +40,7 @@
     ["parametres", "parametres", t("Paramètres")],
     ["aide", "aide", t("Aide")],
   ];
-  const AUTRES: Partial<Record<Page, string>> = { import: t("Importer"), regles: t("Règles"), banques: t("Banques et imports"), plus: t("Plus") };
+  const AUTRES: Partial<Record<Page, string>> = { import: t("Importer"), regles: t("Règles"), banques: t("Banques et imports"), plus: t("Plus"), classer: t("À classer") };
   const titre = $derived(AUTRES[app.page] ?? PAGES.find((p) => p[0] === app.page)![2]);
 
   // Menu de gauche (PC) : vos comptes et leur solde, un clic affiche le tableau de bord du compte
@@ -167,6 +168,8 @@
         <Guide synchro={() => (synchro = true)} />
       {:else if app.page === "plus"}
         <Plus synchro={() => (synchro = true)} />
+      {:else if app.page === "classer"}
+        <Classer />
       {:else if app.page === "analyse"}
         <Analyse />
       {/if}

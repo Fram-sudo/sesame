@@ -7,10 +7,12 @@ export interface Reglages {
   budget: boolean;
   import: boolean;
   sauvegarde: boolean;
+  /** Bilan du mois écoulé, le 1er du mois */
+  bilan: boolean;
   /** Montants dans le texte (visible sur l'écran verrouillé) : non par défaut */
   montants: boolean;
 }
-export const REGLAGES_DEFAUT: Reglages = { decouvert: true, budget: true, import: true, sauvegarde: true, montants: false };
+export const REGLAGES_DEFAUT: Reglages = { decouvert: true, budget: true, import: true, sauvegarde: true, bilan: true, montants: false };
 
 export interface Situation {
   maintenant: number;
@@ -22,11 +24,13 @@ export interface Situation {
   premierImport?: number;
   derniereSauvegarde?: number;
   rappelSauvegardeApres?: number;
+  /** Bilan à annoncer le 1er du mois prochain : mois concerné (clé AAAA-MM et nom lisible) */
+  bilan?: { cle: string; mois: string; quand: number };
 }
 
 export interface Alerte {
   /** Identifiant fixe par type : reprogrammer remplace l'ancienne */
-  id: 1 | 2 | 3 | 4;
+  id: 1 | 2 | 3 | 4 | 5;
   /** Ce qui rend l'alerte unique : une même alerte n'est pas renvoyée une fois passée */
   cle: string;
   quand: number;
@@ -70,5 +74,6 @@ export function alertesAPlanifier(s: Situation, r: Reglages, vues: Record<string
     const due = Math.max(s.derniereSauvegarde ? s.derniereSauvegarde + 30 * JOUR : s.premierImport! + 3 * JOUR, s.rappelSauvegardeApres ?? 0);
     ajouter(4, `sauvegarde|${due}`, aHeure(due, 18, s.maintenant), t("Pensez à exporter une sauvegarde de Sésame : c'est elle qui vous permet de tout retrouver si vous perdez cet appareil."));
   }
+  if (r.bilan !== false && s.bilan) ajouter(5, `bilan|${s.bilan.cle}`, s.bilan.quand, t("Votre bilan de {0} est prêt : ouvrez Sésame pour le voir.", s.bilan.mois));
   return res;
 }

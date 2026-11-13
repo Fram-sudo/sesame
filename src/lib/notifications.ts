@@ -5,7 +5,7 @@ import { estAndroid } from "./api";
 import { donnees } from "./donnees.svelte";
 import { app, deviseAffichee, sauverParametres } from "./etat.svelte";
 import { argent } from "./format";
-import { t } from "./i18n.svelte";
+import { locale, t } from "./i18n.svelte";
 import { prevoir } from "./prevision";
 import { bornes, etatBudgets, type Contexte } from "./stats";
 import { tauxConnus } from "./taux";
@@ -42,6 +42,9 @@ export async function programmerAlertes() {
         const nom = b.id === "global" ? t("Plafond global") : (donnees.categories.find((c) => c.id === b.id)?.nom ?? "");
         s.budget = { cle: `${auj.slice(0, 7)}|${b.id}`, nom, depense: argent(b.depense, devise), plafond: argent(b.budget, devise), part: b.depense / b.budget };
       }
+      // Bilan du mois en cours, annoncé le 1er du mois prochain à 9 h
+      const d1 = new Date(d.getFullYear(), d.getMonth() + 1, 1, 9);
+      s.bilan = { cle: auj.slice(0, 7), mois: d.toLocaleDateString(locale(), { month: "long" }), quand: d1.getTime() };
       const quand = donnees.imports.map((i) => i.quand);
       if (quand.length) (s.dernierImport = Math.max(...quand)), (s.premierImport = Math.min(...quand));
     }
@@ -69,7 +72,7 @@ export async function programmerAlertes() {
         );
       return;
     }
-    await n.cancel([1, 2, 3, 4]);
+    await n.cancel([1, 2, 3, 4, 5]);
     for (const a of alertes) n.sendNotification({ id: a.id, title: "Sésame", body: a.texte, schedule: n.Schedule.at(new Date(a.quand), false, true) });
     // Mémoire des alertes programmées (deux mois), pour ne pas répéter celles déjà passées
     app.params.alertesVues = Object.fromEntries([...garder, ...alertes.map((a) => [a.cle, a.quand] as [string, number])]);

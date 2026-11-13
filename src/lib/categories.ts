@@ -485,3 +485,129 @@ export const ICONES: Record<string, string> = {
   "cat-autres-revenus": "coin",
   [VIREMENT]: "arrows-exchange",
 };
+
+export interface GroupeAClasser<T> {
+  motif: string;
+  /** Libellé d'exemple (le plus récent) */
+  libelle: string;
+  ops: T[];
+  /** Somme des montants (signée), dans la devise du groupe */
+  total: number;
+  devise: string;
+  /** Total converti pour comparer les groupes entre eux (devise d'affichage) */
+  poids: number;
+  derniere: string;
+  /** Catégorie proposée : celle déjà donnée à des opérations du même commerçant, sinon à des libellés qui commencent pareil */
+  propose?: string;
+}
+
+/**
+ * Opérations sans catégorie (hors virements entre vos comptes et paiements en attente), regroupées par commerçant
+ * (motif du libellé), les plus gros montants d'abord : un choix classe tout le groupe.
+ */
+export function groupesAClasser<T extends Op & { enAttente?: boolean }>(
+  ops: T[],
+  deviseDe: (compteId: string) => string = () => "EUR",
+  convertir: (montant: number, devise: string) => number = (m) => m,
+): GroupeAClasser<T>[] {
+  const groupes = new Map<string, T[]>();
+  const classees = new Map<string, Map<string, number>>();
+  const premierMot = (m: string) => m.split(" ")[0] ?? "";
+  for (const o of ops) {
+    if (o.virementId || o.enAttente) continue;
+    const m = motif(o.libelle) || normaliser(o.libelle);
+    if (!m) continue;
+    if (o.categorieId) {
+      for (const cle of [m, `~${premierMot(m)}`]) {
+        const n = classees.get(cle) ?? new Map<string, number>();
+        n.set(o.categorieId, (n.get(o.categorieId) ?? 0) + 1);
+        classees.set(cle, n);
+      }
+      continue;
+    }
+    // Un même commerçant dans deux devises fait deux groupes (on n'additionne pas des euros et des francs CFA)
+    const k = `${m}|${deviseDe(o.compteId)}`;
+    groupes.set(k, [...(groupes.get(k) ?? []), o]);
+  }
+  const plusFrequente = (n?: Map<string, number>) => (n ? [...n].sort((a, b) => b[1] - a[1])[0]?.[0] : undefined);
+  return [...groupes]
+    .map(([k, g]) => {
+      const [m, devise] = k.split("|");
+      const tri = [...g].sort((a, b) => b.date.localeCompare(a.date));
+      const total = g.reduce((s, o) => s + o.montant, 0);
+      return {
+        motif: m,
+        devise,
+        poids: Math.abs(convertir(total, devise)),
+        libelle: tri[0].libelle,
+        ops: tri,
+        total,
+        derniere: tri[0].date,
+        propose: plusFrequente(classees.get(m)) ?? plusFrequente(classees.get(`~${premierMot(m)}`)),
+      };
+    })
+    .sort((a, b) => b.poids - a.poids);
+}
+
+export interface Abonnement {
+  motif: string;
+  libelle: string;
+  compteId: string;
+  frequence: string;
+  /** Coût ramené au mois (positif, en centimes) */
+  parMois: number;
+  dernier: number;
+  /** Jour du mois habituel */
+  jour: number;
+  categorieId?: string;
+  /** Prix en hausse sur l'année : de combien à combien, depuis quand */
+  hausse?: { avant: number; apres: number; depuis: string };
+  /** Deux prélèvements ou plus le même mois, plusieurs mois de suite */
+  double: boolean;
+  /** Apparu depuis moins de 3 mois */
+  nouveau: boolean;
+}
+
+const PAR_MOIS: Record<string, number> = { "chaque semaine": 52 / 12, "toutes les 2 semaines": 26 / 12, "chaque mois": 1, "chaque trimestre": 1 / 3, "chaque année": 1 / 12 };
+
+/** Prélèvements réguliers encore actifs (dépenses), avec hausses de prix, doublons et nouveautés. */
+export function abonnements(ops: Op[], auj: string): Abonnement[] {
+  const jours = (a: string, b: string) => (Date.parse(a) - Date.parse(b)) / 86_400_000;
+  const res: Abonnement[] = [];
+  // Deux prélèvements identiques le même jour (deux abonnements Google Play…) : comptés une fois pour repérer le rythme
+  const vus = new Set<string>();
+  const uniques = ops.filter((o) => {
+    const k = `${o.compteId}|${motif(o.libelle)}|${o.date}|${o.montant < 0}`;
+    return vus.has(k) ? false : (vus.add(k), true);
+  });
+  for (const r of detecterRecurrences(uniques)) {
+    if (r.montant >= 0 || PAR_MOIS[r.frequence] === undefined) continue;
+    // Arrêté : la prochaine échéance attendue est passée depuis longtemps
+    if (jours(auj, r.prochaine) > 20) continue;
+    const g = ops.filter((o) => !o.virementId && o.compteId === r.compteId && o.montant < 0 && motif(o.libelle) === r.motif).sort((a, b) => a.date.localeCompare(b.date));
+    if (!g.length) continue;
+    const dernier = g[g.length - 1];
+    // Hausse : le dernier montant contre celui d'il y a 6 à 12 mois
+    const ancien = g.find((o) => jours(dernier.date, o.date) <= 366 && jours(dernier.date, o.date) >= 150);
+    const avant = ancien ? -ancien.montant : 0;
+    const apres = -dernier.montant;
+    const hausse = ancien && apres - avant >= 100 && apres >= avant * 1.05 ? { avant, apres, depuis: g.find((o) => -o.montant === apres)!.date } : undefined;
+    const parMoisCal = new Map<string, number>();
+    for (const o of g) parMoisCal.set(o.date.slice(0, 7), (parMoisCal.get(o.date.slice(0, 7)) ?? 0) + 1);
+    const double = r.frequence === "chaque mois" && [...parMoisCal.values()].filter((n) => n >= 2).length >= 2;
+    res.push({
+      motif: r.motif,
+      libelle: dernier.libelle,
+      compteId: r.compteId,
+      frequence: r.frequence,
+      parMois: Math.round(-r.montant * PAR_MOIS[r.frequence] * (double ? 2 : 1)),
+      dernier: apres,
+      jour: Number(dernier.date.slice(8, 10)),
+      categorieId: dernier.categorieId,
+      hausse,
+      double,
+      nouveau: jours(auj, g[0].date) < 92,
+    });
+  }
+  return res.sort((a, b) => b.parMois - a.parMois);
+}

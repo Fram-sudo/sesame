@@ -403,6 +403,21 @@ async fn enregistrer_cle_recuperation(app: AppHandle, cle: String) -> Res<bool> 
     demander_et_ecrire(app, "cle-de-recuperation-sesame.txt", "txt", texte.into_bytes()).await
 }
 
+/// Export d'opérations choisi par l'utilisateur (tableur CSV ou document imprimable HTML), enregistré là où il le décide.
+/// Seulement ces deux formats, et un nom de fichier sans chemin.
+#[tauri::command]
+async fn enregistrer_export(app: AppHandle, nom: String, contenu: String) -> Res<bool> {
+    let ext = match nom.rsplit_once('.').map(|(_, e)| e) {
+        Some("csv") => "csv",
+        Some("html") => "html",
+        _ => return Err("Format d'export inconnu.".into()),
+    };
+    if nom.contains(['/', '\\', ':']) || nom.len() > 120 {
+        return Err("Nom de fichier refusé.".into());
+    }
+    demander_et_ecrire(app, &nom, ext, contenu.into_bytes()).await
+}
+
 /// Restaure une sauvegarde : elle doit s'ouvrir avec SON mot de passe (vérifie aussi
 /// qu'elle est intacte), puis elle remplace le coffre de cet appareil.
 #[tauri::command]
@@ -720,6 +735,7 @@ pub fn run() {
             ecrire_parametres,
             exporter_sauvegarde,
             enregistrer_cle_recuperation,
+            enregistrer_export,
             importer_sauvegarde,
             tout_effacer,
             lire_tout,

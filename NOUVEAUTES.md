@@ -10,10 +10,12 @@ Si ce texte n'a pas changé depuis la version précédente, la version dit simpl
 
 ## FR
 
-- Épargne : la courbe suit la période de votre choix (mois, trimestre, année, depuis le début ou des dates précises), comme les autres graphiques.
-- Plus aucune date ni aucun montant qui se chevauchent sur les graphiques, quelle que soit la période ou la taille de l'écran.
+- À classer : les opérations sans catégorie, regroupées par commerçant ; un appui range tout le groupe et les suivantes se classent toutes seules.
+- Objectifs d'épargne avec une date, bilan du mois, surveillance des abonnements (prix en hausse, doublons), export Excel ou PDF et filtres par montant dans Opérations.
+- Correction importante : un ancien défaut pouvait remplacer une catégorie par un budget. Les catégories touchées sont rétablies automatiquement à l'ouverture.
 
 ## EN
 
-- Savings: the curve follows the period you choose (month, quarter, year, since the start or custom dates), like the other charts.
-- No more overlapping dates or amounts on charts, whatever the period or screen size.
+- To categorize: uncategorized transactions grouped by merchant; one tap files the whole group and the next ones are categorized automatically.
+- Savings goals with a deadline, monthly summary, subscription watch (price increases, duplicates), Excel or PDF export and amount filters in Transactions.
+- Important fix: an old bug could replace a category with a budget. Affected categories are restored automatically on opening.

@@ -1,4 +1,5 @@
 <script lang="ts">
+
   import Choix from "../Choix.svelte";
   import { t } from "../i18n.svelte";
   import { detecterRecurrences, libelleLisible } from "../categories";
@@ -7,10 +8,12 @@
   import Feuille from "../Feuille.svelte";
   import IconeCategorie from "../IconeCategorie.svelte";
   import OperationFiche from "../OperationFiche.svelte";
-  import { app } from "../etat.svelte";
+  import { annoncer, app } from "../etat.svelte";
+  import { api, estAndroid } from "../api";
+  import { versCsv, versHtml, type LigneExport } from "../export";
   import { argent, dateCourte, dateLongue } from "../format";
   import Icone from "../Icone.svelte";
-  import { normaliser } from "../import/analyse";
+  import { lireMontant, normaliser } from "../import/analyse";
   import Periode from "../Periode.svelte";
   import { premiereDate } from "../donnees.svelte";
   import { bornes } from "../stats";
@@ -28,19 +31,59 @@
   let fiche = $state<Operation | null>(null);
   let voirRecurrentes = $state(false);
   let deplacer = $state(false);
+  let exporter = $state(false);
+  async function exporterFichier(format: "csv" | "pdf") {
+    const lignes: LigneExport[] = filtrees.map((o) => {
+      const c = comptes.get(o.compteId);
+      return { date: o.date, libelle: libelleLisible(o.libelle), categorie: categories.get(o.categorieId ?? "")?.nom ?? t("Sans catégorie"), compte: c?.nom ?? "", devise: c?.devise ?? "EUR", montant: o.montant, note: o.note };
+    });
+    const jour = new Date().toISOString().slice(0, 10);
+    const titre = t("Sésame · Opérations");
+    const sous = [recherche ? t("Recherche « {0} »", recherche) : b.libelle, compteId ? comptes.get(compteId)?.nom : "", categorieId ? (categorieId === "aucune" ? t("Sans catégorie") : categories.get(categorieId)?.nom) : ""].filter(Boolean).join(" · ");
+    if (format === "csv") {
+      if (await api.enregistrerExport(`operations-${jour}.csv`, versCsv(lignes))) annoncer(t("Fichier enregistré."));
+    } else if (estAndroid) {
+      if (await api.enregistrerExport(`operations-${jour}.html`, versHtml(titre, sous, lignes))) annoncer(t("Fichier enregistré."));
+    } else {
+      // Ordinateur : la fenêtre d'impression du système, où l'on choisit « Enregistrer en PDF »
+      const cadre = document.createElement("iframe");
+      cadre.style.cssText = "position:fixed;width:0;height:0;border:0;right:0;bottom:0";
+      document.body.append(cadre);
+      cadre.contentDocument!.open();
+      cadre.contentDocument!.write(versHtml(titre, sous, lignes));
+      cadre.contentDocument!.close();
+      setTimeout(() => {
+        cadre.contentWindow!.focus();
+        cadre.contentWindow!.print();
+        setTimeout(() => cadre.remove(), 1000);
+      }, 200);
+    }
+    exporter = false;
+  }
 
   const categories = $derived(new Map(donnees.categories.map((c) => [c.id, c])));
   const recurrentes = $derived(voirRecurrentes ? detecterRecurrences(donnees.operations) : []);
 
   const comptes = $derived(new Map(donnees.comptes.map((c) => [c.id, c])));
+  // Recherche avancée : sens, montant (en valeur absolue), et période même pendant une recherche
+  let voirFiltres = $state(false);
+  let sens = $state<"" | "depense" | "revenu">("");
+  let min = $state("");
+  let max = $state("");
+  let dansLaPeriode = $state(false);
+  const nbFiltres = $derived((sens ? 1 : 0) + (min.trim() ? 1 : 0) + (max.trim() ? 1 : 0) + (dansLaPeriode ? 1 : 0));
   const filtrees = $derived.by(() => {
     const q = normaliser(recherche);
+    const mini = lireMontant(min), maxi = lireMontant(max);
     return donnees.operations
       .filter(
         (o) =>
           (!compteId || o.compteId === compteId) &&
-          // Une recherche porte sur toutes les dates ; sinon, la période choisie en haut
-          (!!q || (o.date >= b.de && o.date <= b.fin)) &&
+          // Une recherche porte sur toutes les dates (sauf si on la limite à la période) ; sinon, la période choisie en haut
+          ((!!q && !dansLaPeriode) || (o.date >= b.de && o.date <= b.fin)) &&
+          (!sens || (sens === "depense" ? o.montant < 0 : o.montant > 0)) &&
+          (mini === null || Math.abs(o.montant) >= Math.abs(mini)) &&
+          (maxi === null || Math.abs(o.montant) <= Math.abs(maxi)) &&
           (!categorieId || (categorieId === "aucune" ? !o.categorieId : o.categorieId === categorieId)) &&
           (!q || normaliser(`${o.libelle} ${o.detail ?? ""} ${o.note ?? ""}`).includes(q)),
       )
@@ -83,9 +126,28 @@
       <Choix bind:valeur={compteId} titre={t("Compte")} classe="pastille" actif={!!compteId} options={[{ v: "", l: t("Tous les comptes") }, ...donnees.comptes.map((c) => ({ v: c.id, l: c.nom }))]} />
     {/if}
     <Choix bind:valeur={categorieId} titre={t("Catégorie")} classe="pastille" actif={!!categorieId} options={[{ v: "", l: t("Toutes catégories") }, { v: "aucune", l: t("Sans catégorie") }, ...donnees.categories.map((c) => ({ v: c.id, l: c.nom, cat: c.id }))]} />
+    <button class="pastille" class:actif={nbFiltres > 0} aria-expanded={voirFiltres} onclick={() => (voirFiltres = !voirFiltres)}>{t("Filtres")}{nbFiltres ? ` (${nbFiltres})` : ""}</button>
     <button class="pastille" onclick={() => (voirRecurrentes = true)}>{t("Récurrentes")}</button>
+    <button class="pastille" onclick={() => (exporter = true)} disabled={!filtrees.length}>{t("Exporter")}</button>
+    {#if categorieId === "aucune"}<button class="pastille" onclick={() => (app.page = "classer")}>{t("Classer en lot")}</button>{/if}
     <button class="pastille" onclick={() => (app.page = "import")}><Icone nom="importer" taille={16} />{t("Importer")}</button>
   </div>
+
+  {#if voirFiltres}
+    <div class="carte pile avances">
+      <div class="choix-sens" role="radiogroup" aria-label={t("Sens")}>
+        {#each [["", t("Tout")], ["depense", t("Dépenses")], ["revenu", t("Revenus")]] as [v, l] (v)}
+          <button role="radio" aria-checked={sens === v} class:on={sens === v} onclick={() => (sens = v as typeof sens)}>{l}</button>
+        {/each}
+      </div>
+      <div class="montants">
+        <label>{t("Montant entre")}<input inputmode="decimal" placeholder="0" bind:value={min} /></label>
+        <label>{t("et")}<input inputmode="decimal" placeholder={t("sans limite")} bind:value={max} /></label>
+      </div>
+      {#if recherche}<label class="case"><input type="checkbox" bind:checked={dansLaPeriode} />{t("Chercher seulement dans la période choisie en haut")}</label>{/if}
+      {#if nbFiltres}<button class="lien gauche" onclick={() => ((sens = ""), (min = max = ""), (dansLaPeriode = false))}>{t("Effacer les filtres")}</button>{/if}
+    </div>
+  {/if}
 
   {#if filtrees.length}
     <div class="totaux">
@@ -134,6 +196,14 @@
   {/if}
 </div>
 
+{#if exporter}
+  <Feuille titre={t("Exporter {0} opération(s)", filtrees.length)} fermer={() => (exporter = false)}>
+    <p class="sous">{t("Exactement ce qui est affiché : période, compte, catégorie, recherche et filtres. Le fichier est créé sur votre appareil, rien n'est envoyé.")}</p>
+    <button class="principal" onclick={() => exporterFichier("csv")}>{t("Tableur (CSV, pour Excel)")}</button>
+    <button onclick={() => exporterFichier("pdf")}>{estAndroid ? t("Document à imprimer (ouvrez-le puis Partager → Imprimer en PDF)") : t("PDF à imprimer")}</button>
+  </Feuille>
+{/if}
+
 {#if deplacer}<DeplacerOps ops={filtrees} {recherche} fermer={() => (deplacer = false)} />{/if}
 
 {#if fiche}<OperationFiche op={fiche} fermer={() => (fiche = null)} />{/if}
@@ -146,7 +216,7 @@
       <div class="rec">
         <span class="texte">
           <span class="libelle">{r.libelle}</span>
-          <span class="sous">{r.frequence} {t("· prochaine vers le")} {dateCourte(r.prochaine)} · {c?.nom}</span>
+          <span class="sous">{t(r.frequence)} {t("· prochaine vers le")} {dateCourte(r.prochaine)} · {c?.nom}</span>
         </span>
         <span class="montant" class:positif={r.montant > 0}>{r.variable ? "≈ " : ""}{argent(r.montant, c?.devise ?? "EUR", true)}</span>
       </div>
@@ -281,5 +351,39 @@
   }
   .positif {
     color: var(--ok);
+  }
+  .avances {
+    gap: 10px;
+  }
+  .choix-sens {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 999px;
+    background: var(--fond);
+    align-self: flex-start;
+  }
+  .choix-sens button {
+    background: none;
+    padding: 6px 14px;
+    font-size: 14px;
+  }
+  .choix-sens .on {
+    background: var(--surface);
+    box-shadow: 0 1px 3px rgba(10, 12, 20, 0.12);
+  }
+  .montants {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .case {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 14px;
+  }
+  .gauche {
+    align-self: flex-start;
   }
 </style>

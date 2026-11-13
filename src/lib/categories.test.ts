@@ -192,3 +192,43 @@ describe("virement saisi à la main dont un côté est déjà importé", () => {
     expect(moitieDejaLa([loin, lie], "a", "b", 50000, "2026-11-12")).toBeUndefined();
   });
 });
+
+import { groupesAClasser } from "./categories";
+describe("classer en lot", () => {
+  it("regroupe par commerçant, les plus gros montants d'abord, et propose la catégorie déjà utilisée", () => {
+    const o = (id: string, libelle: string, montant: number, extra: Partial<Op> = {}): Op => ({ id, compteId: "a", date: "2026-11-0" + (Number(id.slice(1)) % 9 + 1), montant, libelle, ...extra });
+    const g = groupesAClasser([
+      o("o1", "CARTE X1234 03/11 ALIEXPRESS", -5000),
+      o("o2", "CARTE X1234 05/11 ALIEXPRESS", -3000),
+      o("o3", "CARTE X1234 01/10 ALIEXPRESS", -2000, { categorieId: "cat-shopping" }),
+      o("o4", "CARTE X1234 06/11 BOULANGERIE DUPONT", -400),
+      o("o5", "VIR VERS LIVRET", -10000, { virementId: "v" }),
+    ]);
+    expect(g.map((x) => [x.motif, x.ops.length, x.total, x.propose])).toEqual([
+      ["aliexpress", 2, -8000, "cat-shopping"],
+      ["boulangerie dupont", 1, -400, undefined],
+    ]);
+  });
+});
+
+import { abonnements } from "./categories";
+describe("abonnements", () => {
+  const mois = (n: number, jour: number) => new Date(Date.UTC(2025, 11 + n, jour)).toISOString().slice(0, 10);
+  it("coût par mois, hausse de prix, doublon le même jour, nouveau", () => {
+    const ops: Op[] = [];
+    for (let n = 0; n < 12; n++) {
+      ops.push({ id: `e${n}`, compteId: "a", date: mois(n, 5), montant: n < 4 ? -2710 : -3036, libelle: "PRELEVEMENT EUROPEEN ALPIQ" });
+      ops.push({ id: `g${n}`, compteId: "a", date: mois(n, 11), montant: -699, libelle: "CARTE X1579 GOOGLE PLAY" });
+      ops.push({ id: `h${n}`, compteId: "a", date: mois(n, 11), montant: -699, libelle: "CARTE X1579 GOOGLE PLAY" });
+    }
+    for (let n = 9; n < 12; n++) ops.push({ id: `s${n}`, compteId: "a", date: mois(n, 2), montant: -2990, libelle: "PRLV SALLE DE SPORT" });
+    const a = abonnements(ops, mois(11, 14));
+    const alpiq = a.find((x) => x.motif.includes("alpiq"))!;
+    expect(alpiq.parMois).toBe(3036);
+    expect(alpiq.hausse).toEqual({ avant: 2710, apres: 3036, depuis: mois(4, 5) });
+    const google = a.find((x) => x.motif.includes("google"))!;
+    expect(google.double).toBe(true);
+    expect(google.parMois).toBe(1398);
+    expect(a.find((x) => x.motif.includes("sport"))?.nouveau).toBe(true);
+  });
+});

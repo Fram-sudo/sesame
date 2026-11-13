@@ -24,6 +24,11 @@ if (import.meta.env.MODE === "demo" || new URLSearchParams(location.search).has(
       { collection: "budgets", id: "global", valeur: { id: "global", montant: 140000 } },
       { collection: "prets", id: "pret-demo", valeur: { id: "pret-demo", nom: "Prêt étudiant (démo)", organisme: "Banque fictive", capital: 800000, taux: 1.2, duree: 72, premiere: "2025-06-05", assurance: 350 } },
     ]);
+    // ?ancienbudget : coffre abîmé par une ancienne version (le budget a écrasé sa catégorie), pour tester la réparation
+    if (new URLSearchParams(location.search).has("ancienbudget")) {
+      memoire.delete("budget:cat-alimentation");
+      memoire.set("cat-alimentation", { collection: "budgets", valeur: { id: "cat-alimentation", montant: 40000 } });
+    }
     if (new URLSearchParams(location.search).has("rappel")) {
       await ecrire([{ collection: "operations", id: "op-rappel", valeur: { id: "op-rappel", compteId: "x", date: "2026-01-01", montant: -100, libelle: "Test", cle: "t" } as never }]);
       const { app } = await import("./etat.svelte");
@@ -122,6 +127,9 @@ mockIPC(async (cmd, a) => {
     case "verrouiller":
       ouvert = false;
       return;
+    case "enregistrer_export":
+      console.log("EXPORT", args.nom, String(args.contenu).length);
+      return true;
     case "lire_parametres":
       return parametres;
     case "ecrire_parametres":

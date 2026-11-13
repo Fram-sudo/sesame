@@ -22,6 +22,7 @@
     ["analyse", "analyse", t("Analyse"), t("Tendances et prévision sur 3 mois")],
     ["import", "importer", t("Importer des relevés"), dernierImport ? t("Dernier import le {0}", new Date(dernierImport).toLocaleDateString(locale())) : t("PDF, CSV, Excel, OFX… toutes banques")],
     ["synchro", "synchro", t("Synchroniser mes appareils"), app.params.aEnvoyer ? t("Changements à envoyer") : t("À jour")],
+    ["classer", "operations", t("À classer"), t("Les opérations sans catégorie, par commerçant")],
     ["regles", "operations", t("Règles de classement"), t("Comment vos opérations sont rangées")],
     ["banques", "portefeuille", t("Banques et imports"), t("Ce que l'appli a retenu de chaque banque")],
     ["parametres", "parametres", t("Paramètres"), t("Thème, devises, sauvegarde, sécurité")],

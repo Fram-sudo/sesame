@@ -31,6 +31,7 @@
     ["budget", t("Budget presque atteint")],
     ["import", t("Rappel d'importer vos relevés (après 2 semaines)")],
     ["sauvegarde", t("Rappel de sauvegarde")],
+    ["bilan", t("Bilan du mois écoulé (le 1er du mois)")],
   ];
   async function changerAlerte(cle: keyof Reglages, oui: boolean) {
     app.params.alertes = { ...app.params.alertes, [cle]: oui };
