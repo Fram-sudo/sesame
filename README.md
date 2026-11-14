@@ -32,8 +32,8 @@
 
 ## Vidéos
 
-- [Bande-annonce (35 s)](videos/sesame-trailer.mp4)
-- [Présentation (1 min 20)](videos/sesame-pub.mp4)
+- Bande-annonce (40 s) : [français](videos/sesame-trailer-fr.mp4) · [English](videos/sesame-trailer-en.mp4)
+- Présentation (1 min 10) : [français](videos/sesame-long-fr.mp4) · [English](videos/sesame-long-en.mp4)
 
 ## Installer
 
