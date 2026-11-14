@@ -30,6 +30,11 @@
 - Sur Android : ouverture par empreinte (clé gardée par le coffre-fort matériel), captures d'écran bloquées, aucune sauvegarde cloud.
 - Détails : [docs/modele-de-menace.md](docs/modele-de-menace.md).
 
+## Vidéos
+
+- [Bande-annonce (35 s)](videos/sesame-trailer.mp4)
+- [Présentation (1 min 20)](videos/sesame-pub.mp4)
+
 ## Installer
 
 Les fichiers sont dans la [dernière version](https://github.com/Fram-sudo/sesame/releases/latest) ; le [site](https://fram-sudo.github.io/sesame/#installer) explique chaque étape.
