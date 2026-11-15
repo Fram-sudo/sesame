@@ -1188,6 +1188,7 @@ export const EN: Record<string, string> = {
   "Avec son icône, comme un logiciel installé. Si vous déplacez le fichier de Sésame, l'entrée suit au prochain lancement.": "With its icon, like an installed program. If you move the Sesame file, the entry follows at the next launch.",
   "Sésame est dans le menu de vos applications.": "Sesame is in your applications menu.",
   "Sésame est retiré du menu de vos applications.": "Sesame has been removed from your applications menu.",
+  "Hier": "Yesterday",
 };
 
 /** Textes volontairement identiques en anglais (codes, données de démonstration) */

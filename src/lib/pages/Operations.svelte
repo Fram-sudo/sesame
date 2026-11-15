@@ -104,6 +104,33 @@
     }
     return { depenses, revenus, dev };
   });
+  // Total de chaque jour (tout ce qui est filtré ce jour-là, même au-delà de « Afficher plus »),
+  // dans la devise des opérations ; plusieurs devises : converti dans la devise d'affichage, précédé de « ≈ »
+  const totauxJour = $derived.by(() => {
+    const parJour = new Map<string, Operation[]>();
+    for (const o of filtrees) (parJour.get(o.date) ?? parJour.set(o.date, []).get(o.date)!).push(o);
+    const taux = tauxConnus(app.params.taux, app.params.tauxManuels);
+    const dev = deviseAffichee();
+    const r = new Map<string, { texte: string; positif: boolean }>();
+    for (const [date, ops] of parJour) {
+      const devises = new Set(ops.map((o) => comptes.get(o.compteId)?.devise ?? "EUR"));
+      if (devises.size === 1) {
+        const somme = ops.reduce((x, o) => x + o.montant, 0);
+        r.set(date, { texte: argent(somme, [...devises][0], true), positif: somme > 0 });
+        continue;
+      }
+      if (![...devises, dev].every((d) => taux[d])) continue;
+      const somme = ops.reduce((x, o) => x + Math.round((o.montant * taux[dev]) / taux[comptes.get(o.compteId)?.devise ?? "EUR"]), 0);
+      r.set(date, { texte: "≈ " + argent(somme, dev, true), positif: somme > 0 });
+    }
+    return r;
+  });
+  const isoLocal = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  const aujourdhui = isoLocal(new Date()), hier = isoLocal(new Date(Date.now() - 86400000));
+  const nomJour = (date: string) => {
+    const n = date === aujourdhui ? t("Aujourd'hui") : date === hier ? t("Hier") : dateLongue(date);
+    return n.charAt(0).toUpperCase() + n.slice(1);
+  };
   // Regroupement par jour pour l'affichage
   const jours = $derived.by(() => {
     const g: [string, typeof filtrees][] = [];
@@ -174,8 +201,9 @@
       </div>
     {/if}
     {#each jours as [date, ops] (date)}
+      {@const total = totauxJour.get(date)}
       <section class="jour">
-        <h3>{dateLongue(date)}</h3>
+        <h3><span>{nomJour(date)}</span>{#if total}<span class="total" class:positif={total.positif}>{total.texte}</span>{/if}</h3>
         {#each ops as o (o.id)}
           {@const c = comptes.get(o.compteId)}
           {@const cat = o.categorieId ? categories.get(o.categorieId) : undefined}
@@ -285,13 +313,21 @@
     padding: 0;
   }
   h3 {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
     font-size: 13px;
     font-weight: 700;
     color: var(--doux);
     margin: 8px 0 2px;
   }
-  h3::first-letter {
-    text-transform: uppercase;
+  h3 .total {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  h3 .total.positif {
+    color: var(--ok);
   }
   .op,
   .rec {
