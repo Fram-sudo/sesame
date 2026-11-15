@@ -5,6 +5,7 @@ import { mockIPC } from "@tauri-apps/api/mocks";
 const memoire = new Map<string, { collection: string; valeur: unknown }>();
 let parametres: unknown = null;
 let ouvert = false;
+let menuLinux = true;
 let existe = true; // mot de passe simulÃ© : Â« test test test Â»
 
 // ?demo : coffre dÃ©jÃ  ouvert avec les donnÃ©es de dÃ©mo (captures d'Ã©cran automatiques)
@@ -168,6 +169,12 @@ mockIPC(async (cmd, a) => {
     }
     case "ouvrir_lien":
       return;
+    // ?linux : comme une AppImage sous Linux (réglage « menu des applications »)
+    case "menu_linux_etat":
+      return new URLSearchParams(location.search).has("linux") ? menuLinux : null;
+    case "menu_linux_regler":
+      menuLinux = (a as { present: boolean }).present;
+      return menuLinux;
     default:
       throw `Simulation : commande ${cmd} non simulÃ©e.`;
   }

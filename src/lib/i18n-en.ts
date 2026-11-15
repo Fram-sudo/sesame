@@ -1183,6 +1183,11 @@ export const EN: Record<string, string> = {
   "Les opérations sans catégorie, regroupées par commerçant. Un appui range tout le groupe, et les suivantes seront classées toutes seules.": "Uncategorized transactions, grouped by merchant. One tap files the whole group, and the next ones will be categorized automatically.",
   "Bilan du mois et abonnements": "Monthly summary and subscriptions",
   "Le bilan résume le mois écoulé ; « Mes prélèvements réguliers » montre ce que coûtent vos abonnements par mois et par an, et signale un prix en hausse ou un doublon.": "The summary recaps the past month; “My regular payments” shows what your subscriptions cost per month and per year, and flags a price increase or a duplicate.",
+  "Menu des applications": "Applications menu",
+  "Afficher Sésame dans le menu des applications": "Show Sesame in the applications menu",
+  "Avec son icône, comme un logiciel installé. Si vous déplacez le fichier de Sésame, l'entrée suit au prochain lancement.": "With its icon, like an installed program. If you move the Sesame file, the entry follows at the next launch.",
+  "Sésame est dans le menu de vos applications.": "Sesame is in your applications menu.",
+  "Sésame est retiré du menu de vos applications.": "Sesame has been removed from your applications menu.",
 };
 
 /** Textes volontairement identiques en anglais (codes, données de démonstration) */

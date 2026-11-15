@@ -24,6 +24,10 @@
   }
   import { REGLAGES_DEFAUT, type Reglages } from "../alertes";
 
+  // Linux (AppImage) : entrée dans le menu des applications
+  let menuLinux = $state<boolean | null>(null);
+  api.menuLinux().then((v) => (menuLinux = v));
+
   // Alertes du téléphone : réglages, puis reprogrammation (l'autorisation est demandée en activant)
   const reglagesAlertes = $derived({ ...REGLAGES_DEFAUT, ...app.params.alertes });
   const TYPES_ALERTES: [keyof Reglages, string][] = [
@@ -291,6 +295,17 @@
     <p class="sous">{t("Au démarrage, l'appli lit seulement la fiche publique de la dernière version sur github.com : rien de vos données n'est envoyé.")}</p>
     <button onclick={() => agir(async () => { const f = await verifierMaj(true); annoncer(f ? t("Nouvelle version {0} disponible.", f.version) : f === null ? t("Vous avez la dernière version.") : t("Pas de connexion : réessayez plus tard.")); })} disabled={enCours}>{t("Vérifier maintenant")}</button>
   </section>
+
+  {#if menuLinux !== null}
+    <section class="carte pile">
+      <h2>{t("Menu des applications")}</h2>
+      <label class="interrupteur">
+        <input type="checkbox" checked={menuLinux} onchange={(e) => { const v = e.currentTarget.checked; agir(async () => { menuLinux = await api.reglerMenuLinux(v); annoncer(v ? t("Sésame est dans le menu de vos applications.") : t("Sésame est retiré du menu de vos applications.")); }); }} disabled={enCours} />
+        <span>{t("Afficher Sésame dans le menu des applications")}</span>
+      </label>
+      <p class="sous">{t("Avec son icône, comme un logiciel installé. Si vous déplacez le fichier de Sésame, l'entrée suit au prochain lancement.")}</p>
+    </section>
+  {/if}
 
   <section class="carte pile">
     <h2>{t("Zone sensible")}</h2>

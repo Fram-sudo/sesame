@@ -23,6 +23,8 @@ struct Etat {
 
 type Res<T> = Result<T, String>;
 
+mod menu_linux;
+
 fn txt(e: impl ToString) -> String {
     e.to_string()
 }
@@ -690,6 +692,22 @@ fn tout_effacer(etat: State<Etat>) -> Res<()> {
     Ok(())
 }
 
+/// Linux (AppImage) : Sésame est-il dans le menu des applications ? null ailleurs
+#[tauri::command]
+fn menu_linux_etat() -> Option<bool> {
+    if cfg!(target_os = "linux") { menu_linux::etat() } else { None }
+}
+
+#[tauri::command]
+fn menu_linux_regler(app: AppHandle, present: bool) -> Res<Option<bool>> {
+    if !cfg!(target_os = "linux") {
+        return Ok(None);
+    }
+    let dossier = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    menu_linux::regler(&dossier, present).map_err(|_| "Impossible de modifier le menu des applications.".to_string())?;
+    Ok(menu_linux::etat())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -721,6 +739,14 @@ pub fn run() {
             app.manage(Etat { fichier: dossier.join(NOM_FICHIER), ouvert: Mutex::new(None) });
             // Calibre Argon2id en tâche de fond pour que la création du coffre soit immédiate
             std::thread::spawn(reglage_appareil);
+            // Linux (AppImage) : entrée dans le menu des applications, avec l'icône
+            #[cfg(target_os = "linux")]
+            {
+                let d = dossier.clone();
+                std::thread::spawn(move || {
+                    let _ = menu_linux::installer(&d);
+                });
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -752,6 +778,8 @@ pub fn run() {
             deverrouiller_empreinte,
             recevoir_changements,
             chercher_changements,
+            menu_linux_etat,
+            menu_linux_regler,
         ])
         .run(tauri::generate_context!())
         .expect("erreur au lancement de l'application");

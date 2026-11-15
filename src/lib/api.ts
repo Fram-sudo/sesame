@@ -74,6 +74,9 @@ export const api = {
   enregistrerExport: (nom: string, contenu: string) => invoke<boolean>("enregistrer_export", { nom, contenu }),
   importer: (mdp: string) => invoke<boolean>("importer_sauvegarde", { mdp }),
   toutEffacer: () => invoke<void>("tout_effacer"),
+  /** Linux (AppImage) : présent dans le menu des applications ? null ailleurs */
+  menuLinux: () => invoke<boolean | null>("menu_linux_etat").catch(() => null),
+  reglerMenuLinux: (present: boolean) => invoke<boolean | null>("menu_linux_regler", { present }),
   lireTout: () => invoke<{ id: string; collection: string; valeur: unknown }[]>("lire_tout"),
   /** valeur null = suppression */
   ecrireLot: (changements: { id: string; collection: string; valeur: unknown }[]) => invoke<void>("ecrire_lot", { changements }),

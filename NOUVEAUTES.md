@@ -10,12 +10,8 @@ Si ce texte n'a pas changé depuis la version précédente, la version dit simpl
 
 ## FR
 
-- À classer : les opérations sans catégorie, regroupées par commerçant ; un appui range tout le groupe et les suivantes se classent toutes seules.
-- Objectifs d'épargne avec une date, bilan du mois, surveillance des abonnements (prix en hausse, doublons), export Excel ou PDF et filtres par montant dans Opérations.
-- Correction importante : un ancien défaut pouvait remplacer une catégorie par un budget. Les catégories touchées sont rétablies automatiquement à l'ouverture.
+- Linux : la version AppImage s'ajoute toute seule au menu de vos applications, avec son icône, et s'ouvre comme un logiciel installé. Un réglage dans Paramètres permet de la retirer du menu.
 
 ## EN
 
-- To categorize: uncategorized transactions grouped by merchant; one tap files the whole group and the next ones are categorized automatically.
-- Savings goals with a deadline, monthly summary, subscription watch (price increases, duplicates), Excel or PDF export and amount filters in Transactions.
-- Important fix: an old bug could replace a category with a budget. Affected categories are restored automatically on opening.
+- Linux: the AppImage version adds itself to your applications menu, with its icon, and opens like an installed program. A setting in Settings removes it from the menu.
